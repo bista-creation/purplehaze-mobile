@@ -19,6 +19,7 @@ import OrdersScreen from '../screens/OrdersScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import LoginModal from '../screens/LoginModal';
 import RegisterModal from '../screens/RegisterModal';
+import MayaModal from '../screens/MayaModal';
 import type { MenuDishDto } from '../shared/types';
 import type { DishDto } from '../services/api-client';
 
@@ -30,6 +31,7 @@ export type RootStackParamList = {
   Orders: undefined;
   LoginModal: undefined;
   RegisterModal: undefined;
+  MayaModal: undefined;
 };
 
 export type MainTabParamList = {
@@ -136,7 +138,14 @@ function MainTabs() {
 }
 
 const linking: LinkingOptions<RootStackParamList> = {
-  prefixes: ['purplehaze://', 'https://purple-haze-git-feature-api-v1-bistacreation-3818.vercel.app', 'https://purplehaze-nine.vercel.app'],
+  prefixes: [
+    'purplehaze://',
+    'https://purple-haze-git-feature-api-v1-bistacreation-3818.vercel.app',
+    'https://purplehaze-nine.vercel.app',
+    'http://localhost:8089',
+    'http://localhost:8089/',
+    '/',
+  ],
   config: {
     screens: {
       MainTabs: {
@@ -155,6 +164,7 @@ const linking: LinkingOptions<RootStackParamList> = {
       Checkout: 'checkout',
       LoginModal: 'login',
       RegisterModal: 'register',
+      MayaModal: 'maya',
     },
   },
 };
@@ -216,6 +226,14 @@ export function RootNavigator() {
         <Stack.Screen
           name="RegisterModal"
           component={RegisterModal}
+          options={{
+            presentation: 'modal',
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="MayaModal"
+          component={MayaModal}
           options={{
             presentation: 'modal',
             headerShown: false,

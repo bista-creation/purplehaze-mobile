@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '../services/api';
+import { api as apiClient } from '../services/api-client';
 import { mobileRealtime } from '../services/realtime';
 import { STATUS_META, type OrderStatus } from '../shared/constants';
 import type { OrderDto } from '../shared/types';
@@ -119,16 +120,39 @@ export default function OrderTrackingScreen({ route, navigation }: OrderTracking
   }, [fetchOrder, orderId, order?.id]);
 
   const handleCallRestaurant = () => {
-    Linking.openURL('tel:+9779800000000').catch(() => {
+    Linking.openURL('tel:+9779852022202').catch(() => {
       Alert.alert('Notice', 'Unable to initiate call.');
     });
   };
 
   const handleOpenWhatsApp = () => {
     const text = encodeURIComponent(`Hi Purple Haze, checking status of order #${order?.orderNumber || orderId}`);
-    Linking.openURL(`whatsapp://send?phone=9779800000000&text=${text}`).catch(() => {
+    Linking.openURL(`whatsapp://send?phone=9779852022202&text=${text}`).catch(() => {
       Alert.alert('WhatsApp', 'WhatsApp is not installed on this device.');
     });
+  };
+
+  const handleCancelOrder = () => {
+    Alert.alert(
+      'Cancel Order',
+      'Are you sure you want to cancel this order? This action cannot be undone.',
+      [
+        { text: 'Keep Order', style: 'cancel' },
+        {
+          text: 'Cancel Order',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await apiClient.orders.cancel(order?.id || orderId, 'Customer requested cancellation via mobile app');
+              setOrder((prev) => (prev ? { ...prev, status: 'CANCELLED' } : prev));
+              Alert.alert('Order Cancelled', 'Your order has been cancelled.');
+            } catch (err: any) {
+              Alert.alert('Unable to Cancel', err?.message || 'Order could not be cancelled.');
+            }
+          },
+        },
+      ]
+    );
   };
 
   if (loading && !order) {
@@ -326,6 +350,14 @@ export default function OrderTrackingScreen({ route, navigation }: OrderTracking
           <Text style={styles.actionBtnText}>WhatsApp Chat</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Customer Cancellation Option */}
+      {currentStatus === 'PENDING' && (
+        <TouchableOpacity style={styles.cancelOrderBtn} onPress={handleCancelOrder}>
+          <Ionicons name="close-circle-outline" size={18} color="#ef4444" />
+          <Text style={styles.cancelOrderBtnText}>Cancel Order</Text>
+        </TouchableOpacity>
+      )}
     </ScrollView>
   );
 }
@@ -429,4 +461,21 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   actionBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
+  cancelOrderBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    borderWidth: 1,
+    borderColor: '#ef4444',
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginTop: 12,
+    gap: 8,
+  },
+  cancelOrderBtnText: {
+    color: '#ef4444',
+    fontWeight: '700',
+    fontSize: 14,
+  },
 });

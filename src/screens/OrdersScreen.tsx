@@ -13,6 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '../services/api';
 import { useAuthStore } from '../stores/auth-store';
+import { useCartStore } from '../stores/cart-store';
 import { STATUS_META } from '../shared/constants';
 import type { OrderDto } from '../shared/types';
 
@@ -84,19 +85,31 @@ export default function OrdersScreen({ navigation }: OrdersScreenProps) {
     }
   };
 
-  const handleReorder = async (order: OrderDto) => {
-    try {
-      await api.post<any>(`/orders/${order.id}/reorder`, {});
-      Alert.alert('Reorder', 'Items from this order have been placed into your cart!', [
-        {
-          text: 'View Cart',
-          onPress: () => navigation.navigate('Cart'),
-        },
-        { text: 'OK' },
-      ]);
-    } catch (err: any) {
-      Alert.alert('Notice', err?.message || 'Unable to reorder items directly. Browse menu to add.');
+  const handleReorder = (order: OrderDto) => {
+    if (!order.items || order.items.length === 0) {
+      Alert.alert('Notice', 'No items found in this order to reorder.');
+      return;
     }
+    const addItem = useCartStore.getState().addItem;
+    for (const item of order.items) {
+      addItem({
+        dishId: (item as any).dishId || item.id,
+        name: item.name,
+        slug: (item as any).slug || 'dish',
+        image: (item as any).image || null,
+        basePrice: item.basePrice || Math.round(item.lineTotal / item.quantity),
+        variantPriceDelta: 0,
+        addOns: [],
+        quantity: item.quantity,
+      });
+    }
+    Alert.alert('Reorder', 'Items from this order have been placed into your cart!', [
+      {
+        text: 'View Cart',
+        onPress: () => navigation.navigate('Cart'),
+      },
+      { text: 'OK' },
+    ]);
   };
 
   const renderOrderItem = ({ item }: { item: OrderDto }) => {

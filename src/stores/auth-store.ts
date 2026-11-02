@@ -10,6 +10,7 @@ type AuthState = {
   checkAuth: () => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string, phone?: string) => Promise<void>;
+  loginWithGoogle: (idToken: string) => Promise<void>;
   logout: () => Promise<void>;
   setUser: (user: UserSessionDto | null) => void;
 };
@@ -71,6 +72,22 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isLoading: true });
     try {
       const data = await api.auth.register({ name, email, password, phone });
+
+      await tokenStorage.setAccessToken(data.tokens.accessToken);
+      await tokenStorage.setRefreshToken(data.tokens.refreshToken);
+      await tokenStorage.setUserSession(JSON.stringify(data.user));
+
+      set({ user: data.user, isAuthenticated: true, isLoading: false });
+    } catch (error) {
+      set({ isLoading: false });
+      throw error;
+    }
+  },
+
+  loginWithGoogle: async (idToken: string) => {
+    set({ isLoading: true });
+    try {
+      const data = await api.auth.googleSignIn(idToken);
 
       await tokenStorage.setAccessToken(data.tokens.accessToken);
       await tokenStorage.setRefreshToken(data.tokens.refreshToken);

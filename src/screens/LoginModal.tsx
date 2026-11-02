@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../stores/auth-store';
+import { GoogleSignInButton } from '../components/ui';
 
 interface LoginModalProps {
   navigation: any;
@@ -117,6 +118,19 @@ export default function LoginModal({ navigation }: LoginModalProps) {
               <Text style={styles.submitBtnText}>Sign In</Text>
             )}
           </TouchableOpacity>
+
+          {/* Social Divider */}
+          <View style={styles.dividerRow}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>OR</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
+          {/* Sign In with Google */}
+          <GoogleSignInButton
+            onSuccess={() => navigation.goBack()}
+            onError={(msg) => setError(msg)}
+          />
         </View>
 
         {/* Switch to Register */}
@@ -199,4 +213,21 @@ const styles = StyleSheet.create({
   },
   footerText: { color: '#94a3b8', fontSize: 14 },
   footerLink: { color: '#c084fc', fontSize: 14, fontWeight: '700' },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 18,
+    gap: 12,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  dividerText: {
+    color: '#94a3b8',
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
 });

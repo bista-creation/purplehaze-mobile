@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { api as typedApi, DishDto, CategoryDto } from '../services/api-client';
 import { mobileRealtime } from '../services/realtime';
 import { useCartStore } from '../stores/cart-store';
+import { useFavoritesStore } from '../stores/favorites-store';
 import { useI18n } from '../i18n';
 import { Header, Badge } from '../components/ui';
 import { colors, spacing, borderRadius } from '../theme';
@@ -24,12 +25,14 @@ export function MenuScreen({ navigation }: any) {
   const [categories, setCategories] = useState<CategoryDto[]>([]);
   const [dishes, setDishes] = useState<DishDto[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [vegOnly, setVegOnly] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const addItem = useCartStore((s) => s.addItem);
+  const { favoriteDishIds, toggleFavorite, isFavorite } = useFavoritesStore();
 
   const loadMenu = async () => {
     try {
@@ -75,7 +78,10 @@ export function MenuScreen({ navigation }: any) {
 
   const filteredDishes = useMemo(() => {
     return dishes.filter((dish) => {
-      if (selectedCategory && dish.categoryId !== selectedCategory) {
+      if (showOnlyFavorites && !favoriteDishIds.includes(dish.id)) {
+        return false;
+      }
+      if (!showOnlyFavorites && selectedCategory && dish.categoryId !== selectedCategory) {
         return false;
       }
       if (vegOnly && !dish.isVeg) {
@@ -90,7 +96,7 @@ export function MenuScreen({ navigation }: any) {
       }
       return true;
     });
-  }, [dishes, selectedCategory, vegOnly, searchQuery]);
+  }, [dishes, selectedCategory, showOnlyFavorites, favoriteDishIds, vegOnly, searchQuery]);
 
   const handleQuickAdd = (dish: DishDto) => {
     if (!dish.isAvailable) return;
@@ -158,7 +164,7 @@ export function MenuScreen({ navigation }: any) {
         </TouchableOpacity>
       </View>
 
-      {/* Category Pills */}
+      {/* Category Pills & Favorites */}
       <View style={styles.categoriesWrapper}>
         <ScrollView
           horizontal
@@ -168,32 +174,64 @@ export function MenuScreen({ navigation }: any) {
           <TouchableOpacity
             style={[
               styles.categoryPill,
-              selectedCategory === null && styles.categoryPillActive,
+              selectedCategory === null && !showOnlyFavorites && styles.categoryPillActive,
             ]}
-            onPress={() => setSelectedCategory(null)}
+            onPress={() => {
+              setSelectedCategory(null);
+              setShowOnlyFavorites(false);
+            }}
           >
             <Text
               style={[
                 styles.categoryPillText,
-                selectedCategory === null && styles.categoryPillTextActive,
+                selectedCategory === null && !showOnlyFavorites && styles.categoryPillTextActive,
               ]}
             >
               {t.menu.allCuisines}
             </Text>
           </TouchableOpacity>
+
+          {/* Favorites Filter Chip */}
+          <TouchableOpacity
+            style={[
+              styles.categoryPill,
+              showOnlyFavorites && styles.categoryPillActiveFavorites,
+            ]}
+            onPress={() => setShowOnlyFavorites(!showOnlyFavorites)}
+          >
+            <View style={styles.pillInnerRow}>
+              <Ionicons
+                name={showOnlyFavorites ? 'heart' : 'heart-outline'}
+                size={14}
+                color={showOnlyFavorites ? '#EF4444' : colors.textMuted}
+              />
+              <Text
+                style={[
+                  styles.categoryPillText,
+                  showOnlyFavorites && styles.categoryPillTextActive,
+                ]}
+              >
+                Favorites {favoriteDishIds.length > 0 ? `(${favoriteDishIds.length})` : ''}
+              </Text>
+            </View>
+          </TouchableOpacity>
+
           {categories.map((cat) => (
             <TouchableOpacity
               key={cat.id}
               style={[
                 styles.categoryPill,
-                selectedCategory === cat.id && styles.categoryPillActive,
+                selectedCategory === cat.id && !showOnlyFavorites && styles.categoryPillActive,
               ]}
-              onPress={() => setSelectedCategory(cat.id)}
+              onPress={() => {
+                setSelectedCategory(cat.id);
+                setShowOnlyFavorites(false);
+              }}
             >
               <Text
                 style={[
                   styles.categoryPillText,
-                  selectedCategory === cat.id && styles.categoryPillTextActive,
+                  selectedCategory === cat.id && !showOnlyFavorites && styles.categoryPillTextActive,
                 ]}
               >
                 {cat.name}
@@ -218,67 +256,84 @@ export function MenuScreen({ navigation }: any) {
             tintColor={colors.gold}
           />
         }
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={[styles.dishCard, !item.isAvailable && styles.dishDisabled]}
-            onPress={() => navigation.navigate('DishDetail', { dish: item })}
-            activeOpacity={0.8}
-          >
-            <View style={styles.dishInfo}>
-              <View style={styles.dishBadgeRow}>
-                <Badge
-                  label={item.isVeg ? t.menu.veg : t.menu.nonVeg}
-                  variant={item.isVeg ? 'veg' : 'nonVeg'}
-                />
-                {item.isSpicy ? (
-                  <View style={styles.spicyTag}>
-                    <Ionicons name="flame" size={13} color={colors.nonVeg} />
-                    <Text style={styles.spicyText}>{t.menu.spicy}</Text>
-                  </View>
+        renderItem={({ item }) => {
+          const favorited = isFavorite(item.id);
+          return (
+            <TouchableOpacity
+              style={[styles.dishCard, !item.isAvailable && styles.dishDisabled]}
+              onPress={() => navigation.navigate('DishDetail', { dish: item })}
+              activeOpacity={0.8}
+            >
+              <View style={styles.dishInfo}>
+                <View style={styles.dishBadgeRow}>
+                  <Badge
+                    label={item.isVeg ? t.menu.veg : t.menu.nonVeg}
+                    variant={item.isVeg ? 'veg' : 'nonVeg'}
+                  />
+                  {item.isSpicy ? (
+                    <View style={styles.spicyTag}>
+                      <Ionicons name="flame" size={13} color={colors.nonVeg} />
+                      <Text style={styles.spicyText}>{t.menu.spicy}</Text>
+                    </View>
+                  ) : null}
+                </View>
+
+                <Text style={styles.dishName}>{item.name}</Text>
+                {item.description ? (
+                  <Text style={styles.dishDesc} numberOfLines={2}>
+                    {item.description}
+                  </Text>
                 ) : null}
+                <Text style={styles.dishPrice}>{formatCurrency(item.price)}</Text>
               </View>
 
-              <Text style={styles.dishName}>{item.name}</Text>
-              {item.description ? (
-                <Text style={styles.dishDesc} numberOfLines={2}>
-                  {item.description}
-                </Text>
-              ) : null}
-              <Text style={styles.dishPrice}>{formatCurrency(item.price)}</Text>
-            </View>
+              <View style={styles.dishImageWrapper}>
+                {item.image ? (
+                  <Image
+                    source={{ uri: item.image }}
+                    style={styles.dishImage}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View style={[styles.dishImage, styles.placeholderImage]}>
+                    <Ionicons name="restaurant-outline" size={28} color={colors.gold} />
+                  </View>
+                )}
 
-            <View style={styles.dishImageWrapper}>
-              {item.image ? (
-                <Image
-                  source={{ uri: item.image }}
-                  style={styles.dishImage}
-                  resizeMode="cover"
-                />
-              ) : (
-                <View style={[styles.dishImage, styles.placeholderImage]}>
-                  <Ionicons name="restaurant-outline" size={28} color={colors.gold} />
-                </View>
-              )}
-
-              {item.isAvailable ? (
+                {/* Favorite Heart Button */}
                 <TouchableOpacity
-                  style={styles.addButton}
-                  onPress={() => handleQuickAdd(item)}
-                  activeOpacity={0.8}
+                  style={styles.favoriteButton}
+                  onPress={() => toggleFavorite(item.id)}
+                  activeOpacity={0.7}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
-                  <Ionicons name="add" size={16} color="#fff" />
-                  <Text style={styles.addButtonText}>
-                    {(item.variants && item.variants.length > 0) ? t.menu.customizable : t.menu.addToCart}
-                  </Text>
+                  <Ionicons
+                    name={favorited ? 'heart' : 'heart-outline'}
+                    size={18}
+                    color={favorited ? '#EF4444' : '#fff'}
+                  />
                 </TouchableOpacity>
-              ) : (
-                <View style={styles.soldOutBadge}>
-                  <Text style={styles.soldOutText}>Sold Out</Text>
-                </View>
-              )}
-            </View>
-          </TouchableOpacity>
-        )}
+
+                {item.isAvailable ? (
+                  <TouchableOpacity
+                    style={styles.addButton}
+                    onPress={() => handleQuickAdd(item)}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons name="add" size={16} color="#fff" />
+                    <Text style={styles.addButtonText}>
+                      {(item.variants && item.variants.length > 0) ? t.menu.customizable : t.menu.addToCart}
+                    </Text>
+                  </TouchableOpacity>
+                ) : (
+                  <View style={styles.soldOutBadge}>
+                    <Text style={styles.soldOutText}>Sold Out</Text>
+                  </View>
+                )}
+              </View>
+            </TouchableOpacity>
+          );
+        }}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Ionicons name="restaurant-outline" size={48} color={colors.textDisabled} />
@@ -286,6 +341,18 @@ export function MenuScreen({ navigation }: any) {
           </View>
         }
       />
+
+      {/* Maya Floating AI Assistant Button */}
+      <TouchableOpacity
+        style={styles.mayaFab}
+        onPress={() => navigation.navigate('MayaModal')}
+        activeOpacity={0.85}
+      >
+        <View style={styles.mayaFabIconCircle}>
+          <Ionicons name="sparkles" size={18} color={colors.gold} />
+        </View>
+        <Text style={styles.mayaFabText}>Ask Maya</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -371,6 +438,15 @@ const styles = StyleSheet.create({
     backgroundColor: colors.purple,
     borderColor: colors.gold,
   },
+  categoryPillActiveFavorites: {
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    borderColor: '#EF4444',
+  },
+  pillInnerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
   categoryPillText: {
     color: colors.textSecondary,
     fontSize: 13,
@@ -382,7 +458,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.xxl,
+    paddingBottom: 90,
     gap: spacing.md,
   },
   dishCard: {
@@ -393,6 +469,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.surfaceBorder,
     alignItems: 'center',
+    position: 'relative',
   },
   dishDisabled: {
     opacity: 0.5,
@@ -443,6 +520,7 @@ const styles = StyleSheet.create({
   dishImageWrapper: {
     width: 105,
     alignItems: 'center',
+    position: 'relative',
   },
   dishImage: {
     width: 95,
@@ -455,6 +533,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: colors.surfaceBorder,
+  },
+  favoriteButton: {
+    position: 'absolute',
+    top: 6,
+    right: 10,
+    backgroundColor: 'rgba(19, 11, 29, 0.75)',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   addButton: {
     marginTop: spacing.xs,
@@ -499,5 +590,38 @@ const styles = StyleSheet.create({
   emptyText: {
     color: colors.textMuted,
     fontSize: 15,
+  },
+  mayaFab: {
+    position: 'absolute',
+    bottom: 24,
+    right: 20,
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: borderRadius.full,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    borderWidth: 1.5,
+    borderColor: colors.gold,
+    shadowColor: colors.gold,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  mayaFabIconCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.goldMuted,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  mayaFabText: {
+    color: colors.gold,
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
 });

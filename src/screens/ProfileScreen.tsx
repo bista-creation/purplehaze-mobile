@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
-import { Header, Card, Typography, Button, Badge } from '../components/ui';
+import { Header, Card, Typography, Button, Badge, GoogleSignInButton } from '../components/ui';
 import { useAuthStore } from '../stores/auth-store';
 import { useI18n } from '../i18n';
 import { colors, spacing, borderRadius } from '../theme';
@@ -100,21 +100,24 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
           </View>
 
           {!isAuthenticated ? (
-            <View style={styles.authButtonsRow}>
-              <Button
-                title={t.profile.signIn}
-                variant="gold"
-                size="md"
-                onPress={() => navigation.navigate('LoginModal')}
-                style={{ flex: 1, marginRight: spacing.sm }}
-              />
-              <Button
-                title={t.profile.register}
-                variant="outline"
-                size="md"
-                onPress={() => navigation.navigate('RegisterModal')}
-                style={{ flex: 1 }}
-              />
+            <View style={{ marginTop: spacing.md }}>
+              <View style={styles.authButtonsRow}>
+                <Button
+                  title={t.profile.signIn}
+                  variant="gold"
+                  size="md"
+                  onPress={() => navigation.navigate('LoginModal')}
+                  style={{ flex: 1, marginRight: spacing.sm }}
+                />
+                <Button
+                  title={t.profile.register}
+                  variant="outline"
+                  size="md"
+                  onPress={() => navigation.navigate('RegisterModal')}
+                  style={{ flex: 1 }}
+                />
+              </View>
+              <GoogleSignInButton style={{ marginTop: spacing.sm }} />
             </View>
           ) : null}
         </Card>
@@ -198,14 +201,14 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
           <TouchableOpacity style={styles.menuItem} onPress={callRestaurant}>
             <View style={styles.menuLeft}>
               <Ionicons name="call-outline" size={20} color={colors.gold} style={styles.menuIcon} />
-              <Typography variant="body">Call Front Desk (+977 9851150987)</Typography>
+              <Typography variant="body">Call Front Desk (+977 9852022202)</Typography>
             </View>
             <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.menuItem, styles.menuItemBorder]}
-            onPress={() => Linking.openURL('https://wa.me/9779851150987').catch(() => {})}
+            onPress={() => Linking.openURL('https://wa.me/9779852022202').catch(() => {})}
           >
             <View style={styles.menuLeft}>
               <Ionicons name="logo-whatsapp" size={20} color="#25D366" style={styles.menuIcon} />

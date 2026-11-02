@@ -296,6 +296,12 @@ export const api = {
       }),
 
     getMe: () => request<UserSessionDto>('/auth/me'),
+
+    googleSignIn: (idToken: string) =>
+      request<AuthResponseDto>('/auth/google', {
+        method: 'POST',
+        body: JSON.stringify({ idToken }),
+      }),
   },
 
   menu: {
@@ -387,6 +393,27 @@ export const api = {
     deleteAccount: () =>
       request<{ message: string }>('/profile', {
         method: 'DELETE',
+      }),
+  },
+
+  assistant: {
+    chat: (message: string, history?: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>) =>
+      request<{ reply: string; suggestedActions?: string[] }>('/assistant/chat', {
+        method: 'POST',
+        body: JSON.stringify({ message, history }),
+      }),
+  },
+
+  payments: {
+    initiate: (orderId: string, provider: 'ESEWA' | 'KHALTI') =>
+      request<{
+        paymentUrl?: string;
+        formUrl?: string;
+        params?: Record<string, string>;
+        pidx?: string;
+      }>('/payments/initiate', {
+        method: 'POST',
+        body: JSON.stringify({ orderId, provider, appScheme: 'purplehaze' }),
       }),
   },
 };

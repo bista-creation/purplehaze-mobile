@@ -370,6 +370,21 @@ export function CheckoutScreen({ navigation }: any) {
             </View>
             <View style={[styles.radioCircle, paymentMethod === "KHALTI" && styles.radioActive]} />
           </TouchableOpacity>
+
+          {/* Fonepay - Phase 2 Merchant Approval Notice */}
+          <View style={[styles.paymentRow, styles.paymentRowDisabled]}>
+            <Ionicons name="qr-code-outline" size={20} color="#64748b" />
+            <View style={styles.paymentTextCol}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                <Text style={[styles.paymentName, { color: "#94a3b8" }]}>Fonepay Direct</Text>
+                <View style={styles.pendingBadge}>
+                  <Text style={styles.pendingBadgeText}>Pending Merchant Approval</Text>
+                </View>
+              </View>
+              <Text style={styles.paymentSub}>Merchant onboarding in progress</Text>
+            </View>
+            <View style={[styles.radioCircle, styles.radioCircleDisabled]} />
+          </View>
         </View>
 
         {/* Final Price Breakdown */}
@@ -578,6 +593,26 @@ const styles = StyleSheet.create({
   radioActive: {
     borderColor: "#a855f7",
     backgroundColor: "#a855f7",
+  },
+  paymentRowDisabled: {
+    opacity: 0.6,
+  },
+  radioCircleDisabled: {
+    borderColor: "#475569",
+    backgroundColor: "transparent",
+  },
+  pendingBadge: {
+    backgroundColor: "rgba(245, 158, 11, 0.15)",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: "rgba(245, 158, 11, 0.4)",
+  },
+  pendingBadgeText: {
+    color: "#f59e0b",
+    fontSize: 10,
+    fontWeight: "700",
   },
   summaryRow: {
     flexDirection: "row",

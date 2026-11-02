@@ -4,14 +4,16 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { useAuthStore } from './src/stores/auth-store';
 import { useLanguageStore } from './src/i18n';
+import { useFavoritesStore } from './src/stores/favorites-store';
 import { pushNotifications } from './src/services/push-notifications';
 
 export default function App() {
   const checkAuth = useAuthStore((s) => s.checkAuth);
 
   useEffect(() => {
-    // 0. Initialize language from secure storage
+    // 0. Initialize language and favorites from secure storage
     useLanguageStore.getState().initLanguage();
+    useFavoritesStore.getState().initFavorites();
 
     // 1. Verify persisted tokens and load user profile
     checkAuth();

@@ -5,3 +5,4 @@ export * from './Card';
 export * from './Badge';
 export * from './Header';
 export * from './LanguageSwitcher';
+export * from './GoogleSignInButton';

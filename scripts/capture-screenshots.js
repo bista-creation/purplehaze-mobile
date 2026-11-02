@@ -71,31 +71,49 @@ server.listen(PORT, async () => {
       file: 'android-menu-screen.png',
       width: 412,
       height: 915,
-      url: `http://localhost:${PORT}/#menu`,
+      url: `http://localhost:${PORT}/menu`,
     },
     {
       file: 'ios-menu-screen.png',
       width: 393,
       height: 852,
-      url: `http://localhost:${PORT}/#menu`,
+      url: `http://localhost:${PORT}/menu`,
     },
     {
       file: 'android-reservations-screen.png',
       width: 412,
       height: 915,
-      url: `http://localhost:${PORT}/#reservations`,
+      url: `http://localhost:${PORT}/reservations`,
     },
     {
       file: 'ios-venues-screen.png',
       width: 393,
       height: 852,
-      url: `http://localhost:${PORT}/#venues`,
+      url: `http://localhost:${PORT}/venues`,
     },
     {
       file: 'ios-profile-screen.png',
       width: 393,
       height: 852,
-      url: `http://localhost:${PORT}/#profile`,
+      url: `http://localhost:${PORT}/profile`,
+    },
+    {
+      file: 'android-profile-screen.png',
+      width: 412,
+      height: 915,
+      url: `http://localhost:${PORT}/profile`,
+    },
+    {
+      file: 'ios-login-modal.png',
+      width: 393,
+      height: 852,
+      url: `http://localhost:${PORT}/login`,
+    },
+    {
+      file: 'ios-maya-modal.png',
+      width: 393,
+      height: 852,
+      url: `http://localhost:${PORT}/maya`,
     },
   ];
 
@@ -114,6 +132,11 @@ server.listen(PORT, async () => {
         item.url,
       ]);
       console.log(`Captured successfully: ${outPath}`);
+
+      const artifactDir = 'C:\\Users\\bista\\.gemini\\antigravity\\brain\\79d61ea4-44e6-48a3-bb44-a27587922187\\screenshots';
+      if (fs.existsSync(artifactDir)) {
+        fs.copyFileSync(outPath, path.join(artifactDir, item.file));
+      }
     } catch (err) {
       console.error(`Error capturing ${item.file}:`, err.message);
     }
