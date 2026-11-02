@@ -3,12 +3,16 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { useAuthStore } from './src/stores/auth-store';
+import { useLanguageStore } from './src/i18n';
 import { pushNotifications } from './src/services/push-notifications';
 
 export default function App() {
   const checkAuth = useAuthStore((s) => s.checkAuth);
 
   useEffect(() => {
+    // 0. Initialize language from secure storage
+    useLanguageStore.getState().initLanguage();
+
     // 1. Verify persisted tokens and load user profile
     checkAuth();
 
@@ -30,7 +34,7 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <StatusBar style="light" backgroundColor="#0b0716" />
+      <StatusBar style="light" />
       <RootNavigator />
     </SafeAreaProvider>
   );

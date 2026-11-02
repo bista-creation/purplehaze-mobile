@@ -90,8 +90,8 @@ export default function OrderTrackingScreen({ route, navigation }: OrderTracking
             if (!prev) return prev;
             return {
               ...prev,
-              status: payload.status,
-              paymentStatus: (payload.paymentStatus as any) || prev.paymentStatus,
+              status: (payload.status as any) || prev.status,
+              paymentStatus: ((payload as any).paymentStatus as any) || prev.paymentStatus,
             };
           });
           setLastUpdated(new Date());

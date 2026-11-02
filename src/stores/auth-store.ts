@@ -1,17 +1,16 @@
-import { create } from "zustand";
-import { api } from "../services/api";
-import { tokenStorage } from "../services/token-storage";
-import type { AuthTokens, UserProfileDto } from "../shared";
+import { create } from 'zustand';
+import { api, type UserSessionDto } from '../services/api-client';
+import { tokenStorage } from '../services/token-storage';
 
 type AuthState = {
-  user: UserProfileDto | null;
+  user: UserSessionDto | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   checkAuth: () => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string, phone?: string) => Promise<void>;
   logout: () => Promise<void>;
-  setUser: (user: UserProfileDto | null) => void;
+  setUser: (user: UserSessionDto | null) => void;
 };
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -24,13 +23,26 @@ export const useAuthStore = create<AuthState>((set) => ({
   checkAuth: async () => {
     set({ isLoading: true });
     try {
+      // 1. Try to load cached user session for instant render
+      const cached = await tokenStorage.getUserSession();
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached) as UserSessionDto;
+          set({ user: parsed, isAuthenticated: true });
+        } catch {
+          // ignore corrupted cache
+        }
+      }
+
       const token = await tokenStorage.getAccessToken();
       if (!token) {
         set({ user: null, isAuthenticated: false, isLoading: false });
         return;
       }
 
-      const user = await api.get<UserProfileDto>("/auth/me");
+      // 2. Revalidate with backend
+      const user = await api.auth.getMe();
+      await tokenStorage.setUserSession(JSON.stringify(user));
       set({ user, isAuthenticated: true, isLoading: false });
     } catch {
       await tokenStorage.clearTokens();
@@ -41,13 +53,11 @@ export const useAuthStore = create<AuthState>((set) => ({
   login: async (email, password) => {
     set({ isLoading: true });
     try {
-      const data = await api.post<{ tokens: AuthTokens; user: UserProfileDto }>(
-        "/auth/login",
-        { email, password },
-      );
+      const data = await api.auth.login({ email, password });
 
       await tokenStorage.setAccessToken(data.tokens.accessToken);
       await tokenStorage.setRefreshToken(data.tokens.refreshToken);
+      await tokenStorage.setUserSession(JSON.stringify(data.user));
 
       set({ user: data.user, isAuthenticated: true, isLoading: false });
     } catch (error) {
@@ -59,13 +69,11 @@ export const useAuthStore = create<AuthState>((set) => ({
   register: async (name, email, password, phone) => {
     set({ isLoading: true });
     try {
-      const data = await api.post<{ tokens: AuthTokens; user: UserProfileDto }>(
-        "/auth/register",
-        { name, email, password, phone },
-      );
+      const data = await api.auth.register({ name, email, password, phone });
 
       await tokenStorage.setAccessToken(data.tokens.accessToken);
       await tokenStorage.setRefreshToken(data.tokens.refreshToken);
+      await tokenStorage.setUserSession(JSON.stringify(data.user));
 
       set({ user: data.user, isAuthenticated: true, isLoading: false });
     } catch (error) {
@@ -76,10 +84,10 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   logout: async () => {
     try {
-      await api.post("/auth/logout").catch(() => null);
+      await api.auth.logout().catch(() => null);
     } finally {
       await tokenStorage.clearTokens();
-      set({ user: null, isAuthenticated: false });
+      set({ user: null, isAuthenticated: false, isLoading: false });
     }
   },
 }));
