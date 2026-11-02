@@ -25,7 +25,7 @@ export const VenuesScreen: React.FC = () => {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [guests, setGuests] = useState('50');
-  const [date, setDate] = useState('2026-11-20');
+  const [date, setDate] = useState(() => new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0]);
   const [eventType, setEventType] = useState('Wedding / Reception');
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);

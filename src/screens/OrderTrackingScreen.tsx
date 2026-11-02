@@ -21,6 +21,7 @@ interface OrderTrackingScreenProps {
       orderId: string;
       orderNumber?: string;
       phone?: string;
+      token?: string;
     };
   };
   navigation: any;
@@ -50,7 +51,7 @@ function formatRs(paisa: number): string {
 }
 
 export default function OrderTrackingScreen({ route, navigation }: OrderTrackingScreenProps) {
-  const { orderId, orderNumber, phone } = route.params || {};
+  const { orderId, orderNumber, phone, token } = route.params || {};
   const [order, setOrder] = useState<OrderDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -60,7 +61,9 @@ export default function OrderTrackingScreen({ route, navigation }: OrderTracking
   const fetchOrder = useCallback(async () => {
     try {
       let endpoint = `/orders/${orderId}`;
-      if (!orderId && orderNumber && phone) {
+      if (token) {
+        endpoint = `/orders/${orderId}?token=${encodeURIComponent(token)}`;
+      } else if (orderNumber && phone) {
         endpoint = `/orders/track?orderNumber=${encodeURIComponent(orderNumber)}&phone=${encodeURIComponent(phone)}`;
       }
 

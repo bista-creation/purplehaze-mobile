@@ -40,10 +40,9 @@ export default function OrdersScreen({ navigation }: OrdersScreenProps) {
     if (!isAuthenticated) return;
     try {
       setLoading(true);
-      const data = await api.get<OrderDto[]>('/orders');
-      if (Array.isArray(data)) {
-        setOrders(data);
-      }
+      const data = await api.get<any>('/orders');
+      const list = Array.isArray(data) ? data : data?.items || [];
+      setOrders(list);
     } catch (err: any) {
       console.warn('Failed to load orders', err);
     } finally {

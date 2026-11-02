@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,37 +7,49 @@ import {
   TouchableOpacity,
   TextInput,
   StyleSheet,
-} from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { useCartStore } from "../stores/cart-store";
-import type { DishAddOnDto, DishVariantDto, MenuDishDto } from "../shared";
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useCartStore } from '../stores/cart-store';
+import { useI18n } from '../i18n';
+import { colors, spacing, borderRadius } from '../theme';
+import type { DishDto } from '../services/api-client';
 
 export function DishDetailModal({ route, navigation }: any) {
-  const { dish }: { dish: MenuDishDto } = route.params;
+  const { t, formatCurrency } = useI18n();
+  const { dish }: { dish: DishDto } = route.params;
 
-  const [selectedVariant, setSelectedVariant] = useState<DishVariantDto | null>(
-    dish.variants?.find((v) => v.isDefault) || dish.variants?.[0] || null,
+  const rawVariants = dish.variants || [];
+  const variants = rawVariants.map((v: any) => ({
+    id: v.id,
+    name: v.name,
+    priceDelta: v.priceDelta ?? (v.price ? Math.max(0, v.price - dish.price) : 0),
+    isDefault: v.isDefault ?? false,
+  }));
+
+  const rawAddOns = dish.addOns || [];
+  const addOns = rawAddOns.map((item: any) => item.addOn || item);
+
+  const [selectedVariant, setSelectedVariant] = useState<any | null>(
+    variants.find((v) => v.isDefault) || variants[0] || null
   );
-  const [selectedAddOns, setSelectedAddOns] = useState<DishAddOnDto[]>([]);
-  const [instructions, setInstructions] = useState("");
+  const [selectedAddOns, setSelectedAddOns] = useState<any[]>([]);
+  const [instructions, setInstructions] = useState('');
   const [quantity, setQuantity] = useState(1);
 
   const addItem = useCartStore((s) => s.addItem);
 
-  const toggleAddOn = (addOn: DishAddOnDto) => {
+  const toggleAddOn = (addOn: any) => {
     setSelectedAddOns((prev) =>
       prev.some((a) => a.id === addOn.id)
         ? prev.filter((a) => a.id !== addOn.id)
-        : [...prev, addOn],
+        : [...prev, addOn]
     );
   };
 
   const unitPrice =
     dish.price +
     (selectedVariant?.priceDelta || 0) +
-    selectedAddOns.reduce((sum, a) => sum + a.price, 0);
-
-  const totalPrice = (unitPrice * quantity) / 100;
+    selectedAddOns.reduce((sum, a) => sum + (a.price || 0), 0);
 
   const handleAddToCart = () => {
     addItem({
@@ -69,13 +81,14 @@ export function DishDetailModal({ route, navigation }: any) {
           <Image source={{ uri: dish.image }} style={styles.heroImage} resizeMode="cover" />
         ) : (
           <View style={[styles.heroImage, styles.placeholderImage]}>
-            <Ionicons name="restaurant" size={48} color="#7c3aed" />
+            <Ionicons name="restaurant" size={48} color={colors.gold} />
           </View>
         )}
 
         <TouchableOpacity
           style={styles.closeButton}
           onPress={() => navigation.goBack()}
+          activeOpacity={0.7}
         >
           <Ionicons name="close" size={24} color="#fff" />
         </TouchableOpacity>
@@ -83,14 +96,16 @@ export function DishDetailModal({ route, navigation }: any) {
         <View style={styles.content}>
           {/* Title and tags */}
           <Text style={styles.title}>{dish.name}</Text>
-          <Text style={styles.description}>{dish.description}</Text>
+          {dish.description ? (
+            <Text style={styles.description}>{dish.description}</Text>
+          ) : null}
 
           {/* Variants section */}
-          {dish.variants?.length > 0 && (
+          {variants.length > 0 && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Choose Variant</Text>
               <View style={styles.optionsList}>
-                {dish.variants.map((v) => {
+                {variants.map((v) => {
                   const isSelected = selectedVariant?.id === v.id;
                   return (
                     <TouchableOpacity
@@ -100,6 +115,7 @@ export function DishDetailModal({ route, navigation }: any) {
                         isSelected && styles.optionRowSelected,
                       ]}
                       onPress={() => setSelectedVariant(v)}
+                      activeOpacity={0.7}
                     >
                       <View style={styles.radioOuter}>
                         {isSelected && <View style={styles.radioInner} />}
@@ -107,7 +123,7 @@ export function DishDetailModal({ route, navigation }: any) {
                       <Text style={styles.optionLabel}>{v.name}</Text>
                       {v.priceDelta > 0 && (
                         <Text style={styles.optionPriceDelta}>
-                          +Rs. {(v.priceDelta / 100).toFixed(0)}
+                          +{formatCurrency(v.priceDelta)}
                         </Text>
                       )}
                     </TouchableOpacity>
@@ -118,11 +134,11 @@ export function DishDetailModal({ route, navigation }: any) {
           )}
 
           {/* Add-ons section */}
-          {dish.addOns?.length > 0 && (
+          {addOns.length > 0 && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Optional Add-ons</Text>
               <View style={styles.optionsList}>
-                {dish.addOns.map(({ addOn }) => {
+                {addOns.map((addOn: any) => {
                   const isSelected = selectedAddOns.some((a) => a.id === addOn.id);
                   return (
                     <TouchableOpacity
@@ -132,6 +148,7 @@ export function DishDetailModal({ route, navigation }: any) {
                         isSelected && styles.optionRowSelected,
                       ]}
                       onPress={() => toggleAddOn(addOn)}
+                      activeOpacity={0.7}
                     >
                       <View
                         style={[
@@ -145,7 +162,7 @@ export function DishDetailModal({ route, navigation }: any) {
                       </View>
                       <Text style={styles.optionLabel}>{addOn.name}</Text>
                       <Text style={styles.optionPriceDelta}>
-                        +Rs. {(addOn.price / 100).toFixed(0)}
+                        +{formatCurrency(addOn.price)}
                       </Text>
                     </TouchableOpacity>
                   );
@@ -159,12 +176,12 @@ export function DishDetailModal({ route, navigation }: any) {
             <Text style={styles.sectionTitle}>Cooking Instructions</Text>
             <TextInput
               style={styles.textArea}
-              placeholder="e.g. Less spicy, extra achar on the side..."
-              placeholderTextColor="#64748b"
-              multiline
-              numberOfLines={3}
+              placeholder="e.g. Less spicy, extra sauce, well done..."
+              placeholderTextColor={colors.textDisabled}
               value={instructions}
               onChangeText={setInstructions}
+              multiline
+              numberOfLines={3}
             />
           </View>
         </View>
@@ -176,6 +193,7 @@ export function DishDetailModal({ route, navigation }: any) {
           <TouchableOpacity
             style={styles.qtyBtn}
             onPress={() => setQuantity((q) => Math.max(1, q - 1))}
+            activeOpacity={0.7}
           >
             <Ionicons name="remove" size={18} color="#fff" />
           </TouchableOpacity>
@@ -183,13 +201,20 @@ export function DishDetailModal({ route, navigation }: any) {
           <TouchableOpacity
             style={styles.qtyBtn}
             onPress={() => setQuantity((q) => Math.min(20, q + 1))}
+            activeOpacity={0.7}
           >
             <Ionicons name="add" size={18} color="#fff" />
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={styles.addCartButton} onPress={handleAddToCart}>
-          <Text style={styles.addCartText}>Add to Cart · Rs. {totalPrice}</Text>
+        <TouchableOpacity
+          style={styles.addCartButton}
+          onPress={handleAddToCart}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.addCartText}>
+            {t.menu.addToCart} · {formatCurrency(unitPrice * quantity)}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -199,171 +224,173 @@ export function DishDetailModal({ route, navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0b0716",
+    backgroundColor: colors.background,
   },
   scrollContent: {
-    paddingBottom: 100,
+    paddingBottom: 110,
   },
   heroImage: {
-    width: "100%",
+    width: '100%',
     height: 240,
   },
   placeholderImage: {
-    backgroundColor: "#181030",
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: colors.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   closeButton: {
-    position: "absolute",
+    position: 'absolute',
     top: 48,
-    right: 16,
+    right: 20,
+    backgroundColor: 'rgba(0,0,0,0.6)',
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   content: {
-    padding: 20,
+    padding: spacing.lg,
   },
   title: {
     fontSize: 22,
-    fontWeight: "bold",
-    color: "#fff",
-    marginBottom: 8,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: spacing.xs,
   },
   description: {
     fontSize: 14,
-    color: "#94a3b8",
+    color: colors.textMuted,
     lineHeight: 20,
-    marginBottom: 20,
+    marginBottom: spacing.lg,
   },
   section: {
-    marginBottom: 20,
+    marginBottom: spacing.lg,
   },
   sectionTitle: {
     fontSize: 15,
-    fontWeight: "bold",
-    color: "#cbd5e1",
-    marginBottom: 10,
-    textTransform: "uppercase",
+    fontWeight: 'bold',
+    color: colors.gold,
+    marginBottom: spacing.sm,
+    textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   optionsList: {
-    gap: 8,
+    gap: spacing.sm,
   },
   optionRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#160e2c",
-    padding: 12,
-    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    padding: spacing.md,
+    borderRadius: borderRadius.md,
     borderWidth: 1,
-    borderColor: "rgba(124, 58, 237, 0.15)",
+    borderColor: colors.surfaceBorder,
   },
   optionRowSelected: {
-    borderColor: "#a855f7",
-    backgroundColor: "rgba(124, 58, 237, 0.12)",
+    borderColor: colors.gold,
+    backgroundColor: colors.surfaceElevated,
   },
   radioOuter: {
     width: 20,
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: "#a855f7",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 10,
+    borderColor: colors.gold,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.md,
   },
   radioInner: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: "#a855f7",
+    backgroundColor: colors.gold,
   },
   checkboxOuter: {
     width: 20,
     height: 20,
     borderRadius: 4,
     borderWidth: 2,
-    borderColor: "#64748b",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 10,
+    borderColor: colors.purpleLight,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.md,
   },
   checkboxActive: {
-    borderColor: "#a855f7",
-    backgroundColor: "#a855f7",
+    backgroundColor: colors.purple,
+    borderColor: colors.purple,
   },
   optionLabel: {
     flex: 1,
-    color: "#fff",
+    color: colors.text,
     fontSize: 14,
-    fontWeight: "500",
+    fontWeight: '500',
   },
   optionPriceDelta: {
-    color: "#a855f7",
+    color: colors.gold,
     fontSize: 13,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
   textArea: {
-    backgroundColor: "#160e2c",
-    borderRadius: 12,
-    padding: 12,
-    color: "#fff",
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    color: colors.text,
     fontSize: 14,
     borderWidth: 1,
-    borderColor: "rgba(124, 58, 237, 0.2)",
+    borderColor: colors.surfaceBorder,
     minHeight: 70,
   },
   bottomBar: {
-    position: "absolute",
+    position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: "#130d24",
-    paddingHorizontal: 20,
-    paddingTop: 12,
+    backgroundColor: colors.surface,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
     paddingBottom: 28,
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: "rgba(124, 58, 237, 0.2)",
-    gap: 14,
+    borderTopColor: colors.surfaceBorder,
+    gap: spacing.md,
   },
   quantityPicker: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#1e143b",
-    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.md,
     padding: 4,
     borderWidth: 1,
-    borderColor: "rgba(124, 58, 237, 0.3)",
+    borderColor: colors.surfaceBorder,
   },
   qtyBtn: {
     width: 32,
     height: 32,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   qtyText: {
-    color: "#fff",
+    color: colors.text,
     fontSize: 15,
-    fontWeight: "bold",
-    paddingHorizontal: 10,
+    fontWeight: 'bold',
+    paddingHorizontal: spacing.sm,
   },
   addCartButton: {
     flex: 1,
-    backgroundColor: "#7c3aed",
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: colors.purple,
+    borderRadius: borderRadius.md,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.gold,
   },
   addCartText: {
-    color: "#fff",
+    color: '#fff',
     fontSize: 15,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
 });

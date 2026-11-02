@@ -20,7 +20,10 @@ export const ReservationsScreen: React.FC = () => {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [guests, setGuests] = useState(2);
-  const [date, setDate] = useState('2026-11-04');
+  const [date, setDate] = useState(() => {
+    const d = new Date(Date.now() + 86400000);
+    return d.toISOString().split('T')[0];
+  });
   const [time, setTime] = useState('19:00');
   const [seatingPreference, setSeatingPreference] = useState<'rooftop' | 'garden' | 'indoor'>('rooftop');
   const [occasion, setOccasion] = useState<'casual' | 'birthday' | 'anniversary' | 'business'>('casual');

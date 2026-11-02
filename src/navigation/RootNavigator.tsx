@@ -20,10 +20,11 @@ import ProfileScreen from '../screens/ProfileScreen';
 import LoginModal from '../screens/LoginModal';
 import RegisterModal from '../screens/RegisterModal';
 import type { MenuDishDto } from '../shared/types';
+import type { DishDto } from '../services/api-client';
 
 export type RootStackParamList = {
   MainTabs: undefined;
-  DishDetail: { dish: MenuDishDto };
+  DishDetail: { dish: DishDto | MenuDishDto };
   Checkout: undefined;
   OrderTracking: { orderId: string; orderNumber?: string; phone?: string; token?: string };
   Orders: undefined;

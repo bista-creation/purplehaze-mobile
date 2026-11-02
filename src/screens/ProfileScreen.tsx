@@ -69,7 +69,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
   };
 
   const callRestaurant = () => {
-    Linking.openURL('tel:+9779851150987').catch(() => {});
+    Linking.openURL('tel:+9779852022202').catch(() => {});
   };
 
   return (

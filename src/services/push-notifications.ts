@@ -13,7 +13,16 @@ Notifications.setNotificationHandler({
   }),
 });
 
+let cachedPushToken: string | null = null;
+
 export const pushNotifications = {
+  /**
+   * Returns the cached Expo push token if available.
+   */
+  getPushToken(): string | null {
+    return cachedPushToken;
+  },
+
   /**
    * Requests user permission, obtains the Expo push token, and registers it with the backend.
    */
@@ -45,6 +54,7 @@ export const pushNotifications = {
 
       const tokenData = await Notifications.getExpoPushTokenAsync();
       const token = tokenData.data;
+      cachedPushToken = token;
 
       // Register with the backend API
       await api.post("/notifications/push-token", {

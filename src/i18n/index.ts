@@ -47,7 +47,17 @@ export const useI18n = () => {
 
   const formatCurrency = (amount: number): string => {
     const symbol = translations.common.currency;
-    return `${symbol} ${amount.toLocaleString()}`;
+    // Canonical backend monetary amounts are in Paisa (1 NPR = 100 Paisa)
+    const rupees = amount >= 1000 ? Math.round(amount / 100) : Math.round(amount);
+    const formattedNum = rupees.toLocaleString('en-IN');
+    
+    if (language === 'ne') {
+      const devanagariDigits = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
+      const neFormatted = formattedNum.replace(/\d/g, (d) => devanagariDigits[parseInt(d, 10)]);
+      return `${symbol} ${neFormatted}`;
+    }
+
+    return `${symbol} ${formattedNum}`;
   };
 
   return {

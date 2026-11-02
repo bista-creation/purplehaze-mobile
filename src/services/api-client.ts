@@ -57,7 +57,9 @@ export interface CategoryDto {
 export interface DishVariantDto {
   id: string;
   name: string;
-  price: number;
+  price?: number;
+  priceDelta?: number;
+  isDefault?: boolean;
 }
 
 export interface AddOnDto {
@@ -406,7 +408,7 @@ export const offlineDishes: DishDto[] = [
     name: 'Steamed Chicken Momo (10 pcs)',
     slug: 'steamed-chicken-momo',
     description: 'Biratnagar favorite! Minced chicken with Himalayan herbs, served with spicy tomato timur chutney.',
-    price: 240,
+    price: 24000,
     isVeg: false,
     isAvailable: true,
     categoryId: 'cat-asian',
@@ -419,7 +421,7 @@ export const offlineDishes: DishDto[] = [
     name: 'Special Chicken Jhol Momo',
     slug: 'special-chicken-jhol-momo',
     description: 'Juicy steamed momos immersed in a rich, tangy sesame-peanut broth with cilantro.',
-    price: 280,
+    price: 28000,
     isVeg: false,
     isAvailable: true,
     categoryId: 'cat-asian',
@@ -432,7 +434,7 @@ export const offlineDishes: DishDto[] = [
     name: 'Paneer Butter Masala',
     slug: 'paneer-butter-masala',
     description: 'Fresh cottage cheese cubes cooked in a velvety tomato-cashew butter gravy infused with kasuri methi.',
-    price: 380,
+    price: 38000,
     isVeg: true,
     isAvailable: true,
     categoryId: 'cat-indian',
@@ -445,7 +447,7 @@ export const offlineDishes: DishDto[] = [
     name: 'Purple Haze Chicken Sizzler',
     slug: 'purple-haze-chicken-sizzler',
     description: 'Grilled tender chicken breast served on a smoking iron platter with garlic rice, buttered vegetables, and pepper sauce.',
-    price: 550,
+    price: 55000,
     isVeg: false,
     isAvailable: true,
     categoryId: 'cat-continental',
@@ -458,7 +460,7 @@ export const offlineDishes: DishDto[] = [
     name: 'Crispy Buff Sukuti Sadeko',
     slug: 'crispy-buff-sukuti-sadeko',
     description: 'Traditional dried buffalo meat tossed with mustard oil, roasted cumin, garlic, green chilies, and fresh ginger.',
-    price: 320,
+    price: 32000,
     isVeg: false,
     isAvailable: true,
     categoryId: 'cat-nepali',
@@ -471,7 +473,7 @@ export const offlineDishes: DishDto[] = [
     name: 'Newari Chicken Choila',
     slug: 'newari-chicken-choila',
     description: 'Smokey clay-oven roasted chicken marinated with fenugreek seeds, mustard oil, garlic, and fresh green chili.',
-    price: 350,
+    price: 35000,
     isVeg: false,
     isAvailable: true,
     categoryId: 'cat-nepali',

@@ -22,7 +22,8 @@ export function CheckoutScreen({ navigation }: any) {
   const user = useAuthStore((s) => s.user);
 
   const [deliveryType, setDeliveryType] = useState<"DELIVERY" | "PICKUP">("DELIVERY");
-  const [fullName, setFullName] = useState(user?.name || "");
+    const [fullName, setFullName] = useState(user?.name || "");
+  const [email, setEmail] = useState(user?.email || "");
   const [phone, setPhone] = useState(user?.phone || "");
   const [line1, setLine1] = useState("");
   const [instructions, setInstructions] = useState("");
@@ -124,10 +125,11 @@ export function CheckoutScreen({ navigation }: any) {
         details: {
           customerName: fullName.trim(),
           customerPhone: phone.trim(),
-          customerEmail: user?.email || "guest@purplehazebiratnagar.com",
+          customerEmail: email.trim() || user?.email || "guest@purplehazebiratnagar.com",
           type: deliveryType,
           paymentMethod,
-          deliveryAddress: deliveryType === "DELIVERY" ? line1.trim() : undefined,
+          line1: deliveryType === "DELIVERY" ? line1.trim() : "",
+          city: "Biratnagar",
           notes: instructions.trim() || undefined,
           couponCode: appliedCoupon?.code,
         },
@@ -190,6 +192,7 @@ export function CheckoutScreen({ navigation }: any) {
       navigation.replace("OrderTracking", {
         orderId: result.orderId,
         orderNumber: result.orderNumber,
+        phone: phone.trim(),
         token: result.publicToken,
       });
     } catch (e: any) {
@@ -259,6 +262,15 @@ export function CheckoutScreen({ navigation }: any) {
             placeholderTextColor="#64748b"
             value={fullName}
             onChangeText={setFullName}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Email Address"
+            placeholderTextColor="#64748b"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            value={email}
+            onChangeText={setEmail}
           />
           <TextInput
             style={styles.input}

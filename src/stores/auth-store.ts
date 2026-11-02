@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { api, type UserSessionDto } from '../services/api-client';
 import { tokenStorage } from '../services/token-storage';
+import { pushNotifications } from '../services/push-notifications';
 
 type AuthState = {
   user: UserSessionDto | null;
@@ -84,7 +85,8 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   logout: async () => {
     try {
-      await api.auth.logout().catch(() => null);
+      const pushToken = pushNotifications.getPushToken() || undefined;
+      await api.auth.logout(pushToken, false).catch(() => null);
     } finally {
       await tokenStorage.clearTokens();
       set({ user: null, isAuthenticated: false, isLoading: false });
