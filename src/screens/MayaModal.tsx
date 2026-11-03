@@ -1,50 +1,18 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
-  FlatList,
-  KeyboardAvoidingView,
+  SafeAreaView,
   Platform,
-  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { api } from '../services/api-client';
 import { useTheme } from '../stores/theme-store';
-import { colors as defaultColors, ColorTheme, spacing, borderRadius } from '../theme';
-
-interface Message {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  suggestedActions?: string[];
-}
-
-const QUICK_SUGGESTIONS = [
-  "What is the Chef's special tonight?",
-  'Recommend the best spicy momo',
-  'What are your vegetarian specialties?',
-  'How do I book a rooftop table?',
-];
+import { MayaAssistantEmbed } from '../components/MayaAssistantEmbed';
 
 export default function MayaModal({ navigation }: any) {
-  const { colors } = useTheme();
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 'welcome',
-      role: 'assistant',
-      content:
-        "Namaste! I am Maya, your Purple Haze dining assistant. How can I delight your palate today in Biratnagar?",
-      suggestedActions: ['Menu Recommendations', 'Rooftop Booking', 'Spicy Sekuwa'],
-    },
-  ]);
-
-  const styles = useMemo(() => createStyles(colors), [colors]);
-  const [inputText, setInputText] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const flatListRef = useRef<FlatList>(null);
+  const { colors, mode } = useTheme();
 
   const handleClose = () => {
     if (navigation?.canGoBack?.()) {
@@ -54,431 +22,123 @@ export default function MayaModal({ navigation }: any) {
     }
   };
 
-  const sendMessage = async (textToSend?: string) => {
-    const text = (textToSend || inputText).trim();
-    if (!text || isLoading) return;
-
-    const userMessage: Message = {
-      id: `u_${Date.now()}`,
-      role: 'user',
-      content: text,
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
-    setInputText('');
-    setIsLoading(true);
-
-    try {
-      const history = messages
-        .filter((m) => m.id !== 'welcome')
-        .slice(-6)
-        .map((m) => ({
-          role: m.role as 'user' | 'assistant',
-          content: m.content,
-        }));
-
-      const res = await api.assistant.chat(text, history);
-
-      const rawActions = (res as any)?.suggestedActions || [];
-      const normalizedActions: string[] = rawActions.map((act: any) =>
-        typeof act === 'string' ? act : (act?.label || act?.action || String(act))
-      );
-
-      const assistantMessage: Message = {
-        id: `m_${Date.now()}`,
-        role: 'assistant',
-        content: res.reply || 'Here is what I recommend from our Biratnagar kitchen!',
-        suggestedActions: normalizedActions,
-      };
-
-      setMessages((prev) => [...prev, assistantMessage]);
-    } catch (err: any) {
-      console.warn('[MayaModal] Error:', err);
-      // Fallback response for offline or rate-limited sessions
-      const fallbackMessage: Message = {
-        id: `m_err_${Date.now()}`,
-        role: 'assistant',
-        content:
-          "I recommend our signature Steamed Chicken Mo:Mo with timur chutney, and the smoking Purple Haze Chicken Sizzler on our Rooftop Terrace! You can also book a table directly in the Reservations tab.",
-      };
-      setMessages((prev) => [...prev, fallbackMessage]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (flatListRef.current) {
-      setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true });
-      }, 100);
-    }
-  }, [messages, isLoading]);
-
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View
+        style={[
+          styles.header,
+          {
+            backgroundColor: mode === 'dark' ? '#1E132C' : colors.surface,
+            borderBottomColor: colors.border,
+          },
+        ]}
+      >
         <View style={styles.headerLeft}>
-          <View style={styles.avatarCircle}>
-            <Ionicons name="sparkles" size={18} color={colors.gold} />
+          <View style={[styles.avatarCircle, { backgroundColor: colors.gold + '22' }]}>
+            <Ionicons name="sparkles" size={18} color={colors.gold || '#D4AF37'} />
           </View>
           <View>
             <View style={styles.nameRow}>
-              <Text style={styles.headerTitle}>Maya</Text>
-              <View style={styles.aiBadge}>
-                <Text style={styles.aiBadgeText}>AI Food Guide</Text>
+              <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Maya AI</Text>
+              <View style={[styles.aiBadge, { backgroundColor: colors.gold + '25' }]}>
+                <Text style={[styles.aiBadgeText, { color: colors.gold || '#D4AF37' }]}>
+                  Live Assistant
+                </Text>
               </View>
             </View>
-            <Text style={styles.headerSub}>Purple Haze Biratnagar</Text>
+            <Text style={[styles.headerSub, { color: colors.textSecondary }]}>
+              Purple Haze Restro &amp; Garden
+            </Text>
           </View>
         </View>
 
         <TouchableOpacity
-          style={styles.closeBtn}
+          style={[styles.closeBtn, { backgroundColor: colors.surface }]}
           onPress={handleClose}
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          aria-label="Close Maya Assistant"
         >
-          <Ionicons name="close" size={22} color={colors.textSecondary} />
+          <Ionicons name="close" size={22} color={colors.textPrimary} />
         </TouchableOpacity>
       </View>
 
-      {/* Messages List */}
-      <FlatList
-        ref={flatListRef}
-        data={messages}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.messageList}
-        renderItem={({ item }) => {
-          const isUser = item.role === 'user';
-          return (
-            <View
-              style={[
-                styles.messageRow,
-                isUser ? styles.userMessageRow : styles.assistantMessageRow,
-              ]}
-            >
-              {!isUser && (
-                <View style={styles.msgAvatar}>
-                  <Ionicons name="sparkles" size={12} color={colors.gold} />
-                </View>
-              )}
-              <View
-                style={[
-                  styles.bubble,
-                  isUser ? styles.userBubble : styles.assistantBubble,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.messageText,
-                    isUser ? styles.userText : styles.assistantText,
-                  ]}
-                >
-                  {item.content}
-                </Text>
-
-                {item.suggestedActions && item.suggestedActions.length > 0 && (
-                  <View style={styles.actionPillsContainer}>
-                    {item.suggestedActions.map((action: string, idx: number) => (
-                      <TouchableOpacity
-                        key={idx}
-                        style={styles.actionPill}
-                        onPress={() => sendMessage(action)}
-                        activeOpacity={0.7}
-                      >
-                        <Text style={styles.actionPillText}>{action}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                )}
-              </View>
-            </View>
-          );
-        }}
-        ListFooterComponent={
-          isLoading ? (
-            <View style={styles.loadingRow}>
-              <View style={styles.msgAvatar}>
-                <Ionicons name="sparkles" size={12} color={colors.gold} />
-              </View>
-              <View style={[styles.bubble, styles.assistantBubble, styles.loadingBubble]}>
-                <ActivityIndicator size="small" color={colors.gold} />
-                <Text style={styles.thinkingText}>Maya is thinking...</Text>
-              </View>
-            </View>
-          ) : undefined
-        }
-      />
-
-      {/* Quick Suggestions Chips */}
-      {messages.length <= 2 && (
-        <View style={styles.quickChipsWrapper}>
-          <Text style={styles.chipsPrompt}>Suggestions:</Text>
-          <FlatList
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            data={QUICK_SUGGESTIONS}
-            keyExtractor={(_, i) => String(i)}
-            contentContainerStyle={styles.chipsScroll}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={styles.chip}
-                onPress={() => sendMessage(item)}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.chipText}>{item}</Text>
-              </TouchableOpacity>
-            )}
-          />
-        </View>
-      )}
-
-      {/* Input Bar */}
-      <View style={styles.inputBar}>
-        <TextInput
-          style={styles.input}
-          placeholder="Ask Maya about food, momo, seating..."
-          placeholderTextColor={colors.textDisabled}
-          value={inputText}
-          onChangeText={setInputText}
-          onSubmitEditing={() => sendMessage()}
-          returnKeyType="send"
-        />
-        <TouchableOpacity
-          style={[
-            styles.sendButton,
-            (!inputText.trim() || isLoading) && styles.sendButtonDisabled,
-          ]}
-          onPress={() => sendMessage()}
-          disabled={!inputText.trim() || isLoading}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="arrow-up" size={20} color="#fff" />
-        </TouchableOpacity>
+      {/* Embedded Assistant */}
+      <View style={styles.embedContainer}>
+        <MayaAssistantEmbed onClose={handleClose} />
       </View>
-    </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
-const createStyles = (colors: ColorTheme) =>
-  StyleSheet.create({
-  container: {
+const styles = StyleSheet.create({
+  safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingTop: 52,
-    paddingBottom: spacing.md,
-    backgroundColor: colors.surface,
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: colors.surfaceBorder,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
+    gap: 12,
   },
   avatarCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: colors.surfaceElevated,
-    borderWidth: 1,
-    borderColor: colors.gold,
-    justifyContent: 'center',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   nameRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
+    gap: 8,
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: colors.text,
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: 0.2,
   },
   aiBadge: {
-    backgroundColor: colors.goldMuted,
-    borderRadius: borderRadius.sm,
-    paddingHorizontal: 6,
+    paddingHorizontal: 7,
     paddingVertical: 2,
-    borderWidth: 1,
-    borderColor: colors.goldDark,
+    borderRadius: 8,
   },
   aiBadgeText: {
-    color: colors.gold,
     fontSize: 10,
     fontWeight: '700',
+    letterSpacing: 0.5,
   },
   headerSub: {
     fontSize: 11,
-    color: colors.textMuted,
+    marginTop: 1,
   },
   closeBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: colors.surfaceElevated,
+    alignItems: 'center',
     justifyContent: 'center',
-    alignItems: 'center',
   },
-  messageList: {
-    padding: spacing.lg,
-    paddingBottom: spacing.xl,
-    gap: spacing.md,
-  },
-  messageRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: spacing.xs,
-  },
-  userMessageRow: {
-    justifyContent: 'flex-end',
-  },
-  assistantMessageRow: {
-    justifyContent: 'flex-start',
-  },
-  msgAvatar: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: colors.surfaceElevated,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  bubble: {
-    maxWidth: '82%',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: borderRadius.lg,
-  },
-  userBubble: {
-    backgroundColor: colors.purple,
-    borderBottomRightRadius: 2,
-    borderWidth: 1,
-    borderColor: colors.gold,
-  },
-  assistantBubble: {
-    backgroundColor: colors.surface,
-    borderBottomLeftRadius: 2,
-    borderWidth: 1,
-    borderColor: colors.surfaceBorder,
-  },
-  loadingBubble: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  thinkingText: {
-    color: colors.textMuted,
-    fontSize: 13,
-    fontStyle: 'italic',
-  },
-  messageText: {
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  userText: {
-    color: '#fff',
-    fontWeight: '500',
-  },
-  assistantText: {
-    color: colors.textSecondary,
-  },
-  actionPillsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-    marginTop: spacing.sm,
-    paddingTop: spacing.xs,
-  },
-  actionPill: {
-    backgroundColor: colors.surfaceElevated,
-    borderRadius: borderRadius.full,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderWidth: 1,
-    borderColor: colors.goldDark,
-  },
-  actionPillText: {
-    color: colors.gold,
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  loadingRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: spacing.xs,
-  },
-  quickChipsWrapper: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.xs,
-  },
-  chipsPrompt: {
-    color: colors.textMuted,
-    fontSize: 11,
-    fontWeight: '600',
-    marginBottom: 6,
-  },
-  chipsScroll: {
-    gap: spacing.xs,
-  },
-  chip: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.full,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderWidth: 1,
-    borderColor: colors.surfaceBorder,
-  },
-  chipText: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  inputBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
-    paddingBottom: 28,
-    backgroundColor: colors.surface,
-    borderTopWidth: 1,
-    borderTopColor: colors.surfaceBorder,
-    gap: spacing.sm,
-  },
-  input: {
+  embedContainer: {
     flex: 1,
-    backgroundColor: colors.background,
-    borderRadius: borderRadius.full,
-    paddingHorizontal: 16,
-    height: 44,
-    color: colors.text,
-    fontSize: 14,
-    borderWidth: 1,
-    borderColor: colors.surfaceBorder,
-  },
-  sendButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.purple,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.gold,
-  },
-  sendButtonDisabled: {
-    opacity: 0.4,
+    overflow: 'hidden',
   },
 });

@@ -18,6 +18,7 @@ import { useCartStore } from '../stores/cart-store';
 import { useFavoritesStore } from '../stores/favorites-store';
 import { useAuthStore } from '../stores/auth-store';
 import { useTheme } from '../stores/theme-store';
+import { useMayaStore } from '../stores/maya-store';
 import { useI18n } from '../i18n';
 import { Header, Badge, FloatingCartBar } from '../components/ui';
 import { isPlaceholderDescription } from '../shared';
@@ -137,7 +138,10 @@ export function HomeScreen({ navigation }: any) {
 
           <TouchableOpacity
             style={styles.mayaButton}
-            onPress={() => navigation.navigate('MayaModal')}
+            onPress={() => {
+              useMayaStore.getState().openMaya();
+              navigation.navigate('MayaModal');
+            }}
             activeOpacity={0.8}
           >
             <Text style={styles.mayaIcon}>✨</Text>

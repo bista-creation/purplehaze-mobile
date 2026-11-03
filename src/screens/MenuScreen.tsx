@@ -18,6 +18,7 @@ import { mobileRealtime } from '../services/realtime';
 import { useCartStore } from '../stores/cart-store';
 import { useFavoritesStore } from '../stores/favorites-store';
 import { useTheme } from '../stores/theme-store';
+import { useMayaStore } from '../stores/maya-store';
 import { useI18n } from '../i18n';
 import { Header, Badge, FloatingCartBar } from '../components/ui';
 import { isPlaceholderDescription } from '../shared';
@@ -409,7 +410,10 @@ export function MenuScreen({ navigation, route }: any) {
       {/* Maya Floating AI Assistant Button */}
       <TouchableOpacity
         style={[styles.mayaFab, cartItemCount > 0 && styles.mayaFabWithCart]}
-        onPress={() => navigation.navigate('MayaModal')}
+        onPress={() => {
+          useMayaStore.getState().openMaya();
+          navigation.navigate('MayaModal');
+        }}
         activeOpacity={0.85}
       >
         <View style={styles.mayaFabIconCircle}>

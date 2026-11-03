@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { RootNavigator } from './src/navigation/RootNavigator';
+import { MayaFloatingWidget } from './src/components/MayaFloatingWidget';
 import { useAuthStore } from './src/stores/auth-store';
 import { useLanguageStore } from './src/i18n';
 import { useFavoritesStore } from './src/stores/favorites-store';
@@ -10,7 +11,7 @@ import { pushNotifications } from './src/services/push-notifications';
 
 export default function App() {
   const checkAuth = useAuthStore((s) => s.checkAuth);
-  const { mode, colors } = useTheme();
+  const { mode } = useTheme();
 
   useEffect(() => {
     // 0. Initialize theme, language and favorites from secure storage
@@ -41,6 +42,7 @@ export default function App() {
     <SafeAreaProvider>
       <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
       <RootNavigator />
+      <MayaFloatingWidget />
     </SafeAreaProvider>
   );
 }
