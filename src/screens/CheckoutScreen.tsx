@@ -46,6 +46,12 @@ export function CheckoutScreen({ navigation }: any) {
   const [fullName, setFullName] = useState(user?.name || "");
   const [email, setEmail] = useState(user?.email || "");
   const [phone, setPhone] = useState(user?.phone || "");
+
+  useEffect(() => {
+    if (user?.name && !fullName) setFullName(user.name);
+    if (user?.phone && !phone) setPhone(user.phone);
+    if (user?.email && !email) setEmail(user.email);
+  }, [user]);
   const [line1, setLine1] = useState("");
   const [instructions, setInstructions] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("COD");
@@ -125,14 +131,15 @@ export function CheckoutScreen({ navigation }: any) {
         },
       );
 
-      if (res.valid) {
+      const discount = res?.discount ?? (res as any)?.discountPaisa;
+      if (res?.valid || discount != null) {
         setAppliedCoupon({
           code: couponCode.trim().toUpperCase(),
-          discountPaisa: res.discount,
+          discountPaisa: discount || 0,
         });
-        Alert.alert("Coupon Applied!", `Saved Rs. ${(res.discount / 100).toFixed(0)}`);
+        Alert.alert("Coupon Applied!", `Saved Rs. ${((discount || 0) / 100).toFixed(0)}`);
       } else {
-        Alert.alert("Invalid Coupon", res.reason || "This coupon cannot be applied.");
+        Alert.alert("Invalid Coupon", res?.reason || "This coupon cannot be applied.");
       }
     } catch (e: any) {
       Alert.alert("Coupon Error", e.message || "Failed to validate coupon.");
@@ -142,7 +149,7 @@ export function CheckoutScreen({ navigation }: any) {
   const handlePlaceOrder = async () => {
     const trimmedName = fullName.trim();
     if (!trimmedName || trimmedName.length < 2) {
-      Alert.alert("Missing Details", "Please provide your full name (at least 2 letters).");
+      Alert.alert("Name Required", "Please enter your full name so our kitchen knows who this order is for.");
       return;
     }
 
@@ -153,7 +160,7 @@ export function CheckoutScreen({ navigation }: any) {
     }
 
     if (deliveryType === "DELIVERY" && (!line1.trim() || line1.trim().length < 4)) {
-      Alert.alert("Delivery Address Required", "Please enter your street address or landmark (at least 4 characters).");
+      Alert.alert("Delivery Address Required", "Please enter your street address or landmark so our rider can deliver your food.");
       return;
     }
 
@@ -388,15 +395,18 @@ export function CheckoutScreen({ navigation }: any) {
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Contact Details</Text>
           <TextInput
-            style={styles.input}
-            placeholder="Full Name"
+            style={[styles.input, !fullName.trim() && styles.inputWarning]}
+            placeholder="Full Name *"
             placeholderTextColor="#64748b"
             value={fullName}
             onChangeText={setFullName}
           />
+          {!fullName.trim() && (
+            <Text style={styles.fieldHint}>💡 Please enter your name so our kitchen knows who to hand this meal to.</Text>
+          )}
           <TextInput
             style={styles.input}
-            placeholder="Email Address"
+            placeholder="Email Address (for order receipt)"
             placeholderTextColor="#64748b"
             keyboardType="email-address"
             autoCapitalize="none"
@@ -405,7 +415,7 @@ export function CheckoutScreen({ navigation }: any) {
           />
           <TextInput
             style={styles.input}
-            placeholder="Phone Number (e.g. 9800000000)"
+            placeholder="Phone Number * (e.g. 98XXXXXXXX)"
             placeholderTextColor="#64748b"
             keyboardType="phone-pad"
             value={phone}
@@ -418,15 +428,45 @@ export function CheckoutScreen({ navigation }: any) {
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Delivery Address</Text>
             <TextInput
-              style={styles.input}
-              placeholder="Street name, Chowk, or Landmark"
+              style={[styles.input, !line1.trim() && styles.inputWarning]}
+              placeholder="Street name, Chowk, or Landmark *"
               placeholderTextColor="#64748b"
               value={line1}
               onChangeText={setLine1}
             />
+            {!line1.trim() && (
+              <Text style={styles.fieldHint}>💡 Please enter your street address or choose a popular area below.</Text>
+            )}
+
+            {/* Quick Landmark Chips */}
+            <View style={styles.landmarksContainer}>
+              <Text style={styles.landmarksLabel}>Popular Biratnagar areas (tap to auto-fill):</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.landmarksScroll}>
+                {[
+                  'Airport Road',
+                  'Traffic Chowk',
+                  'Roadcess Chowk',
+                  'Bargachhi',
+                  'Tintoliya',
+                  'Hospital Chowk',
+                  'Main Road',
+                  'Kanchanbari',
+                ].map((landmark) => (
+                  <TouchableOpacity
+                    key={landmark}
+                    style={styles.landmarkChip}
+                    onPress={() => setLine1(landmark)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.landmarkChipText}>+ {landmark}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+
             <TextInput
               style={[styles.input, styles.instructionsInput]}
-              placeholder="Landmark instructions (e.g. Near Airport Road, green gate)"
+              placeholder="Landmark instructions (e.g. Near green gate, 2nd floor)"
               placeholderTextColor="#64748b"
               value={instructions}
               onChangeText={setInstructions}
@@ -548,6 +588,20 @@ export function CheckoutScreen({ navigation }: any) {
         </View>
       </ScrollView>
 
+      {/* Suggestion banner if name or address missing */}
+      {(!fullName.trim() || (deliveryType === "DELIVERY" && !line1.trim())) && (
+        <View style={styles.suggestionBanner}>
+          <Ionicons name="sparkles" size={16} color={colors.gold} />
+          <Text style={styles.suggestionText}>
+            {!fullName.trim() && (deliveryType === "DELIVERY" && !line1.trim())
+              ? "Please enter your full name and delivery address above to place order."
+              : !fullName.trim()
+                ? "Please enter your full name above to place order."
+                : "Please enter your street or landmark delivery address above."}
+          </Text>
+        </View>
+      )}
+
       {/* Place Order Bar */}
       <View style={styles.footerBar}>
         <TouchableOpacity
@@ -644,6 +698,62 @@ const createStyles = (colors: ColorTheme) =>
     fontWeight: "bold",
     color: colors.text,
     marginBottom: spacing.md,
+  },
+  fieldHint: {
+    fontSize: 11,
+    color: colors.gold,
+    marginTop: -4,
+    marginBottom: 8,
+    paddingHorizontal: 2,
+  },
+  inputWarning: {
+    borderColor: 'rgba(216, 173, 104, 0.4)',
+  },
+  landmarksContainer: {
+    marginTop: 2,
+    marginBottom: 10,
+  },
+  landmarksLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.textMuted,
+    marginBottom: 6,
+  },
+  landmarksScroll: {
+    flexDirection: 'row',
+    gap: 6,
+    paddingBottom: 4,
+  },
+  landmarkChip: {
+    backgroundColor: 'rgba(216, 173, 104, 0.12)',
+    borderColor: 'rgba(216, 173, 104, 0.35)',
+    borderWidth: 1,
+    borderRadius: borderRadius.full,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  landmarkChipText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.gold,
+  },
+  suggestionBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(216, 173, 104, 0.12)',
+    borderColor: 'rgba(216, 173, 104, 0.35)',
+    borderWidth: 1,
+    borderRadius: borderRadius.lg,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.xs,
+    padding: spacing.md,
+  },
+  suggestionText: {
+    flex: 1,
+    fontSize: 12,
+    color: colors.gold,
+    lineHeight: 16,
   },
   zoneItem: {
     flexDirection: 'row',
