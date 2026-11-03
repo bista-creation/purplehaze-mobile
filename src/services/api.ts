@@ -2,12 +2,17 @@ import Constants from "expo-constants";
 import { tokenStorage } from "./token-storage";
 import type { ApiResponse, AuthTokens } from "../shared";
 
-const DEFAULT_API_URL =
-  process.env.EXPO_PUBLIC_API_URL ||
-  Constants.expoConfig?.extra?.apiUrl ||
-  "https://purple-haze-git-feature-api-v1-bistacreation-3818.vercel.app/api/v1";
+function resolveApiBaseUrl(): string {
+  if (process.env.EXPO_PUBLIC_API_URL) {
+    return process.env.EXPO_PUBLIC_API_URL;
+  }
+  if (typeof window !== "undefined" && window.location?.hostname === "localhost") {
+    return "http://localhost:3000/api/v1";
+  }
+  return "http://localhost:3000/api/v1";
+}
 
-export const API_BASE_URL = DEFAULT_API_URL;
+export const API_BASE_URL = resolveApiBaseUrl();
 
 class ApiError extends Error {
   code: string;
