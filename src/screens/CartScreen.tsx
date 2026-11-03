@@ -24,6 +24,14 @@ export function CartScreen({ navigation }: any) {
 
   const styles = useMemo(() => createStyles(colors), [colors]);
 
+  const handleBack = () => {
+    if (navigation?.canGoBack?.()) {
+      navigation.goBack();
+    } else {
+      navigation?.navigate?.('MainTabs', { screen: 'Menu' });
+    }
+  };
+
   const handleClear = () => {
     Alert.alert(t.cart.clearCart, 'Are you sure you want to remove all items?', [
       { text: t.common.cancel, style: 'cancel' },
@@ -34,6 +42,15 @@ export function CartScreen({ navigation }: any) {
   if (items.length === 0) {
     return (
       <View style={styles.emptyContainer}>
+        <TouchableOpacity
+          style={styles.emptyTopBack}
+          onPress={handleBack}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="arrow-back" size={20} color={colors.text} />
+          <Text style={[styles.emptyTopBackText, { color: colors.text }]}>Back</Text>
+        </TouchableOpacity>
+
         <View style={styles.emptyIconCircle}>
           <Ionicons name="cart-outline" size={54} color={colors.gold} />
         </View>
@@ -41,10 +58,18 @@ export function CartScreen({ navigation }: any) {
         <Text style={styles.emptySubtitle}>{t.cart.emptySubtitle}</Text>
         <TouchableOpacity
           style={styles.browseButton}
-          onPress={() => navigation.navigate('Menu')}
+          onPress={() => navigation?.navigate?.('MainTabs', { screen: 'Menu' })}
           activeOpacity={0.8}
         >
           <Text style={styles.browseButtonText}>{t.cart.browseMenu}</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.homeButton}
+          onPress={() => navigation?.navigate?.('MainTabs', { screen: 'Home' })}
+          activeOpacity={0.8}
+        >
+          <Text style={[styles.homeButtonText, { color: colors.gold }]}>Back to Home</Text>
         </TouchableOpacity>
       </View>
     );
@@ -54,11 +79,27 @@ export function CartScreen({ navigation }: any) {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <View>
-          <Text style={styles.headerTitle}>{t.cart.title}</Text>
-          <Text style={styles.itemCountText}>
-            {items.length} {items.length === 1 ? 'item' : 'items'}
-          </Text>
+        <View style={styles.headerLeft}>
+          <TouchableOpacity
+            onPress={handleBack}
+            style={[
+              styles.backBtn,
+              {
+                borderColor: colors.surfaceBorder,
+                backgroundColor: colors.surfaceElevated,
+              },
+            ]}
+            activeOpacity={0.7}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          >
+            <Ionicons name="arrow-back" size={20} color={colors.text} />
+          </TouchableOpacity>
+          <View>
+            <Text style={styles.headerTitle}>{t.cart.title}</Text>
+            <Text style={styles.itemCountText}>
+              {items.length} {items.length === 1 ? 'item' : 'items'}
+            </Text>
+          </View>
         </View>
         <TouchableOpacity onPress={handleClear} activeOpacity={0.7}>
           <Text style={styles.clearText}>{t.cart.clearCart}</Text>
@@ -159,6 +200,41 @@ const createStyles = (colors: ColorTheme) =>
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: colors.surfaceBorder,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyTopBack: {
+    position: 'absolute',
+    top: 54,
+    left: spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    padding: spacing.xs,
+  },
+  emptyTopBackText: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  homeButton: {
+    marginTop: spacing.sm,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.sm,
+  },
+  homeButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   headerTitle: {
     fontSize: 20,

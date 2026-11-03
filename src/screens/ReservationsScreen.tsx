@@ -14,11 +14,19 @@ import { useI18n } from '../i18n';
 import { colors as defaultColors, ColorTheme, spacing, borderRadius } from '../theme';
 import { api } from '../services/api-client';
 
-export const ReservationsScreen: React.FC = () => {
+export const ReservationsScreen: React.FC<any> = ({ navigation }) => {
   const { t } = useI18n();
   const { colors } = useTheme();
 
   const styles = useMemo(() => createStyles(colors), [colors]);
+
+  const handleBack = () => {
+    if (navigation?.canGoBack?.()) {
+      navigation.goBack();
+    } else {
+      navigation?.navigate?.('MainTabs', { screen: 'Home' });
+    }
+  };
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -63,7 +71,7 @@ export const ReservationsScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Header />
+      <Header showBack onBack={handleBack} />
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
@@ -100,6 +108,18 @@ export const ReservationsScreen: React.FC = () => {
                 setNotes('');
               }}
               style={styles.anotherButton}
+            />
+            <Button
+              title="Back to Home"
+              variant="gold"
+              onPress={() => navigation?.navigate?.('MainTabs', { screen: 'Home' })}
+              style={{ marginTop: spacing.sm }}
+            />
+            <Button
+              title="Explore Food Menu"
+              variant="ghost"
+              onPress={() => navigation?.navigate?.('MainTabs', { screen: 'Menu' })}
+              style={{ marginTop: spacing.xs }}
             />
           </Card>
         ) : (
@@ -257,6 +277,16 @@ export const ReservationsScreen: React.FC = () => {
               onPress={handleSubmit}
               style={styles.submitButton}
             />
+
+            <TouchableOpacity
+              onPress={handleBack}
+              style={{ marginTop: spacing.md, alignItems: 'center', padding: spacing.sm }}
+              activeOpacity={0.7}
+            >
+              <Text style={{ color: colors.textSecondary, fontSize: 14, fontWeight: '600' }}>
+                Cancel & Return Home
+              </Text>
+            </TouchableOpacity>
           </Card>
         )}
       </ScrollView>

@@ -1,6 +1,14 @@
 import { tokenStorage } from './token-storage';
 import type { ApiResponse } from '../shared/types';
 
+function cleanUrl(url?: string): string {
+  if (!url) return '';
+  return url
+    .replace(/^[\uFEFF\u200B-\u200D\s]+|[\uFEFF\u200B-\u200D\s]+$/g, '')
+    .trim()
+    .replace(/\/+$/, '');
+}
+
 export function getApiBaseUrl(): string {
   if (typeof window !== 'undefined' && window.location) {
     const host = window.location.hostname;
@@ -9,7 +17,8 @@ export function getApiBaseUrl(): string {
     }
   }
 
-  const envUrl = process.env.EXPO_PUBLIC_API_URL;
+  const rawEnv = process.env.EXPO_PUBLIC_API_URL;
+  const envUrl = cleanUrl(rawEnv);
   if (envUrl && !envUrl.includes('purple-haze-git-feature-api-v1-bistacreation-3818.vercel.app')) {
     return envUrl;
   }
@@ -283,10 +292,11 @@ async function request<T>(
   options: RequestInit = {},
   isRetry = false
 ): Promise<T> {
-  const baseUrl = getApiBaseUrl();
-  const url = endpoint.startsWith('http')
-    ? endpoint
-    : `${baseUrl}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
+  const baseUrl = cleanUrl(getApiBaseUrl());
+  const cleanEndpoint = endpoint.replace(/^[\uFEFF\u200B-\u200D\s]+/, '').trim();
+  const url = cleanEndpoint.startsWith('http')
+    ? cleanEndpoint
+    : `${baseUrl}${cleanEndpoint.startsWith('/') ? '' : '/'}${cleanEndpoint}`;
 
   const token = await tokenStorage.getAccessToken();
 

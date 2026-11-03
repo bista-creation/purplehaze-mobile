@@ -192,9 +192,20 @@ export default function OrderTrackingScreen({ route, navigation }: OrderTracking
     );
   };
 
+  const handleBack = () => {
+    if (navigation?.canGoBack?.()) {
+      navigation.goBack();
+    } else {
+      navigation?.navigate?.('MainTabs', { screen: 'Orders' });
+    }
+  };
+
   if (loading && !order) {
     return (
       <View style={styles.loadingContainer}>
+        <TouchableOpacity onPress={handleBack} style={styles.stateBackBtn}>
+          <Ionicons name="arrow-back" size={22} color={colors.text} />
+        </TouchableOpacity>
         <ActivityIndicator size="large" color="#a855f7" />
         <Text style={styles.loadingText}>Connecting to live tracker...</Text>
       </View>
@@ -204,11 +215,28 @@ export default function OrderTrackingScreen({ route, navigation }: OrderTracking
   if (error && !order) {
     return (
       <View style={styles.errorContainer}>
+        <TouchableOpacity onPress={handleBack} style={styles.stateBackBtn}>
+          <Ionicons name="arrow-back" size={22} color={colors.text} />
+        </TouchableOpacity>
         <Ionicons name="alert-circle-outline" size={48} color="#ef4444" />
         <Text style={styles.errorTitle}>Order Not Found</Text>
         <Text style={styles.errorText}>{error}</Text>
         <TouchableOpacity style={styles.retryBtn} onPress={fetchOrder}>
           <Text style={styles.retryBtnText}>Retry</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.retryBtn,
+            {
+              backgroundColor: 'transparent',
+              borderWidth: 1,
+              borderColor: colors.gold,
+              marginTop: spacing.sm,
+            },
+          ]}
+          onPress={() => navigation?.navigate?.('MainTabs', { screen: 'Orders' })}
+        >
+          <Text style={{ color: colors.gold, fontWeight: '700' }}>View All Orders</Text>
         </TouchableOpacity>
       </View>
     );
@@ -220,7 +248,29 @@ export default function OrderTrackingScreen({ route, navigation }: OrderTracking
   const meta = STATUS_META[currentStatus] || { label: currentStatus, color: '#a855f7' };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <View style={styles.screenWrapper}>
+      {/* Top Navigation Bar */}
+      <View style={styles.navBar}>
+        <TouchableOpacity
+          onPress={handleBack}
+          style={styles.navBackBtn}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+        >
+          <Ionicons name="arrow-back" size={22} color={colors.text} />
+        </TouchableOpacity>
+        <Text style={styles.navTitle}>Live Order Tracker</Text>
+        <TouchableOpacity
+          onPress={() => navigation?.navigate?.('MainTabs', { screen: 'Home' })}
+          style={styles.navHomeBtn}
+          accessibilityRole="button"
+          accessibilityLabel="Go to Home"
+        >
+          <Ionicons name="home-outline" size={22} color={colors.text} />
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {/* Header card */}
       <View style={styles.card}>
         <View style={styles.headerRow}>
@@ -441,11 +491,65 @@ export default function OrderTrackingScreen({ route, navigation }: OrderTracking
         </TouchableOpacity>
       )}
     </ScrollView>
+    </View>
   );
 }
 
 const createStyles = (colors: ColorTheme) =>
   StyleSheet.create({
+  screenWrapper: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  navBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.lg,
+    paddingTop: 54,
+    paddingBottom: spacing.md,
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.surfaceBorder,
+  },
+  navBackBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
+    backgroundColor: colors.surfaceElevated,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  navTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  navHomeBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
+    backgroundColor: colors.surfaceElevated,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stateBackBtn: {
+    position: 'absolute',
+    top: 54,
+    left: spacing.lg,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
+    backgroundColor: colors.surfaceElevated,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   container: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg, paddingBottom: 40 },
   loadingContainer: {

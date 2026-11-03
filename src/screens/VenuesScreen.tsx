@@ -15,7 +15,7 @@ import { useI18n } from '../i18n';
 import { colors as defaultColors, ColorTheme, spacing, borderRadius } from '../theme';
 import { api, type VenueDto } from '../services/api-client';
 
-export const VenuesScreen: React.FC = () => {
+export const VenuesScreen: React.FC<any> = ({ navigation }) => {
   const { t } = useI18n();
   const { colors } = useTheme();
   const [venues, setVenues] = useState<VenueDto[]>([]);
@@ -23,6 +23,14 @@ export const VenuesScreen: React.FC = () => {
   const [showInquiryModal, setShowInquiryModal] = useState(false);
 
   const styles = useMemo(() => createStyles(colors), [colors]);
+
+  const handleBack = () => {
+    if (navigation?.canGoBack?.()) {
+      navigation.goBack();
+    } else {
+      navigation?.navigate?.('MainTabs', { screen: 'Home' });
+    }
+  };
 
   // Inquiry form fields
   const [name, setName] = useState('');
@@ -69,7 +77,7 @@ export const VenuesScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Header />
+      <Header showBack onBack={handleBack} />
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -213,6 +221,24 @@ export const VenuesScreen: React.FC = () => {
             />
           </Card>
         ) : null}
+
+        <View style={{ marginTop: spacing.xl, marginBottom: spacing.lg, gap: spacing.sm, alignItems: 'center' }}>
+          <Button
+            title="Reserve a Dining Table Instead"
+            variant="outline"
+            onPress={() => navigation?.navigate?.('Reservations')}
+            style={{ width: '100%' }}
+          />
+          <TouchableOpacity
+            onPress={handleBack}
+            style={{ padding: spacing.sm }}
+            activeOpacity={0.7}
+          >
+            <Text style={{ color: colors.gold, fontWeight: '700', fontSize: 14 }}>
+              ← Return to Home Page
+            </Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </View>
   );

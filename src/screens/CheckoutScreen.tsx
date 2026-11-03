@@ -207,15 +207,52 @@ export function CheckoutScreen({ navigation }: any) {
     }
   };
 
+  const handleBack = () => {
+    if (navigation?.canGoBack?.()) {
+      navigation.goBack();
+    } else {
+      navigation?.navigate?.('Cart');
+    }
+  };
+
   const totalNpr = calculation ? calculation.total / 100 : items.reduce((s, i) => s + i.lineTotal, 0) / 100;
   const deliveryFeeNpr = calculation ? calculation.deliveryFee / 100 : deliveryType === "DELIVERY" ? 100 : 0;
   const discountNpr = calculation ? calculation.discountAmount / 100 : 0;
+
+  if (items.length === 0) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={handleBack} style={styles.backBtn}>
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Checkout</Text>
+          <View style={{ width: 24 }} />
+        </View>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.xl }}>
+          <Ionicons name="cart-outline" size={60} color={colors.gold} />
+          <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text, marginTop: spacing.md, marginBottom: spacing.sm }}>
+            Your Cart is Empty
+          </Text>
+          <Text style={{ fontSize: 14, color: colors.textMuted, textAlign: 'center', marginBottom: spacing.lg }}>
+            Please add some delicious dishes before proceeding to checkout.
+          </Text>
+          <TouchableOpacity
+            style={[styles.placeOrderBtn, { backgroundColor: colors.purple, paddingHorizontal: spacing.xl, marginTop: spacing.md }]}
+            onPress={() => navigation?.navigate?.('MainTabs', { screen: 'Menu' })}
+          >
+            <Text style={{ color: '#fff', fontWeight: '700' }}>Explore Menu</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+        <TouchableOpacity onPress={handleBack} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Checkout</Text>

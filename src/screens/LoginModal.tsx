@@ -30,6 +30,14 @@ export default function LoginModal({ navigation }: LoginModalProps) {
 
   const styles = useMemo(() => createStyles(colors), [colors]);
 
+  const handleClose = () => {
+    if (navigation?.canGoBack?.()) {
+      navigation.goBack();
+    } else {
+      navigation?.navigate?.('MainTabs', { screen: 'Home' });
+    }
+  };
+
   const handleLogin = async () => {
     if (!email.trim() || !password) {
       setError('Please enter both email and password.');
@@ -40,7 +48,7 @@ export default function LoginModal({ navigation }: LoginModalProps) {
       setLoading(true);
       setError(null);
       await login(email.trim(), password);
-      navigation.goBack();
+      handleClose();
     } catch (err: any) {
       setError(err?.message || 'Login failed. Please check your credentials.');
     } finally {
@@ -58,7 +66,7 @@ export default function LoginModal({ navigation }: LoginModalProps) {
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.closeBtn}
-            onPress={() => navigation.goBack()}
+            onPress={handleClose}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           >
             <Ionicons name="close" size={24} color="#cbd5e1" />

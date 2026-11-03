@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { useI18n } from '../../i18n';
 import { useTheme } from '../../stores/theme-store';
@@ -8,12 +9,16 @@ import { colors, spacing, borderRadius } from '../../theme';
 export interface HeaderProps {
   showTagline?: boolean;
   showLocation?: boolean;
+  showBack?: boolean;
+  onBack?: () => void;
   rightAction?: React.ReactNode;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   showTagline = false,
   showLocation = true,
+  showBack = false,
+  onBack,
   rightAction,
 }) => {
   const { t } = useI18n();
@@ -31,6 +36,25 @@ export const Header: React.FC<HeaderProps> = ({
     >
       <View style={styles.topRow}>
         <View style={styles.brandRow}>
+          {showBack && onBack ? (
+            <TouchableOpacity
+              onPress={onBack}
+              style={[
+                styles.backBtn,
+                {
+                  borderColor: colors.surfaceBorder,
+                  backgroundColor: colors.background,
+                },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
+              activeOpacity={0.7}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            >
+              <Ionicons name="arrow-back" size={20} color={colors.text} />
+            </TouchableOpacity>
+          ) : null}
+
           {/* Official Round Purple Haze Logo */}
           <View style={[styles.logoWrapper, { borderColor: colors.gold }]}>
             <Image
@@ -89,6 +113,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
     flex: 1,
+  },
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   logoWrapper: {
     width: 44,

@@ -32,6 +32,14 @@ export default function RegisterModal({ navigation }: RegisterModalProps) {
 
   const styles = useMemo(() => createStyles(colors), [colors]);
 
+  const handleClose = () => {
+    if (navigation?.canGoBack?.()) {
+      navigation.goBack();
+    } else {
+      navigation?.navigate?.('MainTabs', { screen: 'Home' });
+    }
+  };
+
   const handleRegister = async () => {
     if (!name.trim()) {
       setError('Please enter your full name.');
@@ -50,7 +58,7 @@ export default function RegisterModal({ navigation }: RegisterModalProps) {
       setLoading(true);
       setError(null);
       await register(name.trim(), email.trim(), password, phone.trim() || undefined);
-      navigation.goBack();
+      handleClose();
     } catch (err: any) {
       setError(err?.message || 'Registration failed. Please try again.');
     } finally {
@@ -68,7 +76,7 @@ export default function RegisterModal({ navigation }: RegisterModalProps) {
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.closeBtn}
-            onPress={() => navigation.goBack()}
+            onPress={handleClose}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           >
             <Ionicons name="close" size={24} color="#cbd5e1" />

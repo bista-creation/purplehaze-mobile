@@ -80,7 +80,15 @@ export function DishDetailModal({ route, navigation }: any) {
       quantity,
     });
 
-    navigation.goBack();
+    handleClose();
+  };
+
+  const handleClose = () => {
+    if (navigation?.canGoBack?.()) {
+      navigation.goBack();
+    } else {
+      navigation?.navigate?.('MainTabs', { screen: 'Menu' });
+    }
   };
 
   return (
@@ -97,7 +105,7 @@ export function DishDetailModal({ route, navigation }: any) {
 
         <TouchableOpacity
           style={styles.closeButton}
-          onPress={() => navigation.goBack()}
+          onPress={handleClose}
           activeOpacity={0.7}
         >
           <Ionicons name="close" size={24} color="#fff" />
