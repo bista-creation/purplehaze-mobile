@@ -122,6 +122,50 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
           ) : null}
         </Card>
 
+        {/* Admin Management Hub Card for Staff / Admins */}
+        {isAuthenticated && (user?.role === 'ADMIN' || user?.role === 'STAFF') ? (
+          <Card variant="elevated" style={styles.adminHubCard}>
+            <View style={styles.adminHubHeader}>
+              <View style={styles.adminBadge}>
+                <Ionicons name="shield-checkmark" size={14} color="#000" />
+                <Text style={styles.adminBadgeText}>
+                  {user.role === 'ADMIN' ? 'OWNER / ADMIN' : 'STAFF ACCESS'}
+                </Text>
+              </View>
+              <View style={styles.livePulseContainer}>
+                <View style={styles.liveDot} />
+                <Text style={styles.livePulseText}>Kitchen Live</Text>
+              </View>
+            </View>
+
+            <Typography variant="h2" style={{ color: colors.text, marginTop: spacing.xs }}>
+              Restaurant Operations Hub
+            </Typography>
+            <Typography variant="bodySmall" color={colors.textMuted} style={{ marginTop: 2 }}>
+              Live orders, kitchen management, table bookings, and dish 86/stock.
+            </Typography>
+
+            <View style={styles.adminActionRow}>
+              <TouchableOpacity
+                style={styles.openAdminBtn}
+                onPress={() => navigation.navigate('AdminDashboard')}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="speedometer-outline" size={18} color="#000" />
+                <Text style={styles.openAdminBtnText}>Open Mobile Admin Hub</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.openWebBtn}
+                onPress={() => openPolicyPage('/admin')}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="desktop-outline" size={16} color={colors.gold} />
+              </TouchableOpacity>
+            </View>
+          </Card>
+        ) : null}
+
         {/* Quick Actions */}
         <Typography variant="title" style={styles.sectionHeader}>
           Dining & Orders
@@ -282,7 +326,81 @@ const styles = StyleSheet.create({
   },
   userCard: {
     padding: spacing.lg,
+    marginBottom: spacing.md,
+  },
+  adminHubCard: {
+    backgroundColor: '#1b122c',
+    borderColor: 'rgba(217, 119, 6, 0.5)',
+    borderWidth: 1.5,
     marginBottom: spacing.lg,
+    padding: spacing.md,
+  },
+  adminHubHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  adminBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.gold,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: borderRadius.sm,
+  },
+  adminBadgeText: {
+    fontSize: 10,
+    fontWeight: '900',
+    color: '#000',
+    marginLeft: 4,
+    letterSpacing: 0.5,
+  },
+  livePulseContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  liveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#22c55e',
+    marginRight: 5,
+  },
+  livePulseText: {
+    fontSize: 11,
+    color: '#22c55e',
+    fontWeight: '600',
+  },
+  adminActionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.md,
+  },
+  openAdminBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.gold,
+    paddingVertical: 10,
+    borderRadius: borderRadius.md,
+    marginRight: spacing.sm,
+  },
+  openAdminBtnText: {
+    color: '#000',
+    fontSize: 13,
+    fontWeight: 'bold',
+    marginLeft: 6,
+  },
+  openWebBtn: {
+    backgroundColor: 'rgba(217, 119, 6, 0.15)',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: 'rgba(217, 119, 6, 0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   userRow: {
     flexDirection: 'row',

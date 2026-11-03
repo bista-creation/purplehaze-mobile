@@ -170,6 +170,67 @@ export interface TrackOrderResultDto {
   }>;
 }
 
+export interface AdminSummaryDto {
+  totalOrders: number;
+  completedOrders: number;
+  activeOrders: number;
+  totalReservations: number;
+  totalEvents: number;
+  totalRevenuePaisa: number;
+  totalRevenueNpr: number;
+}
+
+export interface AdminReportDto {
+  summary: AdminSummaryDto;
+  recentOrders: Array<{
+    id: string;
+    orderNumber: string;
+    customerName: string;
+    total: number;
+    status: string;
+    type: string;
+    createdAt: string;
+  }>;
+  topSellingDishes: Array<{
+    dishId: string;
+    name: string;
+    quantitySold: number;
+    totalSalesPaisa: number;
+  }>;
+}
+
+export interface AdminOrderDto {
+  id: string;
+  orderNumber: string;
+  customerName: string;
+  customerPhone?: string;
+  customerEmail?: string;
+  total: number;
+  status: string;
+  paymentStatus: string;
+  type: string;
+  createdAt: string;
+  items?: Array<{
+    id: string;
+    name: string;
+    quantity: number;
+    lineTotal: number;
+  }>;
+}
+
+export interface AdminReservationDto {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  guests: number;
+  date: string;
+  timeSlot: string;
+  status: string;
+  tableNumber?: string | null;
+  notes?: string | null;
+}
+
 // ----------------------------------------------------
 // Automatic 401 Refresh Queue
 // ----------------------------------------------------
@@ -430,6 +491,44 @@ export const api = {
       }>('/payments/initiate', {
         method: 'POST',
         body: JSON.stringify({ orderId, provider, appScheme: 'purplehaze' }),
+      }),
+  },
+
+  admin: {
+    getReports: () => request<AdminReportDto>('/admin/reports'),
+
+    getOrders: (params?: { status?: string; page?: number; limit?: number }) => {
+      const q = new URLSearchParams();
+      if (params?.status) q.set('status', params.status);
+      if (params?.page) q.set('page', String(params.page));
+      if (params?.limit) q.set('limit', String(params.limit || 30));
+      return request<AdminOrderDto[]>(`/admin/orders?${q.toString()}`);
+    },
+
+    updateOrderStatus: (id: string, status: string, note?: string) =>
+      request<{ message: string; order: any }>(`/admin/orders/${id}/status`, {
+        method: 'PUT',
+        body: JSON.stringify({ status, note }),
+      }),
+
+    getReservations: (params?: { status?: string; page?: number; limit?: number }) => {
+      const q = new URLSearchParams();
+      if (params?.status) q.set('status', params.status);
+      if (params?.page) q.set('page', String(params.page));
+      if (params?.limit) q.set('limit', String(params.limit || 30));
+      return request<AdminReservationDto[]>(`/admin/reservations?${q.toString()}`);
+    },
+
+    updateReservationStatus: (id: string, status: string, tableNumber?: string) =>
+      request<{ message: string }>(`/admin/reservations`, {
+        method: 'PUT',
+        body: JSON.stringify({ id, status, tableNumber }),
+      }),
+
+    toggleDishAvailability: (id: string, isAvailable: boolean) =>
+      request<{ id: string; name: string; isAvailable: boolean }>(`/admin/menu/dishes/${id}/availability`, {
+        method: 'PATCH',
+        body: JSON.stringify({ isAvailable }),
       }),
   },
 };
