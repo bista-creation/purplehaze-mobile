@@ -18,6 +18,19 @@ import { useTheme } from "../stores/theme-store";
 import { colors as defaultColors, ColorTheme, spacing, borderRadius } from "../theme";
 import type { OrderSummaryDto, PaymentMethod } from "../shared";
 
+export interface DeliveryZone {
+  id: string;
+  name: string;
+  fee: number;
+  minOrder: number;
+}
+
+const DEFAULT_ZONES: DeliveryZone[] = [
+  { id: 'zone-airport', name: 'Airport Road & nearby', fee: 3000, minOrder: 25000 },
+  { id: 'zone-central', name: 'Central Biratnagar', fee: 5000, minOrder: 30000 },
+  { id: 'zone-outer', name: 'Outer Biratnagar', fee: 10000, minOrder: 50000 },
+];
+
 export function CheckoutScreen({ navigation }: any) {
   const { colors } = useTheme();
   const items = useCartStore((s) => s.items);
@@ -27,7 +40,10 @@ export function CheckoutScreen({ navigation }: any) {
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   const [deliveryType, setDeliveryType] = useState<"DELIVERY" | "PICKUP">("DELIVERY");
-    const [fullName, setFullName] = useState(user?.name || "");
+  const [zones, setZones] = useState<DeliveryZone[]>(DEFAULT_ZONES);
+  const [selectedZoneId, setSelectedZoneId] = useState<string>(DEFAULT_ZONES[0].id);
+
+  const [fullName, setFullName] = useState(user?.name || "");
   const [email, setEmail] = useState(user?.email || "");
   const [phone, setPhone] = useState(user?.phone || "");
   const [line1, setLine1] = useState("");
@@ -43,7 +59,19 @@ export function CheckoutScreen({ navigation }: any) {
   const [isCalculating, setIsCalculating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Recalculate totals with server on cart/coupon changes
+  // Fetch live delivery zones from backend
+  useEffect(() => {
+    api.get<DeliveryZone[]>('/delivery-zones')
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setZones(data);
+          setSelectedZoneId(data[0].id);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // Recalculate totals with server on cart/coupon/zone changes
   useEffect(() => {
     let active = true;
 
@@ -54,11 +82,12 @@ export function CheckoutScreen({ navigation }: any) {
       try {
         const payload = {
           type: deliveryType,
+          zoneId: deliveryType === 'DELIVERY' ? selectedZoneId : undefined,
           couponCode: appliedCoupon?.code,
           items: items.map((i) => ({
             dishId: i.dishId,
-            variantId: i.variantId,
-            addOnIds: i.addOns.map((a) => a.id),
+            variantId: i.variantId || undefined,
+            addOnIds: i.addOns ? i.addOns.map((a) => a.id) : [],
             quantity: i.quantity,
           })),
         };
@@ -82,7 +111,7 @@ export function CheckoutScreen({ navigation }: any) {
     return () => {
       active = false;
     };
-  }, [items, deliveryType, appliedCoupon]);
+  }, [items, deliveryType, appliedCoupon, selectedZoneId]);
 
   const applyCoupon = async () => {
     if (!couponCode.trim()) return;
@@ -111,13 +140,20 @@ export function CheckoutScreen({ navigation }: any) {
   };
 
   const handlePlaceOrder = async () => {
-    if (!fullName.trim() || !phone.trim()) {
-      Alert.alert("Missing Details", "Please provide your name and contact phone.");
+    const trimmedName = fullName.trim();
+    if (!trimmedName || trimmedName.length < 2) {
+      Alert.alert("Missing Details", "Please provide your full name (at least 2 letters).");
       return;
     }
 
-    if (deliveryType === "DELIVERY" && !line1.trim()) {
-      Alert.alert("Missing Address", "Please enter your delivery street / landmark.");
+    const cleanPhone = phone.replace(/\D/g, "");
+    if (!cleanPhone || cleanPhone.length < 7) {
+      Alert.alert("Invalid Phone", "Please enter a valid phone number (at least 7 digits).");
+      return;
+    }
+
+    if (deliveryType === "DELIVERY" && (!line1.trim() || line1.trim().length < 4)) {
+      Alert.alert("Delivery Address Required", "Please enter your street address or landmark (at least 4 characters).");
       return;
     }
 
@@ -128,22 +164,23 @@ export function CheckoutScreen({ navigation }: any) {
 
       const orderPayload = {
         details: {
-          customerName: fullName.trim(),
-          customerPhone: phone.trim(),
+          customerName: trimmedName,
+          customerPhone: cleanPhone,
           customerEmail: email.trim() || user?.email || "guest@purplehazebiratnagar.com",
           type: deliveryType,
           paymentMethod,
           line1: deliveryType === "DELIVERY" ? line1.trim() : "",
           city: "Biratnagar",
+          zoneId: deliveryType === "DELIVERY" ? selectedZoneId : undefined,
           notes: instructions.trim() || undefined,
           couponCode: appliedCoupon?.code,
         },
         items: items.map((i) => ({
           dishId: i.dishId,
-          variantId: i.variantId,
-          addOnIds: i.addOns.map((a) => a.id),
+          variantId: i.variantId || undefined,
+          addOnIds: i.addOns ? i.addOns.map((a) => a.id) : [],
           quantity: i.quantity,
-          instructions: i.instructions,
+          instructions: i.instructions || undefined,
         })),
         idempotencyKey,
       };
@@ -294,6 +331,58 @@ export function CheckoutScreen({ navigation }: any) {
             </Text>
           </TouchableOpacity>
         </View>
+
+        {/* Delivery Area / Zone Selection */}
+        {deliveryType === "DELIVERY" && (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Delivery Area (Biratnagar)</Text>
+            <View style={{ gap: spacing.sm, marginTop: spacing.xs }}>
+              {zones.map((zone) => {
+                const isSelected = selectedZoneId === zone.id;
+                return (
+                  <TouchableOpacity
+                    key={zone.id}
+                    style={[
+                      styles.zoneItem,
+                      isSelected && styles.zoneItemActive,
+                      {
+                        borderColor: isSelected ? colors.gold : colors.surfaceBorder,
+                        backgroundColor: isSelected ? `${colors.gold}15` : colors.surface,
+                      },
+                    ]}
+                    onPress={() => setSelectedZoneId(zone.id)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                      <Ionicons
+                        name={isSelected ? "radio-button-on" : "radio-button-off"}
+                        size={18}
+                        color={isSelected ? colors.gold : colors.textMuted}
+                        style={{ marginRight: spacing.sm }}
+                      />
+                      <Text
+                        style={[
+                          styles.zoneName,
+                          { color: isSelected ? colors.text : colors.textSecondary },
+                        ]}
+                      >
+                        {zone.name}
+                      </Text>
+                    </View>
+                    <Text
+                      style={[
+                        styles.zoneFee,
+                        { color: isSelected ? colors.gold : colors.textMuted },
+                      ]}
+                    >
+                      Rs. {(zone.fee / 100).toFixed(0)}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        )}
 
         {/* Customer Information */}
         <View style={styles.card}>
@@ -555,6 +644,26 @@ const createStyles = (colors: ColorTheme) =>
     fontWeight: "bold",
     color: colors.text,
     marginBottom: spacing.md,
+  },
+  zoneItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+    paddingVertical: 12,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+  },
+  zoneItemActive: {
+    borderWidth: 1.5,
+  },
+  zoneName: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  zoneFee: {
+    fontSize: 13,
+    fontWeight: '700',
   },
   input: {
     backgroundColor: colors.background,
