@@ -177,12 +177,12 @@ const createStyles = (colors: ColorTheme) =>
       zIndex: 99,
     },
     pillCard: {
+      height: 50,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       backgroundColor: colors.purple,
       borderRadius: borderRadius.full,
-      paddingVertical: 9,
       paddingHorizontal: 14,
       borderWidth: 1,
       borderColor: 'rgba(216, 173, 104, 0.45)', // Restrained champagne-gold border
