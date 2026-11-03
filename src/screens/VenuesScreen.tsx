@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   ScrollView,
@@ -10,15 +10,19 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Header, Card, Typography, Badge, Button, Input } from '../components/ui';
+import { useTheme } from '../stores/theme-store';
 import { useI18n } from '../i18n';
-import { colors, spacing, borderRadius } from '../theme';
+import { colors as defaultColors, ColorTheme, spacing, borderRadius } from '../theme';
 import { api, type VenueDto } from '../services/api-client';
 
 export const VenuesScreen: React.FC = () => {
   const { t } = useI18n();
+  const { colors } = useTheme();
   const [venues, setVenues] = useState<VenueDto[]>([]);
   const [selectedVenue, setSelectedVenue] = useState<VenueDto | null>(null);
   const [showInquiryModal, setShowInquiryModal] = useState(false);
+
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   // Inquiry form fields
   const [name, setName] = useState('');
@@ -214,7 +218,8 @@ export const VenuesScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorTheme) =>
+  StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { api } from '../services/api';
 import { useAuthStore } from '../stores/auth-store';
 import { useCartStore } from '../stores/cart-store';
+import { useTheme } from '../stores/theme-store';
+import { ColorTheme, colors as defaultColors, spacing, borderRadius } from '../theme';
 import { STATUS_META } from '../shared/constants';
 import type { OrderDto } from '../shared/types';
 
@@ -27,6 +29,7 @@ function formatRs(paisa: number): string {
 
 export default function OrdersScreen({ navigation }: OrdersScreenProps) {
   const { isAuthenticated } = useAuthStore();
+  const { colors } = useTheme();
 
   const [orders, setOrders] = useState<OrderDto[]>([]);
   const [loading, setLoading] = useState(false);
@@ -36,6 +39,8 @@ export default function OrdersScreen({ navigation }: OrdersScreenProps) {
   const [guestOrderNum, setGuestOrderNum] = useState('');
   const [guestPhone, setGuestPhone] = useState('');
   const [guestLoading, setGuestLoading] = useState(false);
+
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const fetchOrders = useCallback(async () => {
     if (!isAuthenticated) return;
@@ -269,147 +274,156 @@ export default function OrdersScreen({ navigation }: OrdersScreenProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0b0716' },
-  listContent: { padding: 16, paddingBottom: 32 },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  guestContainer: {
-    padding: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-  },
-  guestTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#f8fafc',
-    marginTop: 16,
-  },
-  guestSubtitle: {
-    fontSize: 14,
-    color: '#94a3b8',
-    textAlign: 'center',
-    marginTop: 6,
-    marginBottom: 20,
-    lineHeight: 20,
-  },
-  loginBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#7c3aed',
-    paddingVertical: 14,
-    paddingHorizontal: 28,
-    borderRadius: 12,
-    gap: 8,
-    width: '100%',
-  },
-  loginBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 24,
-    width: '100%',
-  },
-  dividerLine: { flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.1)' },
-  dividerText: { color: '#64748b', fontSize: 11, fontWeight: '700', marginHorizontal: 12 },
-  guestForm: { width: '100%' },
-  inputLabel: { color: '#cbd5e1', fontSize: 13, fontWeight: '600', marginBottom: 6 },
-  input: {
-    backgroundColor: '#18122B',
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    color: '#f8fafc',
-    fontSize: 15,
-    borderWidth: 1,
-    borderColor: '#334155',
-    marginBottom: 14,
-  },
-  lookupBtn: {
-    backgroundColor: '#1e1b2e',
-    borderWidth: 1,
-    borderColor: '#a855f7',
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 6,
-  },
-  lookupBtnText: { color: '#c084fc', fontSize: 15, fontWeight: '700' },
-  emptyTitle: { fontSize: 20, fontWeight: 'bold', color: '#f8fafc', marginTop: 16 },
-  emptySubtitle: {
-    fontSize: 14,
-    color: '#94a3b8',
-    textAlign: 'center',
-    marginTop: 6,
-    marginBottom: 24,
-    maxWidth: 280,
-  },
-  browseBtn: {
-    backgroundColor: '#7c3aed',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 10,
-  },
-  browseBtnText: { color: '#fff', fontWeight: 'bold' },
-  orderCard: {
-    backgroundColor: '#18122B',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(168, 85, 247, 0.15)',
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 12,
-  },
-  orderNumber: { fontSize: 16, fontWeight: 'bold', color: '#f8fafc' },
-  orderDate: { fontSize: 12, color: '#94a3b8', marginTop: 2 },
-  statusBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  statusBadgeText: { fontSize: 11, fontWeight: '700' },
-  cardBody: {
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
-    paddingVertical: 10,
-    marginBottom: 12,
-  },
-  itemsSummary: { color: '#cbd5e1', fontSize: 13, lineHeight: 18 },
-  amountText: { color: '#a855f7', fontWeight: 'bold', fontSize: 15, marginTop: 6 },
-  cardActions: { flexDirection: 'row', gap: 10 },
-  trackBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(168, 85, 247, 0.15)',
-    paddingVertical: 10,
-    borderRadius: 8,
-    gap: 6,
-  },
-  trackBtnText: { color: '#c084fc', fontWeight: '600', fontSize: 13 },
-  reorderBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#7c3aed',
-    paddingVertical: 10,
-    borderRadius: 8,
-    gap: 6,
-  },
-  reorderBtnText: { color: '#fff', fontWeight: '600', fontSize: 13 },
-});
+const createStyles = (colors: ColorTheme) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    listContent: { padding: spacing.lg, paddingBottom: 32 },
+    centerContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 24,
+    },
+    guestContainer: {
+      padding: 24,
+      alignItems: 'center',
+      justifyContent: 'center',
+      flex: 1,
+    },
+    guestTitle: {
+      fontSize: 22,
+      fontWeight: 'bold',
+      color: colors.text,
+      marginTop: 16,
+    },
+    guestSubtitle: {
+      fontSize: 14,
+      color: colors.textMuted,
+      textAlign: 'center',
+      marginTop: 6,
+      marginBottom: 20,
+      lineHeight: 20,
+    },
+    loginBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.purple,
+      paddingVertical: 14,
+      paddingHorizontal: 28,
+      borderRadius: borderRadius.md,
+      gap: 8,
+      width: '100%',
+      borderWidth: 1,
+      borderColor: colors.gold,
+    },
+    loginBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+    dividerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginVertical: 24,
+      width: '100%',
+    },
+    dividerLine: { flex: 1, height: 1, backgroundColor: colors.surfaceBorder },
+    dividerText: { color: colors.textMuted, fontSize: 11, fontWeight: '700', marginHorizontal: 12 },
+    guestForm: { width: '100%' },
+    inputLabel: { color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 6 },
+    input: {
+      backgroundColor: colors.surface,
+      borderRadius: borderRadius.md,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      color: colors.text,
+      fontSize: 15,
+      borderWidth: 1,
+      borderColor: colors.surfaceBorder,
+      marginBottom: 14,
+    },
+    lookupBtn: {
+      backgroundColor: colors.surfaceElevated,
+      borderWidth: 1,
+      borderColor: colors.gold,
+      paddingVertical: 14,
+      borderRadius: borderRadius.md,
+      alignItems: 'center',
+      marginTop: 6,
+    },
+    lookupBtnText: { color: colors.gold, fontSize: 15, fontWeight: '700' },
+    emptyTitle: { fontSize: 20, fontWeight: 'bold', color: colors.text, marginTop: 16 },
+    emptySubtitle: {
+      fontSize: 14,
+      color: colors.textMuted,
+      textAlign: 'center',
+      marginTop: 6,
+      marginBottom: 24,
+      maxWidth: 280,
+    },
+    browseBtn: {
+      backgroundColor: colors.purple,
+      paddingVertical: 12,
+      paddingHorizontal: 24,
+      borderRadius: borderRadius.md,
+      borderWidth: 1,
+      borderColor: colors.gold,
+    },
+    browseBtnText: { color: '#fff', fontWeight: 'bold' },
+    orderCard: {
+      backgroundColor: colors.surface,
+      borderRadius: borderRadius.xl,
+      padding: spacing.lg,
+      marginBottom: 14,
+      borderWidth: 1,
+      borderColor: colors.surfaceBorder,
+    },
+    cardHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      marginBottom: 12,
+    },
+    orderNumber: { fontSize: 16, fontWeight: 'bold', color: colors.text },
+    orderDate: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
+    statusBadge: {
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      borderRadius: borderRadius.full,
+      borderWidth: 1,
+    },
+    statusBadgeText: { fontSize: 11, fontWeight: '700' },
+    cardBody: {
+      borderTopWidth: 1,
+      borderBottomWidth: 1,
+      borderColor: colors.surfaceBorder,
+      paddingVertical: 10,
+      marginBottom: 12,
+    },
+    itemsSummary: { color: colors.textSecondary, fontSize: 13, lineHeight: 18 },
+    amountText: { color: colors.gold, fontWeight: 'bold', fontSize: 15, marginTop: 6 },
+    cardActions: { flexDirection: 'row', gap: 10 },
+    trackBtn: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.purpleMuted,
+      paddingVertical: 10,
+      borderRadius: borderRadius.md,
+      borderWidth: 1,
+      borderColor: colors.purple,
+      gap: 6,
+    },
+    trackBtnText: { color: colors.purple, fontWeight: '700', fontSize: 13 },
+    reorderBtn: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.purple,
+      paddingVertical: 10,
+      borderRadius: borderRadius.md,
+      borderWidth: 1,
+      borderColor: colors.gold,
+      gap: 6,
+    },
+    reorderBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
+  });

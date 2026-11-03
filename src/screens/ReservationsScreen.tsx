@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   ScrollView,
@@ -9,12 +9,16 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Header, Card, Typography, Input, Button, Badge } from '../components/ui';
+import { useTheme } from '../stores/theme-store';
 import { useI18n } from '../i18n';
-import { colors, spacing, borderRadius } from '../theme';
+import { colors as defaultColors, ColorTheme, spacing, borderRadius } from '../theme';
 import { api } from '../services/api-client';
 
 export const ReservationsScreen: React.FC = () => {
   const { t } = useI18n();
+  const { colors } = useTheme();
+
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -260,7 +264,8 @@ export const ReservationsScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorTheme) =>
+  StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,

@@ -1,9 +1,10 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { NavigationContainer, LinkingOptions } from '@react-navigation/native';
+import { NavigationContainer, LinkingOptions, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useCartStore } from '../stores/cart-store';
+import { useTheme } from '../stores/theme-store';
 import { useI18n } from '../i18n';
 import { colors } from '../theme';
 
@@ -54,6 +55,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 function MainTabs() {
   const { t } = useI18n();
+  const { colors } = useTheme();
 
   return (
     <Tab.Navigator
@@ -179,8 +181,25 @@ const linking: LinkingOptions<RootStackParamList> = {
 };
 
 export function RootNavigator() {
+  const { colors, isDark } = useTheme();
+
+  const baseTheme = isDark ? DarkTheme : DefaultTheme;
+  const navigationTheme = {
+    ...baseTheme,
+    dark: isDark,
+    colors: {
+      ...baseTheme.colors,
+      primary: colors.purple,
+      background: colors.background,
+      card: colors.surface,
+      text: colors.text,
+      border: colors.surfaceBorder,
+      notification: colors.gold,
+    },
+  };
+
   return (
-    <NavigationContainer linking={linking}>
+    <NavigationContainer linking={linking} theme={navigationTheme}>
       <Stack.Navigator
         screenOptions={{
           headerStyle: { backgroundColor: colors.background },

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Text as RNText, TextProps as RNTextProps, StyleSheet, TextStyle } from 'react-native';
-import { typography, colors } from '../../theme';
+import { typography } from '../../theme';
+import { useTheme } from '../../stores/theme-store';
 
 export type TypographyVariant =
   | 'h1'
@@ -28,9 +29,30 @@ export const Typography: React.FC<TypographyProps> = ({
   style,
   ...rest
 }) => {
+  const { colors } = useTheme();
+
+  const getDefaultColor = (): string => {
+    switch (variant) {
+      case 'h1':
+      case 'h2':
+      case 'h3':
+      case 'title':
+        return colors.text;
+      case 'body':
+        return colors.textSecondary;
+      case 'bodySmall':
+      case 'caption':
+        return colors.textMuted;
+      case 'goldHeading':
+        return colors.gold;
+      default:
+        return colors.text;
+    }
+  };
+
   const getStyle = (): TextStyle => {
     const base = { ...typography[variant] };
-    if (color) base.color = color;
+    base.color = color || getDefaultColor();
     if (align) base.textAlign = align;
     if (bold) base.fontWeight = '700';
     return base;

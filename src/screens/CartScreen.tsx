@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   Text,
@@ -9,16 +9,20 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useCartStore } from '../stores/cart-store';
+import { useTheme } from '../stores/theme-store';
 import { useI18n } from '../i18n';
-import { colors, spacing, borderRadius } from '../theme';
+import { colors as defaultColors, ColorTheme, spacing, borderRadius } from '../theme';
 
 export function CartScreen({ navigation }: any) {
   const { t, formatCurrency } = useI18n();
+  const { colors } = useTheme();
   const items = useCartStore((s) => s.items);
   const updateQuantity = useCartStore((s) => s.updateQuantity);
   const removeItem = useCartStore((s) => s.removeItem);
   const clearCart = useCartStore((s) => s.clearCart);
   const subtotalPaisa = useCartStore((s) => s.getSubtotalPaisa());
+
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const handleClear = () => {
     Alert.alert(t.cart.clearCart, 'Are you sure you want to remove all items?', [
@@ -139,7 +143,8 @@ export function CartScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorTheme) =>
+  StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,

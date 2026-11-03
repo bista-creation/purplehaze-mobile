@@ -9,6 +9,7 @@ import {
   ViewStyle,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../../stores/theme-store';
 import { colors, borderRadius, spacing } from '../../theme';
 
 export interface InputProps extends TextInputProps {
@@ -29,17 +30,22 @@ export const Input: React.FC<InputProps> = ({
   style,
   ...rest
 }) => {
+  const { colors } = useTheme();
   const [isFocused, setIsFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   return (
     <View style={[styles.container, containerStyle]}>
-      {label ? <Text style={styles.label}>{label}</Text> : null}
+      {label ? <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text> : null}
       <View
         style={[
           styles.inputWrapper,
-          isFocused ? styles.inputFocused : null,
-          error ? styles.inputError : null,
+          {
+            backgroundColor: colors.surface,
+            borderColor: colors.surfaceBorder,
+          },
+          isFocused ? { borderColor: colors.gold } : null,
+          error ? { borderColor: colors.error } : null,
         ]}
       >
         {leftIcon ? (
@@ -52,7 +58,7 @@ export const Input: React.FC<InputProps> = ({
         ) : null}
 
         <TextInput
-          style={[styles.input, style]}
+          style={[styles.input, { color: colors.text }, style]}
           placeholderTextColor={colors.textDisabled}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
@@ -74,7 +80,7 @@ export const Input: React.FC<InputProps> = ({
           </TouchableOpacity>
         ) : null}
       </View>
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      {error ? <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text> : null}
     </View>
   );
 };

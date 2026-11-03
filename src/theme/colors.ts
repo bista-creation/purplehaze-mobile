@@ -101,8 +101,8 @@ export const darkColors = {
   halal: '#06B6D4',
 } as const;
 
-// Default exported colors object for compatibility (Light theme per spec)
-export const colors = lightColors;
-
 export type ColorTheme = { [K in keyof typeof lightColors]: string };
 export type ColorToken = keyof typeof lightColors;
+
+// Default exported mutable colors object so imports of `colors` receive updates immediately
+export const colors: ColorTheme = { ...lightColors };

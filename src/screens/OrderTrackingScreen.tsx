@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -15,7 +15,8 @@ import { api as apiClient } from '../services/api-client';
 import { mobileRealtime } from '../services/realtime';
 import { STATUS_META, type OrderStatus } from '../shared/constants';
 import type { OrderDto } from '../shared/types';
-import { colors, spacing, borderRadius } from '../theme';
+import { useTheme } from '../stores/theme-store';
+import { colors as defaultColors, ColorTheme, spacing, borderRadius } from '../theme';
 
 interface OrderTrackingScreenProps {
   route: {
@@ -54,6 +55,7 @@ function formatRs(paisa: number): string {
 
 export default function OrderTrackingScreen({ route, navigation }: OrderTrackingScreenProps) {
   const { orderId, orderNumber, phone, token } = route.params || {};
+  const { colors } = useTheme();
   const [order, setOrder] = useState<OrderDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -65,6 +67,8 @@ export default function OrderTrackingScreen({ route, navigation }: OrderTracking
     updatedAt?: string;
   } | null>(null);
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const fetchOrder = useCallback(async () => {
     try {
@@ -440,7 +444,8 @@ export default function OrderTrackingScreen({ route, navigation }: OrderTracking
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorTheme) =>
+  StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg, paddingBottom: 40 },
   loadingContainer: {

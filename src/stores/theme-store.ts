@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
-import { lightColors, darkColors, type ColorTheme } from '../theme/colors';
+import { colors, lightColors, darkColors, type ColorTheme } from '../theme/colors';
 
 const THEME_STORAGE_KEY = 'purplehaze_theme_mode';
 
@@ -22,9 +22,11 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
     try {
       const saved = await SecureStore.getItemAsync(THEME_STORAGE_KEY);
       if (saved === 'dark' || saved === 'light') {
+        const activeColors = saved === 'dark' ? (darkColors as ColorTheme) : lightColors;
+        Object.assign(colors, activeColors);
         set({
           mode: saved,
-          colors: saved === 'dark' ? (darkColors as ColorTheme) : lightColors,
+          colors: activeColors,
         });
       }
     } catch {
@@ -34,6 +36,7 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
 
   setMode: async (mode: ThemeMode) => {
     const activeColors = mode === 'dark' ? (darkColors as ColorTheme) : lightColors;
+    Object.assign(colors, activeColors);
     set({ mode, colors: activeColors });
     try {
       await SecureStore.setItemAsync(THEME_STORAGE_KEY, mode);

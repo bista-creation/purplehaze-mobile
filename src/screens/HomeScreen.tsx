@@ -17,17 +17,21 @@ import { api as typedApi, DishDto, CategoryDto } from '../services/api-client';
 import { useCartStore } from '../stores/cart-store';
 import { useFavoritesStore } from '../stores/favorites-store';
 import { useAuthStore } from '../stores/auth-store';
+import { useTheme } from '../stores/theme-store';
 import { useI18n } from '../i18n';
 import { Header, Badge } from '../components/ui';
-import { colors, spacing, borderRadius } from '../theme';
+import { colors as defaultColors, ColorTheme, spacing, borderRadius } from '../theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export function HomeScreen({ navigation }: any) {
   const { t, formatCurrency } = useI18n();
+  const { colors } = useTheme();
   const user = useAuthStore((s) => s.user);
   const { items, addItem, getItemCount, getSubtotalNpr } = useCartStore();
   const { favoriteDishIds, toggleFavorite, isFavorite } = useFavoritesStore();
+
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const [categories, setCategories] = useState<CategoryDto[]>([]);
   const [dishes, setDishes] = useState<DishDto[]>([]);
@@ -495,7 +499,8 @@ export function HomeScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorTheme) =>
+  StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,

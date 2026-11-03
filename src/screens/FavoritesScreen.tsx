@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -13,14 +13,18 @@ import { Ionicons } from '@expo/vector-icons';
 import { api as typedApi, DishDto } from '../services/api-client';
 import { useCartStore } from '../stores/cart-store';
 import { useFavoritesStore } from '../stores/favorites-store';
+import { useTheme } from '../stores/theme-store';
 import { useI18n } from '../i18n';
 import { Header } from '../components/ui';
-import { colors, spacing, borderRadius } from '../theme';
+import { colors as defaultColors, ColorTheme, spacing, borderRadius } from '../theme';
 
 export function FavoritesScreen({ navigation }: any) {
   const { t, formatCurrency } = useI18n();
+  const { colors } = useTheme();
   const { favoriteDishIds, toggleFavorite, isFavorite } = useFavoritesStore();
   const addItem = useCartStore((s) => s.addItem);
+
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const [dishes, setDishes] = useState<DishDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -163,7 +167,8 @@ export function FavoritesScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorTheme) =>
+  StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,

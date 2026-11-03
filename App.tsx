@@ -5,13 +5,16 @@ import { RootNavigator } from './src/navigation/RootNavigator';
 import { useAuthStore } from './src/stores/auth-store';
 import { useLanguageStore } from './src/i18n';
 import { useFavoritesStore } from './src/stores/favorites-store';
+import { useThemeStore, useTheme } from './src/stores/theme-store';
 import { pushNotifications } from './src/services/push-notifications';
 
 export default function App() {
   const checkAuth = useAuthStore((s) => s.checkAuth);
+  const { mode, colors } = useTheme();
 
   useEffect(() => {
-    // 0. Initialize language and favorites from secure storage
+    // 0. Initialize theme, language and favorites from secure storage
+    useThemeStore.getState().initTheme();
     useLanguageStore.getState().initLanguage();
     useFavoritesStore.getState().initFavorites();
 
@@ -36,7 +39,7 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <StatusBar style="light" />
+      <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
       <RootNavigator />
     </SafeAreaProvider>
   );

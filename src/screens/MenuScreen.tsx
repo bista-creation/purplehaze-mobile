@@ -16,12 +16,14 @@ import { api as typedApi, DishDto, CategoryDto } from '../services/api-client';
 import { mobileRealtime } from '../services/realtime';
 import { useCartStore } from '../stores/cart-store';
 import { useFavoritesStore } from '../stores/favorites-store';
+import { useTheme } from '../stores/theme-store';
 import { useI18n } from '../i18n';
 import { Header, Badge } from '../components/ui';
-import { colors, spacing, borderRadius } from '../theme';
+import { colors as defaultColors, ColorTheme, spacing, borderRadius } from '../theme';
 
 export function MenuScreen({ navigation }: any) {
   const { t, formatCurrency } = useI18n();
+  const { colors } = useTheme();
   const [categories, setCategories] = useState<CategoryDto[]>([]);
   const [dishes, setDishes] = useState<DishDto[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -36,6 +38,8 @@ export function MenuScreen({ navigation }: any) {
   const cartItemCount = useCartStore((s) => s.getItemCount());
   const cartSubtotal = useCartStore((s) => s.getSubtotalNpr());
   const { favoriteDishIds, toggleFavorite, isFavorite } = useFavoritesStore();
+
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const loadMenu = async () => {
     try {
@@ -431,7 +435,8 @@ export function MenuScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorTheme) =>
+  StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,9 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../stores/auth-store';
+import { useTheme } from '../stores/theme-store';
 import { GoogleSignInButton } from '../components/ui';
+import { colors as defaultColors, ColorTheme, spacing, borderRadius } from '../theme';
 
 interface LoginModalProps {
   navigation: any;
@@ -20,10 +22,13 @@ interface LoginModalProps {
 
 export default function LoginModal({ navigation }: LoginModalProps) {
   const { login } = useAuthStore();
+  const { colors } = useTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const handleLogin = async () => {
     if (!email.trim() || !password) {
@@ -145,89 +150,92 @@ export default function LoginModal({ navigation }: LoginModalProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0b0716' },
-  content: { padding: 24, paddingBottom: 40 },
-  header: { alignItems: 'flex-end', marginTop: 12 },
-  closeBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  brandContainer: { alignItems: 'center', marginVertical: 20 },
-  logoBadge: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#18122B',
-    borderWidth: 1,
-    borderColor: '#a855f7',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  title: { fontSize: 24, fontWeight: 'bold', color: '#f8fafc' },
-  subtitle: { fontSize: 14, color: '#94a3b8', marginTop: 6 },
-  errorBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(239, 68, 68, 0.12)',
-    borderWidth: 1,
-    borderColor: '#ef4444',
-    padding: 12,
-    borderRadius: 10,
-    marginBottom: 16,
-    gap: 8,
-  },
-  errorText: { color: '#ef4444', fontSize: 13, flex: 1 },
-  form: { marginTop: 8 },
-  label: { color: '#cbd5e1', fontSize: 13, fontWeight: '600', marginBottom: 6 },
-  input: {
-    backgroundColor: '#18122B',
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    color: '#f8fafc',
-    fontSize: 15,
-    borderWidth: 1,
-    borderColor: '#334155',
-    marginBottom: 16,
-  },
-  submitBtn: {
-    backgroundColor: '#7c3aed',
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  submitBtnDisabled: { opacity: 0.6 },
-  submitBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  footerRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 24,
-  },
-  footerText: { color: '#94a3b8', fontSize: 14 },
-  footerLink: { color: '#c084fc', fontSize: 14, fontWeight: '700' },
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 18,
-    gap: 12,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  dividerText: {
-    color: '#94a3b8',
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 1,
-  },
-});
+const createStyles = (colors: ColorTheme) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    content: { padding: spacing.xl, paddingBottom: 40 },
+    header: { alignItems: 'flex-end', marginTop: 12 },
+    closeBtn: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: colors.surfaceBorder,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    brandContainer: { alignItems: 'center', marginVertical: 20 },
+    logoBadge: {
+      width: 64,
+      height: 64,
+      borderRadius: 32,
+      backgroundColor: colors.surface,
+      borderWidth: 1.5,
+      borderColor: colors.gold,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: 16,
+    },
+    title: { fontSize: 24, fontWeight: 'bold', color: colors.text },
+    subtitle: { fontSize: 14, color: colors.textMuted, marginTop: 6 },
+    errorBanner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.errorMuted,
+      borderWidth: 1,
+      borderColor: colors.error,
+      padding: 12,
+      borderRadius: borderRadius.md,
+      marginBottom: 16,
+      gap: 8,
+    },
+    errorText: { color: colors.error, fontSize: 13, flex: 1 },
+    form: { marginTop: 8 },
+    label: { color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 6 },
+    input: {
+      backgroundColor: colors.surface,
+      borderRadius: borderRadius.md,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      color: colors.text,
+      fontSize: 15,
+      borderWidth: 1,
+      borderColor: colors.surfaceBorder,
+      marginBottom: 16,
+    },
+    submitBtn: {
+      backgroundColor: colors.purple,
+      paddingVertical: 14,
+      borderRadius: borderRadius.md,
+      alignItems: 'center',
+      marginTop: 8,
+      borderWidth: 1,
+      borderColor: colors.gold,
+    },
+    submitBtnDisabled: { opacity: 0.6 },
+    submitBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+    footerRow: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginTop: 24,
+    },
+    footerText: { color: colors.textMuted, fontSize: 14 },
+    footerLink: { color: colors.purple, fontSize: 14, fontWeight: '700' },
+    dividerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginVertical: 18,
+      gap: 12,
+    },
+    dividerLine: {
+      flex: 1,
+      height: 1,
+      backgroundColor: colors.surfaceBorder,
+    },
+    dividerText: {
+      color: colors.textMuted,
+      fontSize: 12,
+      fontWeight: '700',
+      letterSpacing: 1,
+    },
+  });

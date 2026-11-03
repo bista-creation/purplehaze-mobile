@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, ViewProps, ViewStyle } from 'react-native';
+import { useTheme } from '../../stores/theme-store';
 import { colors, borderRadius, spacing } from '../../theme';
 
 export interface CardProps extends ViewProps {
@@ -13,16 +14,34 @@ export const Card: React.FC<CardProps> = ({
   style,
   ...rest
 }) => {
+  const { colors } = useTheme();
+
   const getStyle = (): ViewStyle => {
     switch (variant) {
       case 'elevated':
-        return styles.elevated;
+        return {
+          backgroundColor: colors.surfaceElevated,
+          borderWidth: 1,
+          borderColor: colors.surfaceBorderLight,
+        };
       case 'outlined':
-        return styles.outlined;
+        return {
+          backgroundColor: 'transparent',
+          borderWidth: 1,
+          borderColor: colors.surfaceBorder,
+        };
       case 'goldAccent':
-        return styles.goldAccent;
+        return {
+          backgroundColor: colors.surface,
+          borderWidth: 1,
+          borderColor: colors.gold,
+        };
       default:
-        return styles.surface;
+        return {
+          backgroundColor: colors.surface,
+          borderWidth: 1,
+          borderColor: colors.surfaceBorder,
+        };
     }
   };
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   View,
   Text,
@@ -14,13 +14,17 @@ import { Ionicons } from "@expo/vector-icons";
 import { api } from "../services/api";
 import { useCartStore } from "../stores/cart-store";
 import { useAuthStore } from "../stores/auth-store";
-import { colors, spacing, borderRadius } from "../theme";
+import { useTheme } from "../stores/theme-store";
+import { colors as defaultColors, ColorTheme, spacing, borderRadius } from "../theme";
 import type { OrderSummaryDto, PaymentMethod } from "../shared";
 
 export function CheckoutScreen({ navigation }: any) {
+  const { colors } = useTheme();
   const items = useCartStore((s) => s.items);
   const clearCart = useCartStore((s) => s.clearCart);
   const user = useAuthStore((s) => s.user);
+
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const [deliveryType, setDeliveryType] = useState<"DELIVERY" | "PICKUP">("DELIVERY");
     const [fullName, setFullName] = useState(user?.name || "");
@@ -441,7 +445,8 @@ export function CheckoutScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorTheme) =>
+  StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,

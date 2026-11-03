@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '../services/api-client';
-import { colors, spacing, borderRadius } from '../theme';
+import { useTheme } from '../stores/theme-store';
+import { colors as defaultColors, ColorTheme, spacing, borderRadius } from '../theme';
 
 interface Message {
   id: string;
@@ -29,6 +30,7 @@ const QUICK_SUGGESTIONS = [
 ];
 
 export default function MayaModal({ navigation }: any) {
+  const { colors } = useTheme();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome',
@@ -38,6 +40,8 @@ export default function MayaModal({ navigation }: any) {
       suggestedActions: ['Menu Recommendations', 'Rooftop Booking', 'Spicy Sekuwa'],
     },
   ]);
+
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const flatListRef = useRef<FlatList>(null);
@@ -247,7 +251,8 @@ export default function MayaModal({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorTheme) =>
+  StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,

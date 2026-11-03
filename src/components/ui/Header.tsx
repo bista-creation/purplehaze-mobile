@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { useI18n } from '../../i18n';
+import { useTheme } from '../../stores/theme-store';
 import { colors, spacing, borderRadius } from '../../theme';
 
 export interface HeaderProps {
@@ -16,13 +17,22 @@ export const Header: React.FC<HeaderProps> = ({
   rightAction,
 }) => {
   const { t } = useI18n();
+  const { colors } = useTheme();
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.surface,
+          borderBottomColor: colors.surfaceBorder,
+        },
+      ]}
+    >
       <View style={styles.topRow}>
         <View style={styles.brandRow}>
           {/* Official Round Purple Haze Logo */}
-          <View style={styles.logoWrapper}>
+          <View style={[styles.logoWrapper, { borderColor: colors.gold }]}>
             <Image
               source={require('../../../assets/logo.png')}
               style={styles.logo}
@@ -31,12 +41,12 @@ export const Header: React.FC<HeaderProps> = ({
           </View>
 
           <View style={styles.brandContainer}>
-            <Text style={styles.brandTitle}>PURPLE HAZE</Text>
-            <Text style={styles.brandSubtitle}>RESTRO {'&'} GARDEN</Text>
+            <Text style={[styles.brandTitle, { color: colors.purple }]}>PURPLE HAZE</Text>
+            <Text style={[styles.brandSubtitle, { color: colors.gold }]}>RESTRO {'&'} GARDEN</Text>
             {showLocation && (
               <View style={styles.locationBadge}>
                 <Text style={styles.locationPin}>📍</Text>
-                <Text style={styles.subCity}>Airport Road, Biratnagar</Text>
+                <Text style={[styles.subCity, { color: colors.textMuted }]}>Airport Road, Biratnagar</Text>
               </View>
             )}
           </View>
@@ -49,7 +59,7 @@ export const Header: React.FC<HeaderProps> = ({
       </View>
 
       {showTagline ? (
-        <Text style={styles.tagline}>"{t.common.tagline}"</Text>
+        <Text style={[styles.tagline, { color: colors.textMuted }]}>"{t.common.tagline}"</Text>
       ) : null}
     </View>
   );

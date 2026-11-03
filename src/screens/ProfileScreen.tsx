@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   Text,
@@ -13,9 +13,9 @@ import * as WebBrowser from 'expo-web-browser';
 import { Image } from 'react-native';
 import { Header, Card, Typography, Button, Badge, GoogleSignInButton } from '../components/ui';
 import { useAuthStore } from '../stores/auth-store';
-import { useThemeStore } from '../stores/theme-store';
+import { useTheme } from '../stores/theme-store';
 import { useI18n } from '../i18n';
-import { colors, spacing, borderRadius } from '../theme';
+import { colors as defaultColors, ColorTheme, spacing, borderRadius } from '../theme';
 import { api } from '../services/api-client';
 
 interface ProfileScreenProps {
@@ -24,8 +24,10 @@ interface ProfileScreenProps {
 
 export default function ProfileScreen({ navigation }: ProfileScreenProps) {
   const { user, isAuthenticated, logout } = useAuthStore();
-  const { mode, setMode } = useThemeStore();
+  const { mode, setMode, colors } = useTheme();
   const { t, language, setLanguage } = useI18n();
+
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const handleLogout = () => {
     Alert.alert(t.profile.signOut, 'Are you sure you want to sign out?', [
@@ -379,7 +381,8 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorTheme) =>
+  StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
