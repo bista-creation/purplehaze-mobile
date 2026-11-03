@@ -15,6 +15,7 @@ import { api as apiClient } from '../services/api-client';
 import { mobileRealtime } from '../services/realtime';
 import { STATUS_META, type OrderStatus } from '../shared/constants';
 import type { OrderDto } from '../shared/types';
+import { colors, spacing, borderRadius } from '../theme';
 
 interface OrderTrackingScreenProps {
   route: {
@@ -57,6 +58,12 @@ export default function OrderTrackingScreen({ route, navigation }: OrderTracking
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [riderLocation, setRiderLocation] = useState<{
+    latitude: number;
+    longitude: number;
+    speed?: number | null;
+    updatedAt?: string;
+  } | null>(null);
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchOrder = useCallback(async () => {
@@ -79,10 +86,34 @@ export default function OrderTrackingScreen({ route, navigation }: OrderTracking
     } finally {
       setLoading(false);
     }
-  }, [orderId, orderNumber, phone]);
+  }, [orderId, orderNumber, phone, token]);
+
+  const fetchRiderLocation = useCallback(async () => {
+    if (!orderId) return;
+    try {
+      const endpoint = token
+        ? `/orders/${orderId}/location?token=${encodeURIComponent(token)}`
+        : `/orders/${orderId}/location`;
+      const res = await api.get<{
+        active: boolean;
+        location?: {
+          latitude: number;
+          longitude: number;
+          speed?: number | null;
+          updatedAt?: string;
+        } | null;
+      }>(endpoint);
+      if (res?.active && res.location) {
+        setRiderLocation(res.location);
+      }
+    } catch {
+      // silent fallback
+    }
+  }, [orderId, token]);
 
   useEffect(() => {
     fetchOrder();
+    fetchRiderLocation();
 
     let unsubscribe = () => {};
     const targetId = order?.id || orderId;
@@ -99,6 +130,7 @@ export default function OrderTrackingScreen({ route, navigation }: OrderTracking
             };
           });
           setLastUpdated(new Date());
+          fetchRiderLocation();
         })
         .then((unsub) => {
           unsubscribe = unsub;
@@ -109,6 +141,7 @@ export default function OrderTrackingScreen({ route, navigation }: OrderTracking
     // 5-second polling fallback
     pollTimerRef.current = setInterval(() => {
       fetchOrder();
+      fetchRiderLocation();
     }, 5000);
 
     return () => {
@@ -117,7 +150,7 @@ export default function OrderTrackingScreen({ route, navigation }: OrderTracking
         clearInterval(pollTimerRef.current);
       }
     };
-  }, [fetchOrder, orderId, order?.id]);
+  }, [fetchOrder, fetchRiderLocation, orderId, order?.id]);
 
   const handleCallRestaurant = () => {
     Linking.openURL('tel:+9779852022202').catch(() => {
@@ -275,6 +308,51 @@ export default function OrderTrackingScreen({ route, navigation }: OrderTracking
         </View>
       )}
 
+      {/* Live Rider Location & Tracking */}
+      {(order?.status === 'OUT_FOR_DELIVERY' || riderLocation) && (
+        <View style={[styles.card, styles.riderCard]}>
+          <View style={styles.riderHeader}>
+            <View style={styles.riderIconCircle}>
+              <Ionicons name="bicycle" size={22} color="#FFFFFF" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.riderTitle}>Rider En Route</Text>
+              <Text style={styles.riderSubtitle}>
+                {riderLocation?.speed ? `Moving at ${(riderLocation.speed * 3.6).toFixed(0)} km/h` : 'Delivering your order hot & fresh'}
+              </Text>
+            </View>
+            <View style={styles.livePulseBadge}>
+              <View style={styles.pulseDot} />
+              <Text style={styles.livePulseText}>LIVE GPS</Text>
+            </View>
+          </View>
+
+          {/* Delivery OTP for secure handoff */}
+          {Boolean((order as any)?.deliveryOtp) && (
+            <View style={styles.otpBox}>
+              <Text style={styles.otpLabel}>Delivery Verification Code</Text>
+              <Text style={styles.otpValue}>{(order as any).deliveryOtp}</Text>
+              <Text style={styles.otpHint}>Share this 4-digit code with your rider upon arrival</Text>
+            </View>
+          )}
+
+          {riderLocation && (
+            <TouchableOpacity
+              style={styles.openMapBtn}
+              onPress={() => {
+                const url = `https://www.google.com/maps/search/?api=1&query=${riderLocation.latitude},${riderLocation.longitude}`;
+                Linking.openURL(url);
+              }}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="navigate-circle" size={18} color="#FFFFFF" />
+              <Text style={styles.openMapText}>Track Rider Location on Google Maps</Text>
+              <Ionicons name="open-outline" size={14} color="#FFFFFF" />
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
+
       {/* Customer and Delivery Details */}
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Recipient & Delivery</Text>
@@ -363,46 +441,48 @@ export default function OrderTrackingScreen({ route, navigation }: OrderTracking
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0b0716' },
-  content: { padding: 16, paddingBottom: 40 },
+  container: { flex: 1, backgroundColor: colors.background },
+  content: { padding: spacing.lg, paddingBottom: 40 },
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#0b0716',
+    backgroundColor: colors.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  loadingText: { color: '#94a3b8', marginTop: 12, fontSize: 14 },
+  loadingText: { color: colors.textSecondary, marginTop: 12, fontSize: 14 },
   errorContainer: {
     flex: 1,
-    backgroundColor: '#0b0716',
+    backgroundColor: colors.background,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
   },
-  errorTitle: { color: '#f8fafc', fontSize: 18, fontWeight: '700', marginTop: 12 },
-  errorText: { color: '#94a3b8', fontSize: 14, textAlign: 'center', marginTop: 6, marginBottom: 20 },
+  errorTitle: { color: colors.text, fontSize: 18, fontWeight: '700', marginTop: 12 },
+  errorText: { color: colors.textMuted, fontSize: 14, textAlign: 'center', marginTop: 6, marginBottom: 20 },
   retryBtn: {
-    backgroundColor: '#7c3aed',
+    backgroundColor: colors.purple,
     paddingHorizontal: 20,
     paddingVertical: 10,
-    borderRadius: 8,
-  },
-  retryBtnText: { color: '#fff', fontWeight: '600' },
-  card: {
-    backgroundColor: '#18122B',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
+    borderRadius: borderRadius.md,
     borderWidth: 1,
-    borderColor: 'rgba(168, 85, 247, 0.15)',
+    borderColor: colors.gold,
+  },
+  retryBtnText: { color: '#fff', fontWeight: 'bold' },
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.xl,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
   },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  orderNumber: { fontSize: 20, fontWeight: 'bold', color: '#f8fafc' },
-  orderType: { fontSize: 13, color: '#94a3b8', marginTop: 2 },
-  badge: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20, borderWidth: 1 },
+  orderNumber: { fontSize: 20, fontWeight: 'bold', color: colors.text },
+  orderType: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
+  badge: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: borderRadius.full, borderWidth: 1 },
   badgeText: { fontSize: 12, fontWeight: '700' },
-  updatedAt: { color: '#64748b', fontSize: 11, marginTop: 12 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#f8fafc', marginBottom: 14 },
+  updatedAt: { color: colors.textMuted, fontSize: 11, marginTop: 12 },
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 14 },
   timeline: { paddingLeft: 4 },
   timelineStep: { flexDirection: 'row', alignItems: 'flex-start' },
   iconColumn: { alignItems: 'center', width: 36 },
@@ -413,41 +493,137 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  stepCirclePast: { backgroundColor: '#10b981' },
-  stepCircleCurrent: { backgroundColor: '#7c3aed' },
-  stepCircleUpcoming: { backgroundColor: '#1e1b2e', borderWidth: 1, borderColor: '#334155' },
+  stepCirclePast: { backgroundColor: colors.success },
+  stepCircleCurrent: { backgroundColor: colors.purple, borderWidth: 2, borderColor: colors.gold },
+  stepCircleUpcoming: { backgroundColor: colors.backgroundSecondary, borderWidth: 1, borderColor: colors.surfaceBorder },
   timelineLine: { width: 2, height: 32 },
-  timelineLineActive: { backgroundColor: '#10b981' },
-  timelineLineInactive: { backgroundColor: '#334155' },
+  timelineLineActive: { backgroundColor: colors.success },
+  timelineLineInactive: { backgroundColor: colors.surfaceBorder },
   stepContent: { flex: 1, paddingLeft: 12, paddingTop: 4, paddingBottom: 24 },
-  stepLabel: { fontSize: 14, fontWeight: '600', color: '#cbd5e1' },
-  stepLabelCurrent: { color: '#a855f7', fontWeight: 'bold', fontSize: 15 },
-  stepLabelUpcoming: { color: '#64748b' },
-  stepSublabel: { color: '#c084fc', fontSize: 11, marginTop: 2 },
+  stepLabel: { fontSize: 14, fontWeight: '600', color: colors.textSecondary },
+  stepLabelCurrent: { color: colors.purple, fontWeight: 'bold', fontSize: 15 },
+  stepLabelUpcoming: { color: colors.textMuted },
+  stepSublabel: { color: colors.goldDark, fontSize: 11, marginTop: 2 },
   cancelledCard: { alignItems: 'center', padding: 24 },
-  cancelledTitle: { color: '#ef4444', fontSize: 18, fontWeight: 'bold', marginTop: 8 },
-  cancelledText: { color: '#94a3b8', fontSize: 13, textAlign: 'center', marginTop: 6 },
+  cancelledTitle: { color: colors.error, fontSize: 18, fontWeight: 'bold', marginTop: 8 },
+  cancelledText: { color: colors.textMuted, fontSize: 13, textAlign: 'center', marginTop: 6 },
+  riderCard: {
+    borderColor: colors.gold,
+    backgroundColor: colors.surfaceElevated,
+  },
+  riderHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  riderIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.purple,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: colors.gold,
+  },
+  riderTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+  riderSubtitle: {
+    fontSize: 12,
+    color: colors.textMuted,
+    marginTop: 2,
+  },
+  livePulseBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: 'rgba(16, 185, 129, 0.12)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+    borderColor: colors.success,
+  },
+  pulseDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.success,
+  },
+  livePulseText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: colors.success,
+    letterSpacing: 0.5,
+  },
+  otpBox: {
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    alignItems: 'center',
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
+  },
+  otpLabel: {
+    fontSize: 12,
+    color: colors.textMuted,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  otpValue: {
+    fontSize: 26,
+    fontWeight: '900',
+    color: colors.gold,
+    letterSpacing: 4,
+  },
+  otpHint: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    marginTop: 4,
+  },
+  openMapBtn: {
+    backgroundColor: colors.purple,
+    borderRadius: borderRadius.md,
+    paddingVertical: 12,
+    paddingHorizontal: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    borderWidth: 1,
+    borderColor: colors.gold,
+  },
+  openMapText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 13,
+  },
   detailRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-  detailLabel: { color: '#94a3b8', fontSize: 13 },
-  detailValue: { color: '#f8fafc', fontSize: 13, fontWeight: '600' },
+  detailLabel: { color: colors.textMuted, fontSize: 13 },
+  detailValue: { color: colors.text, fontSize: 13, fontWeight: '600' },
   orderItemRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
-  itemName: { color: '#e2e8f0', fontSize: 14, fontWeight: '500' },
-  itemVariant: { color: '#a855f7', fontSize: 12, marginTop: 2 },
-  itemNotes: { color: '#94a3b8', fontSize: 11, fontStyle: 'italic', marginTop: 2 },
-  itemPrice: { color: '#f8fafc', fontSize: 14, fontWeight: '600' },
-  divider: { height: 1, backgroundColor: 'rgba(255,255,255,0.08)', marginVertical: 12 },
+  itemName: { color: colors.text, fontSize: 14, fontWeight: '600' },
+  itemVariant: { color: colors.gold, fontSize: 12, marginTop: 2 },
+  itemNotes: { color: colors.textMuted, fontSize: 11, fontStyle: 'italic', marginTop: 2 },
+  itemPrice: { color: colors.text, fontSize: 14, fontWeight: '700' },
+  divider: { height: 1, backgroundColor: colors.surfaceBorder, marginVertical: 12 },
   totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  totalLabel: { fontSize: 15, fontWeight: '700', color: '#f8fafc' },
-  totalValue: { fontSize: 18, fontWeight: 'bold', color: '#a855f7' },
+  totalLabel: { fontSize: 15, fontWeight: '700', color: colors.text },
+  totalValue: { fontSize: 18, fontWeight: 'bold', color: colors.gold },
   actionRow: { flexDirection: 'row', gap: 12, marginTop: 8 },
   callBtn: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#3b82f6',
+    backgroundColor: colors.info,
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: borderRadius.md,
     gap: 8,
   },
   whatsAppBtn: {
@@ -455,9 +631,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#10b981',
+    backgroundColor: colors.success,
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: borderRadius.md,
     gap: 8,
   },
   actionBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
@@ -465,16 +641,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    backgroundColor: colors.errorMuted,
     borderWidth: 1,
-    borderColor: '#ef4444',
+    borderColor: colors.error,
     paddingVertical: 12,
-    borderRadius: 12,
+    borderRadius: borderRadius.md,
     marginTop: 12,
     gap: 8,
   },
   cancelOrderBtnText: {
-    color: '#ef4444',
+    color: colors.error,
     fontWeight: '700',
     fontSize: 14,
   },

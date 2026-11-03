@@ -16,11 +16,13 @@ export const ne: Translations = {
     viewAll: 'सबै हेर्नुहोस्',
   },
   navigation: {
+    home: 'गृहपृष्ठ',
     menu: 'मेनु',
     reservations: 'आरक्षण',
     venues: 'हल/बगैंचा',
     cart: 'कार्ट',
     orders: 'अर्डरहरू',
+    favorites: 'मनपर्ने',
     profile: 'प्रोफाइल',
   },
   menu: {

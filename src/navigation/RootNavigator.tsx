@@ -8,12 +8,14 @@ import { useI18n } from '../i18n';
 import { colors } from '../theme';
 
 // Screens
+import { HomeScreen } from '../screens/HomeScreen';
 import { MenuScreen } from '../screens/MenuScreen';
 import { ReservationsScreen } from '../screens/ReservationsScreen';
 import { VenuesScreen } from '../screens/VenuesScreen';
 import { CartScreen } from '../screens/CartScreen';
 import { CheckoutScreen } from '../screens/CheckoutScreen';
 import { DishDetailModal } from '../screens/DishDetailModal';
+import { FavoritesScreen } from '../screens/FavoritesScreen';
 import OrderTrackingScreen from '../screens/OrderTrackingScreen';
 import OrdersScreen from '../screens/OrdersScreen';
 import ProfileScreen from '../screens/ProfileScreen';
@@ -27,9 +29,12 @@ import type { DishDto } from '../services/api-client';
 export type RootStackParamList = {
   MainTabs: undefined;
   DishDetail: { dish: DishDto | MenuDishDto };
+  Cart: undefined;
   Checkout: undefined;
   OrderTracking: { orderId: string; orderNumber?: string; phone?: string; token?: string };
   Orders: undefined;
+  Reservations: undefined;
+  Venues: undefined;
   LoginModal: undefined;
   RegisterModal: undefined;
   MayaModal: undefined;
@@ -37,10 +42,10 @@ export type RootStackParamList = {
 };
 
 export type MainTabParamList = {
+  Home: undefined;
   Menu: undefined;
-  Reservations: undefined;
-  Venues: undefined;
-  Cart: undefined;
+  Orders: undefined;
+  Favorites: undefined;
   Profile: undefined;
 };
 
@@ -48,11 +53,11 @@ const Tab = createBottomTabNavigator<MainTabParamList>();
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 function MainTabs() {
-  const itemCount = useCartStore((s) => s.getItemCount());
   const { t } = useI18n();
 
   return (
     <Tab.Navigator
+      initialRouteName="Home"
       screenOptions={{
         headerStyle: { backgroundColor: colors.background },
         headerTintColor: colors.text,
@@ -65,14 +70,26 @@ function MainTabs() {
           paddingBottom: 8,
           paddingTop: 6,
         },
-        tabBarActiveTintColor: colors.gold,
+        tabBarActiveTintColor: colors.purple,
         tabBarInactiveTintColor: colors.textMuted,
         tabBarLabelStyle: {
           fontSize: 11,
-          fontWeight: '600',
+          fontWeight: '700',
         },
       }}
     >
+      <Tab.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{
+          title: t.navigation.home,
+          tabBarLabel: t.navigation.home,
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'home' : 'home-outline'} size={size} color={color} />
+          ),
+          headerShown: false,
+        }}
+      />
       <Tab.Screen
         name="Menu"
         component={MenuScreen}
@@ -86,39 +103,25 @@ function MainTabs() {
         }}
       />
       <Tab.Screen
-        name="Reservations"
-        component={ReservationsScreen}
+        name="Orders"
+        component={OrdersScreen}
         options={{
-          title: t.navigation.reservations,
-          tabBarLabel: t.navigation.reservations,
+          title: t.navigation.orders,
+          tabBarLabel: t.navigation.orders,
           tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons name={focused ? 'calendar' : 'calendar-outline'} size={size} color={color} />
+            <Ionicons name={focused ? 'receipt' : 'receipt-outline'} size={size} color={color} />
           ),
           headerShown: false,
         }}
       />
       <Tab.Screen
-        name="Venues"
-        component={VenuesScreen}
+        name="Favorites"
+        component={FavoritesScreen}
         options={{
-          title: t.navigation.venues,
-          tabBarLabel: t.navigation.venues,
+          title: t.navigation.favorites,
+          tabBarLabel: t.navigation.favorites,
           tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons name={focused ? 'business' : 'business-outline'} size={size} color={color} />
-          ),
-          headerShown: false,
-        }}
-      />
-      <Tab.Screen
-        name="Cart"
-        component={CartScreen}
-        options={{
-          title: t.navigation.cart,
-          tabBarLabel: t.navigation.cart,
-          tabBarBadge: itemCount > 0 ? itemCount : undefined,
-          tabBarBadgeStyle: { backgroundColor: colors.purple, color: '#fff', fontSize: 11, fontWeight: 'bold' },
-          tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons name={focused ? 'cart' : 'cart-outline'} size={size} color={color} />
+            <Ionicons name={focused ? 'heart' : 'heart-outline'} size={size} color={color} />
           ),
           headerShown: false,
         }}
@@ -152,13 +155,16 @@ const linking: LinkingOptions<RootStackParamList> = {
     screens: {
       MainTabs: {
         screens: {
+          Home: 'home',
           Menu: 'menu',
-          Reservations: 'reservations',
-          Venues: 'venues',
-          Cart: 'cart',
+          Orders: 'orders-tab',
+          Favorites: 'favorites',
           Profile: 'profile',
         },
       },
+      Cart: 'cart',
+      Reservations: 'reservations',
+      Venues: 'venues',
       OrderTracking: {
         path: 'orders/:orderId',
       },
@@ -186,6 +192,27 @@ export function RootNavigator() {
           name="MainTabs"
           component={MainTabs}
           options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="Cart"
+          component={CartScreen}
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="Reservations"
+          component={ReservationsScreen}
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="Venues"
+          component={VenuesScreen}
+          options={{
+            headerShown: false,
+          }}
         />
         <Stack.Screen
           name="DishDetail"

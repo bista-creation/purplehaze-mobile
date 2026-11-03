@@ -16,11 +16,13 @@ export const en: Translations = {
     viewAll: 'View All',
   },
   navigation: {
+    home: 'Home',
     menu: 'Menu',
     reservations: 'Reservations',
     venues: 'Venues',
     cart: 'Cart',
     orders: 'Orders',
+    favorites: 'Favorites',
     profile: 'Profile',
   },
   menu: {

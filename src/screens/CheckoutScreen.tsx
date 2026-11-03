@@ -14,6 +14,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { api } from "../services/api";
 import { useCartStore } from "../stores/cart-store";
 import { useAuthStore } from "../stores/auth-store";
+import { colors, spacing, borderRadius } from "../theme";
 import type { OrderSummaryDto, PaymentMethod } from "../shared";
 
 export function CheckoutScreen({ navigation }: any) {
@@ -211,7 +212,7 @@ export function CheckoutScreen({ navigation }: any) {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Checkout</Text>
         <View style={{ width: 24 }} />
@@ -443,18 +444,18 @@ export function CheckoutScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0b0716",
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing.lg,
     paddingTop: 54,
-    paddingBottom: 14,
-    backgroundColor: "#130d24",
+    paddingBottom: spacing.md,
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(124, 58, 237, 0.2)",
+    borderBottomColor: colors.surfaceBorder,
   },
   backBtn: {
     padding: 4,
@@ -462,20 +463,20 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#fff",
+    color: colors.text,
   },
   scrollContent: {
-    padding: 16,
-    paddingBottom: 100,
-    gap: 14,
+    padding: spacing.lg,
+    paddingBottom: 110,
+    gap: spacing.md,
   },
   typeSelector: {
     flexDirection: "row",
-    backgroundColor: "#160e2c",
-    borderRadius: 12,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
     padding: 4,
     borderWidth: 1,
-    borderColor: "rgba(124, 58, 237, 0.2)",
+    borderColor: colors.surfaceBorder,
   },
   typeBtn: {
     flex: 1,
@@ -483,43 +484,46 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 10,
-    borderRadius: 10,
+    borderRadius: borderRadius.md,
     gap: 6,
   },
   typeBtnActive: {
-    backgroundColor: "#7c3aed",
+    backgroundColor: colors.purple,
+    borderWidth: 1,
+    borderColor: colors.gold,
   },
   typeText: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#94a3b8",
+    color: colors.textMuted,
   },
   typeTextActive: {
     color: "#fff",
+    fontWeight: "bold",
   },
   card: {
-    backgroundColor: "#140e29",
-    borderRadius: 16,
-    padding: 16,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.xl,
+    padding: spacing.lg,
     borderWidth: 1,
-    borderColor: "rgba(124, 58, 237, 0.15)",
+    borderColor: colors.surfaceBorder,
   },
   cardTitle: {
     fontSize: 15,
     fontWeight: "bold",
-    color: "#cbd5e1",
-    marginBottom: 12,
+    color: colors.text,
+    marginBottom: spacing.md,
   },
   input: {
-    backgroundColor: "#1c1436",
-    borderRadius: 10,
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.md,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    color: "#fff",
+    color: colors.text,
     fontSize: 14,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: "rgba(124, 58, 237, 0.2)",
+    borderColor: colors.surfaceBorder,
   },
   instructionsInput: {
     height: 60,
@@ -534,11 +538,13 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   applyCouponBtn: {
-    backgroundColor: "#7c3aed",
-    borderRadius: 10,
+    backgroundColor: colors.purple,
+    borderRadius: borderRadius.md,
     paddingHorizontal: 18,
     justifyContent: "center",
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: colors.gold,
   },
   applyCouponText: {
     color: "#fff",
@@ -552,35 +558,35 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   appliedText: {
-    color: "#22c55e",
+    color: colors.success,
     fontSize: 13,
     fontWeight: "600",
   },
   paymentRow: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#1a1233",
+    backgroundColor: colors.background,
     padding: 12,
-    borderRadius: 12,
+    borderRadius: borderRadius.lg,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: "rgba(124, 58, 237, 0.15)",
+    borderColor: colors.surfaceBorder,
   },
   paymentRowActive: {
-    borderColor: "#a855f7",
-    backgroundColor: "rgba(124, 58, 237, 0.15)",
+    borderColor: colors.gold,
+    backgroundColor: colors.purpleMuted,
   },
   paymentTextCol: {
     flex: 1,
     marginLeft: 10,
   },
   paymentName: {
-    color: "#fff",
+    color: colors.text,
     fontSize: 14,
     fontWeight: "bold",
   },
   paymentSub: {
-    color: "#94a3b8",
+    color: colors.textMuted,
     fontSize: 12,
   },
   radioCircle: {
@@ -588,29 +594,29 @@ const styles = StyleSheet.create({
     height: 18,
     borderRadius: 9,
     borderWidth: 2,
-    borderColor: "#64748b",
+    borderColor: colors.surfaceBorder,
   },
   radioActive: {
-    borderColor: "#a855f7",
-    backgroundColor: "#a855f7",
+    borderColor: colors.purple,
+    backgroundColor: colors.purple,
   },
   paymentRowDisabled: {
     opacity: 0.6,
   },
   radioCircleDisabled: {
-    borderColor: "#475569",
+    borderColor: colors.textDisabled,
     backgroundColor: "transparent",
   },
   pendingBadge: {
-    backgroundColor: "rgba(245, 158, 11, 0.15)",
+    backgroundColor: colors.warningMuted,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
     borderWidth: 1,
-    borderColor: "rgba(245, 158, 11, 0.4)",
+    borderColor: colors.warning,
   },
   pendingBadgeText: {
-    color: "#f59e0b",
+    color: colors.warning,
     fontSize: 10,
     fontWeight: "700",
   },
@@ -620,27 +626,27 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   summaryLabel: {
-    color: "#94a3b8",
+    color: colors.textMuted,
     fontSize: 14,
   },
   summaryVal: {
-    color: "#fff",
+    color: colors.text,
     fontSize: 14,
     fontWeight: "600",
   },
   totalRow: {
     borderTopWidth: 1,
-    borderTopColor: "rgba(255, 255, 255, 0.08)",
+    borderTopColor: colors.surfaceBorder,
     paddingTop: 10,
     marginTop: 4,
   },
   totalLabel: {
-    color: "#fff",
+    color: colors.text,
     fontSize: 16,
     fontWeight: "bold",
   },
   totalVal: {
-    color: "#a855f7",
+    color: colors.gold,
     fontSize: 18,
     fontWeight: "bold",
   },
@@ -649,21 +655,23 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: "#130d24",
+    backgroundColor: colors.surface,
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 28,
     borderTopWidth: 1,
-    borderTopColor: "rgba(124, 58, 237, 0.2)",
+    borderTopColor: colors.surfaceBorder,
   },
   placeOrderBtn: {
-    backgroundColor: "#7c3aed",
-    borderRadius: 12,
+    backgroundColor: colors.purple,
+    borderRadius: borderRadius.lg,
     paddingVertical: 14,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
+    borderWidth: 1,
+    borderColor: colors.gold,
   },
   btnDisabled: {
     opacity: 0.6,

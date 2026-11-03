@@ -6,10 +6,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "dark",
-    "splash": {
-      "backgroundColor": "#0b0716"
-    },
+    "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.bistacreation.purplehaze"
@@ -17,7 +14,7 @@
     "android": {
       "package": "com.bistacreation.purplehaze",
       "adaptiveIcon": {
-        "backgroundColor": "#0b0716",
+        "backgroundColor": "#54266D",
         "foregroundImage": "./assets/android-icon-foreground.png"
       }
     },
@@ -27,13 +24,14 @@
         "expo-notifications",
         {
           "icon": "./assets/icon.png",
-          "color": "#7c3aed"
+          "color": "#54266D"
         }
-      ]
+      ],
+      "expo-font"
     ],
     "extra": {
-      "apiUrl": "https://purple-haze-git-feature-api-v1-bistacreation-3818.vercel.app/api/v1",
-      "websiteUrl": "https://purple-haze-git-feature-api-v1-bistacreation-3818.vercel.app"
+      "apiUrl": "https://purplehaze-nine.vercel.app/api/v1",
+      "websiteUrl": "https://purplehaze-nine.vercel.app"
     }
   }
 }

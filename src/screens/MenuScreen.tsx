@@ -28,10 +28,13 @@ export function MenuScreen({ navigation }: any) {
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [vegOnly, setVegOnly] = useState(false);
+  const [sortBy, setSortBy] = useState<'default' | 'price-asc' | 'price-desc' | 'under-500'>('default');
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const addItem = useCartStore((s) => s.addItem);
+  const cartItemCount = useCartStore((s) => s.getItemCount());
+  const cartSubtotal = useCartStore((s) => s.getSubtotalNpr());
   const { favoriteDishIds, toggleFavorite, isFavorite } = useFavoritesStore();
 
   const loadMenu = async () => {
@@ -77,7 +80,7 @@ export function MenuScreen({ navigation }: any) {
   }, []);
 
   const filteredDishes = useMemo(() => {
-    return dishes.filter((dish) => {
+    let list = dishes.filter((dish) => {
       if (showOnlyFavorites && !favoriteDishIds.includes(dish.id)) {
         return false;
       }
@@ -85,6 +88,9 @@ export function MenuScreen({ navigation }: any) {
         return false;
       }
       if (vegOnly && !dish.isVeg) {
+        return false;
+      }
+      if (sortBy === 'under-500' && dish.price > 50000) {
         return false;
       }
       if (searchQuery.trim().length > 0) {
@@ -96,7 +102,15 @@ export function MenuScreen({ navigation }: any) {
       }
       return true;
     });
-  }, [dishes, selectedCategory, showOnlyFavorites, favoriteDishIds, vegOnly, searchQuery]);
+
+    if (sortBy === 'price-asc') {
+      list = [...list].sort((a, b) => a.price - b.price);
+    } else if (sortBy === 'price-desc') {
+      list = [...list].sort((a, b) => b.price - a.price);
+    }
+
+    return list;
+  }, [dishes, selectedCategory, showOnlyFavorites, favoriteDishIds, vegOnly, sortBy, searchQuery]);
 
   const handleQuickAdd = (dish: DishDto) => {
     if (!dish.isAvailable) return;
@@ -241,6 +255,38 @@ export function MenuScreen({ navigation }: any) {
         </ScrollView>
       </View>
 
+      {/* Sorting & Quick Filters */}
+      <View style={styles.sortWrapper}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.sortScroll}>
+          <TouchableOpacity
+            style={[styles.sortChip, sortBy === 'default' && styles.sortChipActive]}
+            onPress={() => setSortBy('default')}
+          >
+            <Text style={[styles.sortChipText, sortBy === 'default' && styles.sortChipTextActive]}>Recommended</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.sortChip, sortBy === 'price-asc' && styles.sortChipActive]}
+            onPress={() => setSortBy(sortBy === 'price-asc' ? 'default' : 'price-asc')}
+          >
+            <Ionicons name="arrow-up" size={12} color={sortBy === 'price-asc' ? colors.gold : colors.textMuted} />
+            <Text style={[styles.sortChipText, sortBy === 'price-asc' && styles.sortChipTextActive]}>Price: Low to High</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.sortChip, sortBy === 'price-desc' && styles.sortChipActive]}
+            onPress={() => setSortBy(sortBy === 'price-desc' ? 'default' : 'price-desc')}
+          >
+            <Ionicons name="arrow-down" size={12} color={sortBy === 'price-desc' ? colors.gold : colors.textMuted} />
+            <Text style={[styles.sortChipText, sortBy === 'price-desc' && styles.sortChipTextActive]}>Price: High to Low</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.sortChip, sortBy === 'under-500' && styles.sortChipActive]}
+            onPress={() => setSortBy(sortBy === 'under-500' ? 'default' : 'under-500')}
+          >
+            <Text style={[styles.sortChipText, sortBy === 'under-500' && styles.sortChipTextActive]}>Under Rs. 500</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </View>
+
       {/* Dishes List */}
       <FlatList
         data={filteredDishes}
@@ -342,9 +388,37 @@ export function MenuScreen({ navigation }: any) {
         }
       />
 
+      {/* Floating Cart Bar (Persistent summary when cart has items) */}
+      {cartItemCount > 0 && (
+        <TouchableOpacity
+          style={styles.floatingCartBar}
+          onPress={() => navigation.navigate('Cart')}
+          activeOpacity={0.9}
+        >
+          <View style={styles.floatingCartLeft}>
+            <View style={styles.floatingCartBadge}>
+              <Ionicons name="cart" size={16} color="#FFFFFF" />
+              <Text style={styles.floatingCartCount}>{cartItemCount}</Text>
+            </View>
+            <View>
+              <Text style={styles.floatingCartTitle}>
+                {cartItemCount} {cartItemCount === 1 ? 'item' : 'items'} added
+              </Text>
+              <Text style={styles.floatingCartSubtotal}>
+                Rs. {cartSubtotal.toLocaleString()}
+              </Text>
+            </View>
+          </View>
+          <View style={styles.floatingCartAction}>
+            <Text style={styles.floatingCartActionText}>View Cart</Text>
+            <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
+          </View>
+        </TouchableOpacity>
+      )}
+
       {/* Maya Floating AI Assistant Button */}
       <TouchableOpacity
-        style={styles.mayaFab}
+        style={[styles.mayaFab, cartItemCount > 0 && styles.mayaFabWithCart]}
         onPress={() => navigation.navigate('MayaModal')}
         activeOpacity={0.85}
       >
@@ -623,5 +697,102 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '800',
     letterSpacing: 0.5,
+  },
+  mayaFabWithCart: {
+    bottom: 84,
+  },
+  sortWrapper: {
+    paddingBottom: spacing.sm,
+  },
+  sortScroll: {
+    paddingHorizontal: spacing.lg,
+    gap: spacing.xs,
+  },
+  sortChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
+  },
+  sortChipActive: {
+    backgroundColor: colors.purpleMuted,
+    borderColor: colors.gold,
+  },
+  sortChipText: {
+    fontSize: 11,
+    color: colors.textMuted,
+    fontWeight: '600',
+  },
+  sortChipTextActive: {
+    color: colors.purple,
+    fontWeight: '700',
+  },
+  floatingCartBar: {
+    position: 'absolute',
+    bottom: 14,
+    left: 16,
+    right: 16,
+    backgroundColor: colors.purple,
+    borderRadius: borderRadius.xl,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    shadowColor: colors.purpleDark,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: colors.gold,
+  },
+  floatingCartLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  floatingCartBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: borderRadius.md,
+  },
+  floatingCartCount: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+    fontSize: 12,
+  },
+  floatingCartTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.85)',
+  },
+  floatingCartSubtotal: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  floatingCartAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: borderRadius.lg,
+  },
+  floatingCartActionText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#FFFFFF',
   },
 });

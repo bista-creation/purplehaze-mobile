@@ -14,7 +14,7 @@ export function getApiBaseUrl(): string {
     return envUrl;
   }
 
-  return 'http://localhost:3000/api/v1';
+  return 'https://purplehaze-nine.vercel.app/api/v1';
 }
 
 export const API_BASE_URL = getApiBaseUrl();

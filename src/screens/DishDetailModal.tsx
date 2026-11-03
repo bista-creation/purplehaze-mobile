@@ -33,6 +33,7 @@ export function DishDetailModal({ route, navigation }: any) {
     variants.find((v) => v.isDefault) || variants[0] || null
   );
   const [selectedAddOns, setSelectedAddOns] = useState<any[]>([]);
+  const [spiceLevel, setSpiceLevel] = useState<'Mild' | 'Medium' | 'Spicy' | 'Extra Hot'>('Medium');
   const [instructions, setInstructions] = useState('');
   const [quantity, setQuantity] = useState(1);
 
@@ -52,6 +53,11 @@ export function DishDetailModal({ route, navigation }: any) {
     selectedAddOns.reduce((sum, a) => sum + (a.price || 0), 0);
 
   const handleAddToCart = () => {
+    const combinedNotes = [
+      dish.isSpicy || spiceLevel !== 'Medium' ? `Spice: ${spiceLevel}` : '',
+      instructions.trim(),
+    ].filter(Boolean).join(' • ');
+
     addItem({
       dishId: dish.id,
       name: dish.name,
@@ -66,7 +72,7 @@ export function DishDetailModal({ route, navigation }: any) {
         name: a.name,
         price: a.price,
       })),
-      instructions: instructions.trim() || undefined,
+      instructions: combinedNotes || undefined,
       quantity,
     });
 
@@ -94,11 +100,54 @@ export function DishDetailModal({ route, navigation }: any) {
         </TouchableOpacity>
 
         <View style={styles.content}>
+          {/* Dietary & Spice Tags */}
+          <View style={styles.tagRow}>
+            <View style={[styles.dietBadge, dish.isVeg ? styles.vegBadge : styles.nonVegBadge]}>
+              <View style={[styles.dietDot, dish.isVeg ? styles.vegDot : styles.nonVegDot]} />
+              <Text style={[styles.dietText, dish.isVeg ? styles.vegText : styles.nonVegText]}>
+                {dish.isVeg ? 'Vegetarian' : 'Non-Vegetarian'}
+              </Text>
+            </View>
+            {dish.isSpicy && (
+              <View style={styles.spicyTag}>
+                <Ionicons name="flame" size={13} color={colors.nonVeg} />
+                <Text style={styles.spicyTagText}>Chef Special Spice</Text>
+              </View>
+            )}
+          </View>
+
           {/* Title and tags */}
           <Text style={styles.title}>{dish.name}</Text>
           {dish.description ? (
             <Text style={styles.description}>{dish.description}</Text>
           ) : null}
+
+          {/* Spice Level Customization */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Spice Level Preference</Text>
+            <View style={styles.spiceRow}>
+              {(['Mild', 'Medium', 'Spicy', 'Extra Hot'] as const).map((level) => {
+                const isSelected = spiceLevel === level;
+                return (
+                  <TouchableOpacity
+                    key={level}
+                    style={[styles.spicePill, isSelected && styles.spicePillActive]}
+                    onPress={() => setSpiceLevel(level)}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons
+                      name="flame"
+                      size={14}
+                      color={isSelected ? '#FFFFFF' : colors.textMuted}
+                    />
+                    <Text style={[styles.spicePillText, isSelected && styles.spicePillTextActive]}>
+                      {level}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
 
           {/* Variants section */}
           {variants.length > 0 && (
@@ -251,6 +300,93 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: spacing.lg,
+  },
+  tagRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.xs,
+  },
+  dietBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: borderRadius.sm,
+    borderWidth: 1,
+  },
+  vegBadge: {
+    borderColor: colors.veg,
+    backgroundColor: 'rgba(22, 163, 74, 0.1)',
+  },
+  nonVegBadge: {
+    borderColor: colors.nonVeg,
+    backgroundColor: 'rgba(220, 38, 38, 0.1)',
+  },
+  dietDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  vegDot: {
+    backgroundColor: colors.veg,
+  },
+  nonVegDot: {
+    backgroundColor: colors.nonVeg,
+  },
+  dietText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  vegText: {
+    color: colors.veg,
+  },
+  nonVegText: {
+    color: colors.nonVeg,
+  },
+  spicyTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: borderRadius.sm,
+  },
+  spicyTagText: {
+    color: colors.nonVeg,
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  spiceRow: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+  },
+  spicePill: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    backgroundColor: colors.surface,
+    paddingVertical: 8,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
+  },
+  spicePillActive: {
+    backgroundColor: colors.purple,
+    borderColor: colors.gold,
+  },
+  spicePillText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
+  spicePillTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '700',
   },
   title: {
     fontSize: 22,

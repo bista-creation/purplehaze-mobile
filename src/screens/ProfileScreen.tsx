@@ -10,8 +10,10 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
+import { Image } from 'react-native';
 import { Header, Card, Typography, Button, Badge, GoogleSignInButton } from '../components/ui';
 import { useAuthStore } from '../stores/auth-store';
+import { useThemeStore } from '../stores/theme-store';
 import { useI18n } from '../i18n';
 import { colors, spacing, borderRadius } from '../theme';
 import { api } from '../services/api-client';
@@ -22,6 +24,7 @@ interface ProfileScreenProps {
 
 export default function ProfileScreen({ navigation }: ProfileScreenProps) {
   const { user, isAuthenticated, logout } = useAuthStore();
+  const { mode, setMode } = useThemeStore();
   const { t, language, setLanguage } = useI18n();
 
   const handleLogout = () => {
@@ -174,11 +177,22 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
         <Card variant="surface" style={styles.menuGroup}>
           <TouchableOpacity
             style={styles.menuItem}
-            onPress={() => navigation.navigate('OrderTracking')}
+            onPress={() => navigation.navigate('Orders')}
           >
             <View style={styles.menuLeft}>
-              <Ionicons name="search-outline" size={20} color={colors.gold} style={styles.menuIcon} />
-              <Typography variant="body" bold>{t.orders.trackOrder}</Typography>
+              <Ionicons name="receipt-outline" size={20} color={colors.gold} style={styles.menuIcon} />
+              <Typography variant="body" bold>{t.navigation.orders}</Typography>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.menuItem, styles.menuItemBorder]}
+            onPress={() => navigation.navigate('Favorites')}
+          >
+            <View style={styles.menuLeft}>
+              <Ionicons name="heart-outline" size={20} color={colors.gold} style={styles.menuIcon} />
+              <Typography variant="body" bold>{t.navigation.favorites}</Typography>
             </View>
             <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
           </TouchableOpacity>
@@ -206,6 +220,42 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
           </TouchableOpacity>
         </Card>
 
+        {/* App Appearance & Theme */}
+        <Typography variant="title" style={styles.sectionHeader}>
+          Appearance & Theme
+        </Typography>
+        <Card variant="surface" style={styles.menuGroup}>
+          <View style={styles.languageRow}>
+            <View style={styles.menuLeft}>
+              <Ionicons
+                name={mode === 'dark' ? 'moon' : 'sunny'}
+                size={20}
+                color={colors.gold}
+                style={styles.menuIcon}
+              />
+              <Typography variant="body" bold>Display Mode</Typography>
+            </View>
+            <View style={styles.langPills}>
+              <TouchableOpacity
+                style={[styles.langPill, mode === 'light' ? styles.langPillActive : null]}
+                onPress={() => setMode('light')}
+              >
+                <Text style={[styles.langPillText, mode === 'light' ? styles.langPillTextActive : null]}>
+                  Light
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.langPill, mode === 'dark' ? styles.langPillActive : null]}
+                onPress={() => setMode('dark')}
+              >
+                <Text style={[styles.langPillText, mode === 'dark' ? styles.langPillTextActive : null]}>
+                  Dark
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Card>
+
         {/* Language & Preferences */}
         <Typography variant="title" style={styles.sectionHeader}>
           {t.profile.language}
@@ -213,7 +263,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
         <Card variant="surface" style={styles.menuGroup}>
           <View style={styles.languageRow}>
             <View style={styles.menuLeft}>
-              <Ionicons name="globe-outline" size={20} color={colors.purpleLight} style={styles.menuIcon} />
+              <Ionicons name="globe-outline" size={20} color={colors.purple} style={styles.menuIcon} />
               <Typography variant="body" bold>{t.profile.language}</Typography>
             </View>
             <View style={styles.langPills}>
@@ -307,9 +357,23 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
           </View>
         ) : null}
 
-        <Text style={styles.versionInfo}>
-          Purple Haze Mobile v1.0.0 (Biratnagar, Nepal)
-        </Text>
+        {/* Brand Insignia & Heritage Footer */}
+        <View style={styles.brandFooter}>
+          <Image
+            source={require('../../assets/logo.png')}
+            style={styles.brandFooterLogo}
+            resizeMode="contain"
+          />
+          <Text style={styles.brandFooterTitle}>
+            Purple Haze Restaurant & Garden
+          </Text>
+          <Text style={styles.brandFooterSub}>
+            Biratnagar, Nepal • Crafted with Passion
+          </Text>
+          <Text style={styles.versionInfo}>
+            Mobile App v1.0.0
+          </Text>
+        </View>
       </ScrollView>
     </View>
   );
@@ -492,10 +556,32 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
     marginBottom: spacing.lg,
   },
+  brandFooter: {
+    alignItems: 'center',
+    marginTop: spacing.xl,
+    marginBottom: spacing.md,
+    gap: 4,
+  },
+  brandFooterLogo: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    marginBottom: 6,
+  },
+  brandFooterTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.gold,
+    letterSpacing: 0.5,
+  },
+  brandFooterSub: {
+    fontSize: 11,
+    color: colors.textMuted,
+  },
   versionInfo: {
     textAlign: 'center',
-    fontSize: 11,
+    fontSize: 10,
     color: colors.textDisabled,
-    marginTop: spacing.md,
+    marginTop: 4,
   },
 });

@@ -16,11 +16,13 @@ export interface Translations {
     viewAll: string;
   };
   navigation: {
+    home: string;
     menu: string;
     reservations: string;
     venues: string;
     cart: string;
     orders: string;
+    favorites: string;
     profile: string;
   };
   menu: {
