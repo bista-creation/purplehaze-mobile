@@ -1,17 +1,23 @@
 import { tokenStorage } from './token-storage';
 import type { ApiResponse } from '../shared/types';
 
-function resolveApiBaseUrl(): string {
-  if (process.env.EXPO_PUBLIC_API_URL) {
-    return process.env.EXPO_PUBLIC_API_URL;
+export function getApiBaseUrl(): string {
+  if (typeof window !== 'undefined' && window.location) {
+    const host = window.location.hostname;
+    if (host === 'localhost' || host === '127.0.0.1') {
+      return `http://${host}:3000/api/v1`;
+    }
   }
-  if (typeof window !== 'undefined' && window.location?.hostname === 'localhost') {
-    return 'http://localhost:3000/api/v1';
+
+  const envUrl = process.env.EXPO_PUBLIC_API_URL;
+  if (envUrl && !envUrl.includes('purple-haze-git-feature-api-v1-bistacreation-3818.vercel.app')) {
+    return envUrl;
   }
+
   return 'http://localhost:3000/api/v1';
 }
 
-export const API_BASE_URL = resolveApiBaseUrl();
+export const API_BASE_URL = getApiBaseUrl();
 
 export class ApiError extends Error {
   code: string;
@@ -180,8 +186,9 @@ async function executeTokenRefresh(): Promise<string | null> {
   const refreshToken = await tokenStorage.getRefreshToken();
   if (!refreshToken) return null;
 
+  const baseUrl = getApiBaseUrl();
   try {
-    const res = await fetch(`${API_BASE_URL}/auth/refresh`, {
+    const res = await fetch(`${baseUrl}/auth/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refreshToken }),
@@ -215,9 +222,10 @@ async function request<T>(
   options: RequestInit = {},
   isRetry = false
 ): Promise<T> {
+  const baseUrl = getApiBaseUrl();
   const url = endpoint.startsWith('http')
     ? endpoint
-    : `${API_BASE_URL}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
+    : `${baseUrl}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
 
   const token = await tokenStorage.getAccessToken();
 
