@@ -1,9 +1,11 @@
 export const REALTIME_CHANNELS = {
-  adminOrders: "orders:admin",
-  adminBookings: "bookings:admin",
-  publicMenu: "menu:public",
-  orderTracking: (orderId: string) => `orders:${orderId}`,
-  userOrders: (userId: string) => `orders:user:${userId}`,
+  adminOrders: "admin-orders",
+  adminBookings: "admin-orders",
+  publicMenu: "menu-availability",
+  menuAvailability: "menu-availability",
+  orderTracking: (orderId: string) => `order-${orderId}`,
+  userOrders: (userId: string) => `user-${userId}`,
+  userChannel: (userId: string) => `user-${userId}`,
 } as const;
 
 export const REALTIME_EVENTS = {

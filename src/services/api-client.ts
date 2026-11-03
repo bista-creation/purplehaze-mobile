@@ -269,11 +269,12 @@ async function executeTokenRefresh(): Promise<string | null> {
       return null;
     }
 
-    const json = (await res.json()) as ApiResponse<AuthTokensDto>;
-    if (json.data?.accessToken && json.data?.refreshToken) {
-      await tokenStorage.setAccessToken(json.data.accessToken);
-      await tokenStorage.setRefreshToken(json.data.refreshToken);
-      return json.data.accessToken;
+    const json = (await res.json()) as any;
+    const tokenData = json?.data?.tokens || json?.data;
+    if (tokenData?.accessToken && tokenData?.refreshToken) {
+      await tokenStorage.setAccessToken(tokenData.accessToken);
+      await tokenStorage.setRefreshToken(tokenData.refreshToken);
+      return tokenData.accessToken;
     }
   } catch (error) {
     console.warn('[API Client] Token refresh network error:', error);

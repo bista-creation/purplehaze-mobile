@@ -68,11 +68,12 @@ async function refreshAuthTokens(): Promise<string | null> {
       return null;
     }
 
-    const json = (await res.json()) as ApiResponse<AuthTokens>;
-    if (json.data?.accessToken && json.data?.refreshToken) {
-      await tokenStorage.setAccessToken(json.data.accessToken);
-      await tokenStorage.setRefreshToken(json.data.refreshToken);
-      return json.data.accessToken;
+    const json = (await res.json()) as any;
+    const tokenData = json?.data?.tokens || json?.data;
+    if (tokenData?.accessToken && tokenData?.refreshToken) {
+      await tokenStorage.setAccessToken(tokenData.accessToken);
+      await tokenStorage.setRefreshToken(tokenData.refreshToken);
+      return tokenData.accessToken;
     }
   } catch (e) {
     console.warn("Failed to refresh token", e);

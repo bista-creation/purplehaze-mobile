@@ -124,18 +124,30 @@ export default function OrderTrackingScreen({ route, navigation }: OrderTracking
 
     if (targetId) {
       mobileRealtime
-        .subscribeToOrder(targetId, (payload) => {
-          setOrder((prev) => {
-            if (!prev) return prev;
-            return {
-              ...prev,
-              status: (payload.status as any) || prev.status,
-              paymentStatus: ((payload as any).paymentStatus as any) || prev.paymentStatus,
-            };
-          });
-          setLastUpdated(new Date());
-          fetchRiderLocation();
-        })
+        .subscribeToOrder(
+          targetId,
+          (payload) => {
+            setOrder((prev) => {
+              if (!prev) return prev;
+              return {
+                ...prev,
+                status: (payload.status as any) || prev.status,
+                paymentStatus: ((payload as any).paymentStatus as any) || prev.paymentStatus,
+              };
+            });
+            setLastUpdated(new Date());
+            fetchRiderLocation();
+          },
+          (liveLoc) => {
+            setRiderLocation({
+              latitude: liveLoc.latitude,
+              longitude: liveLoc.longitude,
+              speed: liveLoc.speed,
+              updatedAt: liveLoc.updatedAt,
+            });
+            setLastUpdated(new Date());
+          }
+        )
         .then((unsub) => {
           unsubscribe = unsub;
         })
@@ -386,7 +398,7 @@ export default function OrderTrackingScreen({ route, navigation }: OrderTracking
             <View style={styles.otpBox}>
               <Text style={styles.otpLabel}>Delivery Verification Code</Text>
               <Text style={styles.otpValue}>{(order as any).deliveryOtp}</Text>
-              <Text style={styles.otpHint}>Share this 4-digit code with your rider upon arrival</Text>
+              <Text style={styles.otpHint}>Share this 6-digit code with your rider upon arrival</Text>
             </View>
           )}
 

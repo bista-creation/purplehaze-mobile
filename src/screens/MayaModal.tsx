@@ -79,11 +79,16 @@ export default function MayaModal({ navigation }: any) {
 
       const res = await api.assistant.chat(text, history);
 
+      const rawActions = (res as any)?.suggestedActions || [];
+      const normalizedActions: string[] = rawActions.map((act: any) =>
+        typeof act === 'string' ? act : (act?.label || act?.action || String(act))
+      );
+
       const assistantMessage: Message = {
         id: `m_${Date.now()}`,
         role: 'assistant',
         content: res.reply || 'Here is what I recommend from our Biratnagar kitchen!',
-        suggestedActions: res.suggestedActions,
+        suggestedActions: normalizedActions,
       };
 
       setMessages((prev) => [...prev, assistantMessage]);

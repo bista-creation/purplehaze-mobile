@@ -14,15 +14,25 @@ type RealtimeAuthResponse = {
   channels: string[];
 };
 
+export type RiderLocationPayload = {
+  latitude: number;
+  longitude: number;
+  speed?: number | null;
+  updatedAt?: string;
+};
+
 class MobileRealtimeService {
   private client: SupabaseClient | null = null;
   private channels = new Map<string, RealtimeChannel>();
 
-  async getClient(): Promise<SupabaseClient | null> {
+  async getClient(orderId?: string): Promise<SupabaseClient | null> {
     if (this.client) return this.client;
 
     try {
-      const authData = await api.post<RealtimeAuthResponse>("/realtime/auth", {});
+      const authData = await api.post<RealtimeAuthResponse>(
+        "/realtime/auth",
+        orderId ? { orderId } : {}
+      );
       if (!authData?.url || !authData?.anonKey || !authData?.token) {
         return null;
       }
@@ -41,14 +51,15 @@ class MobileRealtimeService {
   }
 
   /**
-   * Subscribes to live status updates for a specific order.
+   * Subscribes to live status & GPS updates for a specific order.
    */
   async subscribeToOrder(
     orderId: string,
     onStatusUpdate: (payload: OrderStatusUpdatedPayload) => void,
+    onRiderLocation?: (payload: RiderLocationPayload) => void,
   ): Promise<() => void> {
     const topic = REALTIME_CHANNELS.orderTracking(orderId);
-    const client = await this.getClient();
+    const client = await this.getClient(orderId);
     if (!client) return () => {};
 
     if (this.channels.has(topic)) {
@@ -62,6 +73,20 @@ class MobileRealtimeService {
         { event: REALTIME_EVENTS.orderStatusUpdated },
         (response: { payload: OrderStatusUpdatedPayload }) => {
           onStatusUpdate(response.payload);
+        },
+      )
+      .on(
+        "broadcast",
+        { event: "rider.location" },
+        (response: { payload: { lat: number; lng: number; speed?: number; updatedAt?: string } }) => {
+          if (response?.payload?.lat != null && response?.payload?.lng != null) {
+            onRiderLocation?.({
+              latitude: response.payload.lat,
+              longitude: response.payload.lng,
+              speed: response.payload.speed,
+              updatedAt: response.payload.updatedAt,
+            });
+          }
         },
       )
       .subscribe();
