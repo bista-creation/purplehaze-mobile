@@ -4,13 +4,13 @@ import {
   Text,
   ScrollView,
   Image,
+  ImageBackground,
   TouchableOpacity,
   StyleSheet,
-  TextInput,
   ActivityIndicator,
   RefreshControl,
-  Dimensions,
   Platform,
+  useWindowDimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { api as typedApi, DishDto, CategoryDto } from '../services/api-client';
@@ -19,10 +19,9 @@ import { useFavoritesStore } from '../stores/favorites-store';
 import { useAuthStore } from '../stores/auth-store';
 import { useTheme } from '../stores/theme-store';
 import { useI18n } from '../i18n';
-import { Header, Badge } from '../components/ui';
-import { colors as defaultColors, ColorTheme, spacing, borderRadius } from '../theme';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+import { Header, Badge, FloatingCartBar } from '../components/ui';
+import { isPlaceholderDescription } from '../shared';
+import { colors as defaultColors, ColorTheme, spacing, borderRadius, displayFontFamily } from '../theme';
 
 export function HomeScreen({ navigation }: any) {
   const { t, formatCurrency } = useI18n();
@@ -30,6 +29,9 @@ export function HomeScreen({ navigation }: any) {
   const user = useAuthStore((s) => s.user);
   const { items, addItem, getItemCount, getSubtotalNpr } = useCartStore();
   const { favoriteDishIds, toggleFavorite, isFavorite } = useFavoritesStore();
+  const { width: windowWidth } = useWindowDimensions();
+
+  const cardWidth = Math.min(windowWidth - 32, 640);
 
   const styles = useMemo(() => createStyles(colors), [colors]);
 
@@ -75,31 +77,31 @@ export function HomeScreen({ navigation }: any) {
     {
       id: '1',
       title: 'Himalayan Garden Dining',
-      subtitle: 'Experience golden evenings at Airport Road, Biratnagar',
-      tag: 'GARDEN FRESH',
-      tagColor: '#16A34A',
-      image: require('../../assets/logo.png'),
+      subtitle: 'Experience open-air candlelit evenings & tranquil greenery',
+      tag: 'GARDEN & ROOFTOP',
+      tagColor: colors.gold,
+      imageSource: require('../../assets/banners/garden-dining.jpg'),
       actionText: 'Reserve Table',
       route: 'Reservations',
     },
     {
       id: '2',
       title: 'Flavors of Nepal & Sekuwa',
-      subtitle: 'Authentic charcoal smoked delights with house dips',
-      tag: 'CHEF SPECIAL',
-      tagColor: colors.purple,
-      image: require('../../assets/logo.png'),
-      actionText: 'Explore Menu',
+      subtitle: 'Authentic charcoal smoked delights, Mo:Mo & sizzling platters',
+      tag: 'CHEF SPECIALS',
+      tagColor: '#F59E0B',
+      imageSource: require('../../assets/banners/restaurant.jpg'),
+      actionText: 'Order Food',
       route: 'Menu',
     },
     {
       id: '3',
       title: 'Banquets & Celebrations',
-      subtitle: 'Host birthdays, parties & meetings in leafy grandeur',
-      tag: 'EVENTS & VENUES',
-      tagColor: colors.gold,
-      image: require('../../assets/logo.png'),
-      actionText: 'View Venues',
+      subtitle: 'Air-conditioned banquet halls for weddings & private gatherings',
+      tag: 'VENUES & EVENTS',
+      tagColor: '#10B981',
+      imageSource: require('../../assets/banners/banquet.jpg'),
+      actionText: 'Explore Venues',
       route: 'Venues',
     },
   ];
@@ -126,7 +128,7 @@ export function HomeScreen({ navigation }: any) {
       >
         {/* Customer Greeting & AI Pill */}
         <View style={styles.greetingSection}>
-          <View>
+          <View style={{ flex: 1, paddingRight: spacing.sm }}>
             <Text style={styles.greetingGreeting}>
               {user?.name ? `Namaste, ${user.name.split(' ')[0]} 👋` : 'Namaste, Guest 👋'}
             </Text>
@@ -151,14 +153,14 @@ export function HomeScreen({ navigation }: any) {
         >
           <Ionicons name="search" size={18} color={colors.textMuted} />
           <Text style={styles.searchPlaceholder}>
-            Search dishes, Sekuwa, Pizza, Biryani...
+            Search dishes, Sekuwa, Mo:Mo, Sizzler, Biryani...
           </Text>
           <View style={styles.searchFilterBadge}>
             <Ionicons name="options-outline" size={14} color={colors.purple} />
           </View>
         </TouchableOpacity>
 
-        {/* Hero Promotional Carousel */}
+        {/* Hero Promotional Carousel with Atmospheric Imagery */}
         <ScrollView
           horizontal
           pagingEnabled
@@ -166,92 +168,126 @@ export function HomeScreen({ navigation }: any) {
           style={styles.heroScroll}
           contentContainerStyle={styles.heroContainer}
           onScroll={(e) => {
-            const slide = Math.round(e.nativeEvent.contentOffset.x / (SCREEN_WIDTH - 32));
+            const slide = Math.round(e.nativeEvent.contentOffset.x / cardWidth);
             setActiveBannerIndex(slide);
           }}
           scrollEventThrottle={16}
         >
           {promotionalBanners.map((banner) => (
-            <View key={banner.id} style={styles.heroBanner}>
-              <View style={styles.heroBannerContent}>
-                <View style={[styles.heroTag, { backgroundColor: banner.tagColor + '20' }]}>
-                  <Text style={[styles.heroTagText, { color: banner.tagColor }]}>
-                    {banner.tag}
+            <View key={banner.id} style={[styles.heroBanner, { width: cardWidth }]}>
+              <ImageBackground
+                source={banner.imageSource}
+                style={styles.heroBannerBg}
+                imageStyle={styles.heroBannerImageStyle}
+              >
+                <View style={styles.heroBannerOverlay}>
+                  <View style={[styles.heroTag, { backgroundColor: banner.tagColor }]}>
+                    <Text style={styles.heroTagText}>{banner.tag}</Text>
+                  </View>
+                  <Text style={styles.heroTitle}>{banner.title}</Text>
+                  <Text style={styles.heroSubtitle} numberOfLines={2}>
+                    {banner.subtitle}
                   </Text>
+                  <TouchableOpacity
+                    style={styles.heroActionBtn}
+                    onPress={() => navigation.navigate(banner.route)}
+                    activeOpacity={0.85}
+                  >
+                    <Text style={styles.heroActionText}>{banner.actionText}</Text>
+                    <Ionicons name="arrow-forward" size={14} color="#FFFFFF" />
+                  </TouchableOpacity>
                 </View>
-                <Text style={styles.heroTitle}>{banner.title}</Text>
-                <Text style={styles.heroSubtitle}>{banner.subtitle}</Text>
-                <TouchableOpacity
-                  style={styles.heroActionBtn}
-                  onPress={() => navigation.navigate(banner.route)}
-                  activeOpacity={0.85}
-                >
-                  <Text style={styles.heroActionText}>{banner.actionText}</Text>
-                  <Ionicons name="arrow-forward" size={14} color="#FFFFFF" />
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.heroLogoCircle}>
-                <Image source={banner.image} style={styles.heroLogoImg} resizeMode="contain" />
-              </View>
+              </ImageBackground>
             </View>
           ))}
         </ScrollView>
 
-        {/* Quick Service Hub Cards */}
-        <View style={styles.hubSection}>
+        {/* Primary Action Hub: Ordering & Booking Dominant Paths */}
+        <View style={styles.primaryHubContainer}>
           <TouchableOpacity
-            style={styles.hubCard}
+            style={[styles.primaryActionCard, styles.orderCard]}
             onPress={() => navigation.navigate('Menu')}
-            activeOpacity={0.85}
+            activeOpacity={0.88}
           >
-            <View style={[styles.hubIconBg, { backgroundColor: 'rgba(84, 38, 109, 0.1)' }]}>
-              <Ionicons name="restaurant" size={20} color={colors.purple} />
+            <View style={styles.primaryBadgeRow}>
+              <View style={styles.primaryIconCirclePurple}>
+                <Ionicons name="restaurant" size={20} color="#FFFFFF" />
+              </View>
+              <View style={styles.primaryLivePill}>
+                <Text style={styles.primaryLivePillText}>⚡ 30-45 MINS</Text>
+              </View>
             </View>
-            <Text style={styles.hubTitle}>Food Menu</Text>
-            <Text style={styles.hubDesc}>Delivery {'&'} Pickup</Text>
+            <Text style={styles.primaryCardTitle}>Order Food</Text>
+            <Text style={styles.primaryCardSubtitle}>Delivery & Takeaway</Text>
+            <View style={styles.primaryCardCta}>
+              <Text style={styles.primaryCardCtaText}>View Menu</Text>
+              <Ionicons name="arrow-forward" size={13} color={colors.purple} />
+            </View>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.hubCard}
+            style={[styles.primaryActionCard, styles.reserveCard]}
             onPress={() => navigation.navigate('Reservations')}
-            activeOpacity={0.85}
+            activeOpacity={0.88}
           >
-            <View style={[styles.hubIconBg, { backgroundColor: 'rgba(216, 173, 104, 0.15)' }]}>
-              <Ionicons name="calendar" size={20} color={colors.goldDark} />
+            <View style={styles.primaryBadgeRow}>
+              <View style={styles.primaryIconCircleGold}>
+                <Ionicons name="calendar" size={20} color="#FFFFFF" />
+              </View>
+              <View style={styles.primaryGardenPill}>
+                <Text style={styles.primaryGardenPillText}>🌿 GARDEN</Text>
+              </View>
             </View>
-            <Text style={styles.hubTitle}>Reserve Table</Text>
-            <Text style={styles.hubDesc}>Garden {'&'} Hall</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.hubCard}
-            onPress={() => navigation.navigate('Venues')}
-            activeOpacity={0.85}
-          >
-            <View style={[styles.hubIconBg, { backgroundColor: 'rgba(16, 185, 129, 0.12)' }]}>
-              <Ionicons name="sparkles" size={20} color="#10B981" />
+            <Text style={styles.primaryCardTitle}>Book Table</Text>
+            <Text style={styles.primaryCardSubtitle}>Dine-in & Rooftop</Text>
+            <View style={styles.primaryCardCta}>
+              <Text style={[styles.primaryCardCtaText, { color: colors.goldDark }]}>Reserve Now</Text>
+              <Ionicons name="arrow-forward" size={13} color={colors.goldDark} />
             </View>
-            <Text style={styles.hubTitle}>Banquets</Text>
-            <Text style={styles.hubDesc}>Events {'&'} Parties</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.hubCard}
-            onPress={() => navigation.navigate('Orders')}
-            activeOpacity={0.85}
-          >
-            <View style={[styles.hubIconBg, { backgroundColor: 'rgba(59, 130, 246, 0.12)' }]}>
-              <Ionicons name="receipt" size={20} color="#3B82F6" />
-            </View>
-            <Text style={styles.hubTitle}>My Orders</Text>
-            <Text style={styles.hubDesc}>Live Tracking</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Food Categories Carousel */}
+        {/* Secondary Services Quick Strip */}
+        <View style={styles.secondaryStrip}>
+          <TouchableOpacity
+            style={styles.secondaryItem}
+            onPress={() => navigation.navigate('Venues')}
+            activeOpacity={0.8}
+          >
+            <View style={styles.secondaryIconWrap}>
+              <Ionicons name="sparkles" size={16} color="#10B981" />
+            </View>
+            <View>
+              <Text style={styles.secondaryTitle}>Banquets & Parties</Text>
+              <Text style={styles.secondarySubtitle}>Weddings, Events, Halls</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={14} color={colors.textMuted} style={{ marginLeft: 'auto' }} />
+          </TouchableOpacity>
+
+          <View style={styles.secondaryDivider} />
+
+          <TouchableOpacity
+            style={styles.secondaryItem}
+            onPress={() => navigation.navigate('Orders')}
+            activeOpacity={0.8}
+          >
+            <View style={styles.secondaryIconWrap}>
+              <Ionicons name="receipt" size={16} color="#3B82F6" />
+            </View>
+            <View>
+              <Text style={styles.secondaryTitle}>My Orders</Text>
+              <Text style={styles.secondarySubtitle}>Live GPS status</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={14} color={colors.textMuted} style={{ marginLeft: 'auto' }} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Food Categories Carousel with Non-truncated Two-Line Labels */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Explore Categories</Text>
+          <View>
+            <Text style={styles.sectionTitle}>Explore Categories</Text>
+            <Text style={styles.sectionSubtitle}>Handcrafted multi-cuisine selections</Text>
+          </View>
           <TouchableOpacity onPress={() => navigation.navigate('Menu')}>
             <Text style={styles.sectionLink}>View All ({categories.length}) →</Text>
           </TouchableOpacity>
@@ -270,9 +306,21 @@ export function HomeScreen({ navigation }: any) {
               activeOpacity={0.8}
             >
               <View style={styles.categoryCircle}>
-                <Text style={styles.categoryEmoji}>🍽️</Text>
+                <Text style={styles.categoryEmoji}>
+                  {/momo/i.test(cat.name)
+                    ? '🥟'
+                    : /nepali/i.test(cat.name)
+                    ? '🥘'
+                    : /indian|tandoor|curry/i.test(cat.name)
+                    ? '🍛'
+                    : /sizzler|continental/i.test(cat.name)
+                    ? '🥩'
+                    : /beverage|drink|bar/i.test(cat.name)
+                    ? '🍹'
+                    : '🍽️'}
+                </Text>
               </View>
-              <Text style={styles.categoryName} numberOfLines={1}>
+              <Text style={styles.categoryName} numberOfLines={2}>
                 {cat.name}
               </Text>
             </TouchableOpacity>
@@ -283,31 +331,34 @@ export function HomeScreen({ navigation }: any) {
         <View style={styles.sectionHeader}>
           <View>
             <Text style={styles.sectionTitle}>Chef's Recommendations 👨‍🍳</Text>
-            <Text style={styles.sectionSubtitle}>Handcrafted specials with authentic garden spices</Text>
+            <Text style={styles.sectionSubtitle}>Signature culinary crafts by executive chefs</Text>
           </View>
           <TouchableOpacity onPress={() => navigation.navigate('Menu')}>
-            <Text style={styles.sectionLink}>See All</Text>
+            <Text style={styles.sectionLink}>Full Menu →</Text>
           </TouchableOpacity>
         </View>
 
         {isLoading ? (
-          <ActivityIndicator color={colors.purple} style={{ marginVertical: 30 }} />
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="small" color={colors.purple} />
+            <Text style={styles.loadingText}>Crafting fresh recommendations...</Text>
+          </View>
         ) : (
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.horizontalDishScroll}
+            contentContainerStyle={styles.dishesScroll}
           >
             {chefSpecials.map((dish) => {
               const favorited = isFavorite(dish.id);
               return (
                 <TouchableOpacity
                   key={dish.id}
-                  style={styles.dishCardH}
+                  style={styles.dishCard}
                   onPress={() => navigation.navigate('DishDetail', { dish })}
                   activeOpacity={0.9}
                 >
-                  <View style={styles.dishImageWrapper}>
+                  <View style={styles.dishImageWrap}>
                     {dish.image ? (
                       <Image source={{ uri: dish.image }} style={styles.dishImage} />
                     ) : (
@@ -316,7 +367,6 @@ export function HomeScreen({ navigation }: any) {
                       </View>
                     )}
 
-                    {/* Veg indicator badge */}
                     <View style={styles.vegIndicatorBadge}>
                       <View
                         style={[
@@ -326,7 +376,6 @@ export function HomeScreen({ navigation }: any) {
                       />
                     </View>
 
-                    {/* Favorite toggle */}
                     <TouchableOpacity
                       style={styles.favBtn}
                       onPress={() => toggleFavorite(dish.id)}
@@ -344,9 +393,11 @@ export function HomeScreen({ navigation }: any) {
                     <Text style={styles.dishName} numberOfLines={1}>
                       {dish.name}
                     </Text>
-                    <Text style={styles.dishDesc} numberOfLines={2}>
-                      {dish.description || 'Prepared fresh in the Purple Haze kitchen.'}
-                    </Text>
+                    {dish.description && !isPlaceholderDescription(dish.description) ? (
+                      <Text style={styles.dishDesc} numberOfLines={2}>
+                        {dish.description}
+                      </Text>
+                    ) : null}
 
                     <View style={styles.dishBottomRow}>
                       <Text style={styles.dishPrice}>{formatCurrency(dish.price)}</Text>
@@ -377,76 +428,82 @@ export function HomeScreen({ navigation }: any) {
         )}
 
         {/* Bestseller Dishes Collection */}
-        <View style={styles.sectionHeader}>
-          <View>
-            <Text style={styles.sectionTitle}>Popular Bestsellers 🔥</Text>
-            <Text style={styles.sectionSubtitle}>Most loved dishes ordered by Biratnagar foodies</Text>
-          </View>
-        </View>
+        {bestsellers.length > 0 && (
+          <>
+            <View style={styles.sectionHeader}>
+              <View>
+                <Text style={styles.sectionTitle}>Popular Bestsellers 🔥</Text>
+                <Text style={styles.sectionSubtitle}>Most loved dishes ordered by Biratnagar foodies</Text>
+              </View>
+            </View>
 
-        <View style={styles.bestsellerGrid}>
-          {bestsellers.map((dish) => {
-            const favorited = isFavorite(dish.id);
-            return (
-              <TouchableOpacity
-                key={dish.id}
-                style={styles.bestsellerRow}
-                onPress={() => navigation.navigate('DishDetail', { dish })}
-                activeOpacity={0.9}
-              >
-                <View style={styles.bestsellerLeft}>
-                  <View style={styles.vegIndicatorBadgeInline}>
-                    <View
-                      style={[
-                        styles.vegDot,
-                        { backgroundColor: dish.isVeg ? colors.veg : colors.nonVeg },
-                      ]}
-                    />
-                    <Text style={styles.bestsellerBadgeText}>
-                      {dish.isVeg ? 'VEG' : 'NON-VEG'}
-                    </Text>
-                  </View>
-
-                  <Text style={styles.bestsellerTitle} numberOfLines={1}>
-                    {dish.name}
-                  </Text>
-                  <Text style={styles.bestsellerPrice}>{formatCurrency(dish.price)}</Text>
-                  <Text style={styles.bestsellerDesc} numberOfLines={2}>
-                    {dish.description || 'Authentic Himalayan spices and ingredients.'}
-                  </Text>
-                </View>
-
-                <View style={styles.bestsellerRight}>
-                  {dish.image ? (
-                    <Image source={{ uri: dish.image }} style={styles.bestsellerImg} />
-                  ) : (
-                    <View style={[styles.bestsellerImg, styles.dishImagePlaceholder]}>
-                      <Ionicons name="restaurant-outline" size={24} color={colors.textMuted} />
-                    </View>
-                  )}
+            <View style={styles.bestsellerGrid}>
+              {bestsellers.map((dish) => {
+                const favorited = isFavorite(dish.id);
+                return (
                   <TouchableOpacity
-                    style={styles.bestsellerAddBtn}
-                    onPress={() => {
-                      addItem({
-                        dishId: dish.id,
-                        name: dish.name,
-                        slug: dish.slug || 'dish',
-                        basePrice: dish.price,
-                        quantity: 1,
-                        variantPriceDelta: 0,
-                        addOns: [],
-                        image: dish.image || null,
-                      });
-                    }}
-                    activeOpacity={0.8}
+                    key={dish.id}
+                    style={styles.bestsellerRow}
+                    onPress={() => navigation.navigate('DishDetail', { dish })}
+                    activeOpacity={0.9}
                   >
-                    <Text style={styles.bestsellerAddBtnText}>ADD +</Text>
+                    <View style={styles.bestsellerLeft}>
+                      <View style={styles.vegIndicatorBadgeInline}>
+                        <View
+                          style={[
+                            styles.vegDot,
+                            { backgroundColor: dish.isVeg ? colors.veg : colors.nonVeg },
+                          ]}
+                        />
+                        <Text style={styles.bestsellerBadgeText}>
+                          {dish.isVeg ? 'VEG' : 'NON-VEG'}
+                        </Text>
+                      </View>
+
+                      <Text style={styles.bestsellerTitle} numberOfLines={1}>
+                        {dish.name}
+                      </Text>
+                      <Text style={styles.bestsellerPrice}>{formatCurrency(dish.price)}</Text>
+                      {dish.description && !isPlaceholderDescription(dish.description) ? (
+                        <Text style={styles.bestsellerDesc} numberOfLines={2}>
+                          {dish.description}
+                        </Text>
+                      ) : null}
+                    </View>
+
+                    <View style={styles.bestsellerRight}>
+                      {dish.image ? (
+                        <Image source={{ uri: dish.image }} style={styles.bestsellerImg} />
+                      ) : (
+                        <View style={[styles.bestsellerImg, styles.dishImagePlaceholder]}>
+                          <Ionicons name="restaurant-outline" size={24} color={colors.textMuted} />
+                        </View>
+                      )}
+                      <TouchableOpacity
+                        style={styles.bestsellerAddBtn}
+                        onPress={() => {
+                          addItem({
+                            dishId: dish.id,
+                            name: dish.name,
+                            slug: dish.slug || 'dish',
+                            basePrice: dish.price,
+                            quantity: 1,
+                            variantPriceDelta: 0,
+                            addOns: [],
+                            image: dish.image || null,
+                          });
+                        }}
+                        activeOpacity={0.8}
+                      >
+                        <Text style={styles.bestsellerAddBtnText}>ADD +</Text>
+                      </TouchableOpacity>
+                    </View>
                   </TouchableOpacity>
-                </View>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+                );
+              })}
+            </View>
+          </>
+        )}
 
         {/* Restaurant Heritage & Story Card */}
         <View style={styles.heritageCard}>
@@ -466,35 +523,12 @@ export function HomeScreen({ navigation }: any) {
           </View>
         </View>
 
-        {/* Bottom spacer for floating cart bar */}
-        <View style={{ height: cartItemCount > 0 ? 100 : 40 }} />
+        {/* Bottom spacer ensuring fixed navigation bar never covers content */}
+        <View style={{ height: cartItemCount > 0 ? 80 : 24 }} />
       </ScrollView>
 
-      {/* Floating Persistent Cart Summary Bar */}
-      {cartItemCount > 0 && (
-        <View style={styles.floatingCartBar}>
-          <View style={styles.floatingCartInfo}>
-            <View style={styles.cartCountCircle}>
-              <Text style={styles.cartCountText}>{cartItemCount}</Text>
-            </View>
-            <View>
-              <Text style={styles.floatingCartLabel}>
-                {cartItemCount} {cartItemCount === 1 ? 'item' : 'items'} added
-              </Text>
-              <Text style={styles.floatingCartTotal}>{formatCurrency(cartSubtotal)}</Text>
-            </View>
-          </View>
-
-          <TouchableOpacity
-            style={styles.floatingCartAction}
-            onPress={() => navigation.navigate('Cart')}
-            activeOpacity={0.85}
-          >
-            <Text style={styles.floatingCartActionText}>View Cart</Text>
-            <Ionicons name="cart" size={16} color="#FFFFFF" />
-          </TouchableOpacity>
-        </View>
-      )}
+      {/* Floating Persistent Cart Summary Bar (Safely above Bottom Tabs) */}
+      <FloatingCartBar onPress={() => navigation.navigate('Cart')} />
     </View>
   );
 }
@@ -511,6 +545,9 @@ const createStyles = (colors: ColorTheme) =>
   scrollContent: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
+    maxWidth: 720,
+    width: '100%',
+    alignSelf: 'center',
   },
   greetingSection: {
     flexDirection: 'row',
@@ -524,7 +561,7 @@ const createStyles = (colors: ColorTheme) =>
     color: colors.text,
   },
   greetingSubtitle: {
-    fontSize: 11,
+    fontSize: 12,
     color: colors.textMuted,
     marginTop: 2,
   },
@@ -560,7 +597,7 @@ const createStyles = (colors: ColorTheme) =>
     marginBottom: spacing.lg,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.04,
     shadowRadius: 3,
     elevation: 1,
   },
@@ -568,11 +605,15 @@ const createStyles = (colors: ColorTheme) =>
     flex: 1,
     fontSize: 13,
     color: colors.textMuted,
+    fontWeight: '500',
   },
   searchFilterBadge: {
-    padding: 4,
-    backgroundColor: colors.backgroundSecondary,
-    borderRadius: borderRadius.md,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: colors.purpleMuted,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   heroScroll: {
     marginBottom: spacing.lg,
@@ -581,24 +622,29 @@ const createStyles = (colors: ColorTheme) =>
     gap: 12,
   },
   heroBanner: {
-    width: SCREEN_WIDTH - 32,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.surfaceBorder,
+    height: 180,
     borderRadius: borderRadius.xl,
-    padding: spacing.lg,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  heroBannerContent: {
+  heroBannerBg: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'flex-end',
+  },
+  heroBannerImageStyle: {
+    borderRadius: borderRadius.xl,
+  },
+  heroBannerOverlay: {
     flex: 1,
-    paddingRight: spacing.sm,
+    backgroundColor: 'rgba(19, 11, 29, 0.55)',
+    padding: spacing.md,
+    justifyContent: 'flex-end',
+    borderRadius: borderRadius.xl,
   },
   heroTag: {
     alignSelf: 'flex-start',
@@ -610,89 +656,183 @@ const createStyles = (colors: ColorTheme) =>
   heroTagText: {
     fontSize: 10,
     fontWeight: '800',
+    color: '#FFFFFF',
     letterSpacing: 0.5,
   },
   heroTitle: {
-    fontSize: 16,
+    fontFamily: displayFontFamily,
+    fontSize: 19,
     fontWeight: '800',
-    color: colors.text,
-    lineHeight: 20,
+    color: '#FFFFFF',
+    lineHeight: 24,
+    letterSpacing: -0.3,
+    textShadowColor: 'rgba(0, 0, 0, 0.6)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   heroSubtitle: {
-    fontSize: 11,
-    color: colors.textSecondary,
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.9)',
     marginTop: 4,
     marginBottom: 10,
+    fontWeight: '500',
   },
   heroActionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
     backgroundColor: colors.purple,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: colors.gold,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
     borderRadius: borderRadius.full,
     alignSelf: 'flex-start',
   },
   heroActionText: {
-    fontSize: 11,
-    fontWeight: '700',
+    fontSize: 12,
+    fontWeight: '800',
     color: '#FFFFFF',
   },
-  heroLogoCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#FFFFFF',
+
+  /* Primary Hub: Ordering & Booking */
+  primaryHubContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: spacing.md,
+  },
+  primaryActionCard: {
+    flex: 1,
+    borderRadius: borderRadius.xl,
+    padding: spacing.md,
     borderWidth: 1,
-    borderColor: colors.surfaceBorder,
-    alignItems: 'center',
-    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
   },
-  heroLogoImg: {
-    width: 54,
-    height: 54,
+  orderCard: {
+    backgroundColor: colors.surface,
+    borderColor: colors.purpleLight,
   },
-  hubSection: {
+  reserveCard: {
+    backgroundColor: colors.surface,
+    borderColor: colors.goldLight,
+  },
+  primaryBadgeRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: spacing.xl,
-    gap: 8,
+    alignItems: 'center',
+    marginBottom: 10,
   },
-  hubCard: {
-    flex: 1,
+  primaryIconCirclePurple: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: colors.purple,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  primaryIconCircleGold: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: colors.goldDark,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  primaryLivePill: {
+    backgroundColor: 'rgba(84, 38, 109, 0.1)',
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: borderRadius.full,
+  },
+  primaryLivePillText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: colors.purple,
+    letterSpacing: 0.5,
+  },
+  primaryGardenPill: {
+    backgroundColor: 'rgba(216, 173, 104, 0.15)',
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: borderRadius.full,
+  },
+  primaryGardenPillText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: colors.goldDark,
+    letterSpacing: 0.5,
+  },
+  primaryCardTitle: {
+    fontFamily: displayFontFamily,
+    fontSize: 16,
+    fontWeight: '800',
+    color: colors.text,
+    letterSpacing: -0.2,
+  },
+  primaryCardSubtitle: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    marginTop: 2,
+    marginBottom: 10,
+  },
+  primaryCardCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  primaryCardCtaText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: colors.purple,
+  },
+
+  /* Secondary Hub Strip */
+  secondaryStrip: {
+    flexDirection: 'row',
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.surfaceBorder,
     borderRadius: borderRadius.lg,
-    padding: spacing.sm,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginBottom: spacing.xl,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
   },
-  hubIconBg: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+  secondaryItem: {
+    flex: 1,
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
+  },
+  secondaryIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.surfaceElevated,
     justifyContent: 'center',
-    marginBottom: 6,
+    alignItems: 'center',
   },
-  hubTitle: {
-    fontSize: 11,
+  secondaryTitle: {
+    fontSize: 12,
     fontWeight: '700',
     color: colors.text,
-    textAlign: 'center',
   },
-  hubDesc: {
-    fontSize: 9,
+  secondarySubtitle: {
+    fontSize: 10,
     color: colors.textMuted,
-    marginTop: 1,
-    textAlign: 'center',
   },
+  secondaryDivider: {
+    width: 1,
+    height: 28,
+    backgroundColor: colors.surfaceBorder,
+    marginHorizontal: 10,
+  },
+
+  /* Section Header */
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -700,10 +840,11 @@ const createStyles = (colors: ColorTheme) =>
     marginBottom: spacing.md,
   },
   sectionTitle: {
-    fontSize: 15,
+    fontFamily: displayFontFamily,
+    fontSize: 17,
     fontWeight: '800',
     color: colors.text,
-    letterSpacing: 0.2,
+    letterSpacing: -0.3,
   },
   sectionSubtitle: {
     fontSize: 11,
@@ -715,45 +856,63 @@ const createStyles = (colors: ColorTheme) =>
     fontWeight: '700',
     color: colors.purple,
   },
+
+  /* Categories */
   categoriesScroll: {
-    gap: 12,
+    gap: 10,
     paddingBottom: spacing.lg,
   },
   categoryItem: {
     alignItems: 'center',
-    width: 68,
+    width: 82,
+    marginRight: 4,
   },
   categoryCircle: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 54,
+    height: 54,
+    borderRadius: 27,
     backgroundColor: colors.surface,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: colors.surfaceBorder,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 1,
+    shadowColor: colors.purple,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
   },
   categoryEmoji: {
     fontSize: 22,
   },
   categoryName: {
     fontSize: 11,
-    fontWeight: '600',
-    color: colors.textSecondary,
+    fontWeight: '700',
+    color: colors.text,
     textAlign: 'center',
+    lineHeight: 14,
+    paddingHorizontal: 2,
   },
-  horizontalDishScroll: {
-    gap: 12,
-    paddingBottom: spacing.lg,
+
+  /* Dishes */
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: spacing.xl,
+    justifyContent: 'center',
   },
-  dishCardH: {
-    width: 170,
+  loadingText: {
+    fontSize: 12,
+    color: colors.textMuted,
+  },
+  dishesScroll: {
+    gap: spacing.md,
+    paddingBottom: spacing.xl,
+  },
+  dishCard: {
+    width: 175,
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.surfaceBorder,
@@ -762,22 +921,19 @@ const createStyles = (colors: ColorTheme) =>
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
-    shadowRadius: 4,
+    shadowRadius: 5,
     elevation: 2,
   },
-  dishImageWrapper: {
-    position: 'relative',
+  dishImageWrap: {
     width: '100%',
-    height: 110,
-    backgroundColor: colors.backgroundSecondary,
+    height: 120,
+    position: 'relative',
+    backgroundColor: colors.surfaceElevated,
   },
   dishImage: {
     width: '100%',
     height: '100%',
-  },
-  dishImagePlaceholder: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    resizeMode: 'cover',
   },
   vegIndicatorBadge: {
     position: 'absolute',
@@ -788,17 +944,6 @@ const createStyles = (colors: ColorTheme) =>
     borderColor: '#E5E7EB',
     borderRadius: 3,
     padding: 2,
-  },
-  vegIndicatorBadgeInline: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginBottom: 4,
-  },
-  bestsellerBadgeText: {
-    fontSize: 9,
-    fontWeight: '800',
-    color: colors.textMuted,
   },
   vegDot: {
     width: 8,
@@ -815,43 +960,49 @@ const createStyles = (colors: ColorTheme) =>
   },
   dishInfo: {
     padding: spacing.sm,
+    flex: 1,
+    justifyContent: 'space-between',
   },
   dishName: {
-    fontSize: 13,
+    fontFamily: displayFontFamily,
+    fontSize: 14,
     fontWeight: '700',
     color: colors.text,
+    marginBottom: 2,
+    letterSpacing: -0.1,
   },
   dishDesc: {
     fontSize: 10,
     color: colors.textMuted,
-    marginTop: 2,
-    lineHeight: 14,
-    height: 28,
+    lineHeight: 13,
+    marginBottom: 8,
   },
   dishBottomRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: spacing.xs,
+    marginTop: 'auto',
   },
   dishPrice: {
     fontSize: 13,
     fontWeight: '800',
-    color: colors.purple,
+    color: colors.text,
   },
   addDishBtn: {
     backgroundColor: colors.purple,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: borderRadius.sm,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: borderRadius.md,
   },
   addDishBtnText: {
     fontSize: 10,
     fontWeight: '800',
     color: '#FFFFFF',
   },
+
+  /* Bestsellers */
   bestsellerGrid: {
-    gap: 10,
+    gap: spacing.md,
     marginBottom: spacing.xl,
   },
   bestsellerRow: {
@@ -861,8 +1012,8 @@ const createStyles = (colors: ColorTheme) =>
     borderColor: colors.surfaceBorder,
     borderRadius: borderRadius.lg,
     padding: spacing.md,
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.04,
@@ -873,32 +1024,49 @@ const createStyles = (colors: ColorTheme) =>
     flex: 1,
     paddingRight: spacing.md,
   },
+  vegIndicatorBadgeInline: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 4,
+  },
+  bestsellerBadgeText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: colors.textMuted,
+  },
   bestsellerTitle: {
+    fontFamily: displayFontFamily,
     fontSize: 14,
     fontWeight: '800',
     color: colors.text,
+    letterSpacing: -0.1,
   },
   bestsellerPrice: {
     fontSize: 13,
     fontWeight: '800',
     color: colors.purple,
-    marginTop: 2,
-    marginBottom: 4,
+    marginVertical: 2,
   },
   bestsellerDesc: {
     fontSize: 11,
     color: colors.textMuted,
-    lineHeight: 15,
+    lineHeight: 14,
   },
   bestsellerRight: {
-    position: 'relative',
     alignItems: 'center',
+    position: 'relative',
   },
   bestsellerImg: {
-    width: 80,
+    width: 90,
     height: 80,
     borderRadius: borderRadius.md,
-    backgroundColor: colors.backgroundSecondary,
+    resizeMode: 'cover',
+  },
+  dishImagePlaceholder: {
+    backgroundColor: colors.surfaceElevated,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   bestsellerAddBtn: {
     position: 'absolute',
@@ -908,11 +1076,11 @@ const createStyles = (colors: ColorTheme) =>
     borderColor: colors.purple,
     paddingHorizontal: 12,
     paddingVertical: 4,
-    borderRadius: borderRadius.sm,
+    borderRadius: borderRadius.md,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowRadius: 4,
     elevation: 2,
   },
   bestsellerAddBtnText: {
@@ -920,6 +1088,8 @@ const createStyles = (colors: ColorTheme) =>
     fontWeight: '900',
     color: colors.purple,
   },
+
+  /* Heritage */
   heritageCard: {
     backgroundColor: colors.surface,
     borderWidth: 1,
@@ -932,21 +1102,21 @@ const createStyles = (colors: ColorTheme) =>
   heritageLogo: {
     width: 60,
     height: 60,
-    marginBottom: spacing.sm,
+    marginBottom: 8,
   },
   heritageTitle: {
-    fontSize: 15,
-    fontWeight: '800',
+    fontFamily: displayFontFamily,
+    fontSize: 17,
+    fontWeight: '700',
     color: colors.text,
-    textAlign: 'center',
+    marginBottom: 6,
+    letterSpacing: 0.2,
   },
   heritageText: {
     fontSize: 11,
-    color: colors.textSecondary,
+    color: colors.textMuted,
     textAlign: 'center',
-    marginTop: 4,
     lineHeight: 16,
-    paddingHorizontal: spacing.sm,
   },
   heritageBadges: {
     flexDirection: 'row',
@@ -964,11 +1134,15 @@ const createStyles = (colors: ColorTheme) =>
     paddingVertical: 4,
     borderRadius: borderRadius.full,
   },
+
+  /* Floating Cart Bar (Above Bottom Tab Navigator) */
   floatingCartBar: {
     position: 'absolute',
-    bottom: Platform.OS === 'ios' ? 24 : 16,
+    bottom: Platform.OS === 'ios' ? 76 : 70,
     left: 16,
     right: 16,
+    maxWidth: 680,
+    alignSelf: 'center',
     backgroundColor: colors.purple,
     borderRadius: borderRadius.xl,
     flexDirection: 'row',

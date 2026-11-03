@@ -71,3 +71,15 @@ export const STATUS_META: Record<
     color: "#ef4444",
   },
 };
+
+/**
+ * Detects placeholder or test strings (e.g. "jhfvhjvhjbbkvkvk", "asdf", "test")
+ * so the customer UI can omit rendering them cleanly without exposing database cleanup text.
+ */
+export function isPlaceholderDescription(desc?: string | null): boolean {
+  if (!desc) return true;
+  const trimmed = desc.trim();
+  if (trimmed.length === 0) return true;
+  return /^(jhfv|test|asdf|mock|[bcdfghjklmnpqrstvwxyz]{6,})/i.test(trimmed);
+}
+

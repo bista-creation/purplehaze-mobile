@@ -1,7 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { NavigationContainer, LinkingOptions, DefaultTheme, DarkTheme } from '@react-navigation/native';
+import { NavigationContainer, LinkingOptions, DefaultTheme, DarkTheme, getStateFromPath } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useCartStore } from '../stores/cart-store';
 import { useTheme } from '../stores/theme-store';
@@ -44,7 +44,7 @@ export type RootStackParamList = {
 
 export type MainTabParamList = {
   Home: undefined;
-  Menu: undefined;
+  Menu: { categoryId?: string } | undefined;
   Orders: undefined;
   Favorites: undefined;
   Profile: undefined;
@@ -147,19 +147,21 @@ function MainTabs() {
 const linking: LinkingOptions<RootStackParamList> = {
   prefixes: [
     'purplehaze://',
-    'https://purple-haze-git-feature-api-v1-bistacreation-3818.vercel.app',
+    'https://purplehaze-mobile.vercel.app',
     'https://purplehaze-nine.vercel.app',
     'http://localhost:8089',
-    'http://localhost:8089/',
+    'http://localhost:8081',
+    'http://localhost:3000',
     '/',
   ],
   config: {
     screens: {
       MainTabs: {
+        path: '',
         screens: {
-          Home: 'home',
+          Home: '',
           Menu: 'menu',
-          Orders: 'orders-tab',
+          Orders: 'orders',
           Favorites: 'favorites',
           Profile: 'profile',
         },
@@ -168,15 +170,26 @@ const linking: LinkingOptions<RootStackParamList> = {
       Reservations: 'reservations',
       Venues: 'venues',
       OrderTracking: {
-        path: 'orders/:orderId',
+        path: 'track-order/:orderId',
       },
-      Orders: 'orders',
       Checkout: 'checkout',
       LoginModal: 'login',
       RegisterModal: 'register',
       MayaModal: 'maya',
       AdminDashboard: 'admin',
     },
+  },
+  getStateFromPath: (path, options) => {
+    // Normalize aliases so direct links work seamlessly:
+    // /home -> /
+    // /orders-tab -> /orders
+    let cleanPath = path.replace(/^\/+/, '');
+    if (cleanPath === 'home' || cleanPath === '') {
+      cleanPath = '';
+    } else if (cleanPath === 'orders-tab') {
+      cleanPath = 'orders';
+    }
+    return getStateFromPath(cleanPath, options);
   },
 };
 

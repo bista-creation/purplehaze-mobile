@@ -13,14 +13,36 @@ import { useCartStore } from '../stores/cart-store';
 import { useTheme } from '../stores/theme-store';
 import { useI18n } from '../i18n';
 import { colors as defaultColors, ColorTheme, spacing, borderRadius } from '../theme';
+import { isPlaceholderDescription } from '../shared';
 import type { DishDto } from '../services/api-client';
 
 export function DishDetailModal({ route, navigation }: any) {
   const { t, formatCurrency } = useI18n();
   const { colors } = useTheme();
-  const { dish }: { dish: DishDto } = route.params;
+  const dish: DishDto | undefined = route?.params?.dish;
 
   const styles = useMemo(() => createStyles(colors), [colors]);
+
+  if (!dish) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', padding: 24 }]}>
+        <Ionicons name="restaurant-outline" size={54} color={colors.gold} />
+        <Text style={{ fontSize: 18, fontWeight: '800', color: colors.text, marginTop: 16 }}>
+          Dish Not Found
+        </Text>
+        <Text style={{ fontSize: 13, color: colors.textMuted, textAlign: 'center', marginTop: 8, marginBottom: 20 }}>
+          The requested dish could not be loaded. Please choose from our fresh menu.
+        </Text>
+        <TouchableOpacity
+          style={{ backgroundColor: colors.purple, paddingHorizontal: 24, paddingVertical: 12, borderRadius: borderRadius.full }}
+          onPress={() => navigation?.navigate?.('MainTabs', { screen: 'Menu' })}
+          activeOpacity={0.8}
+        >
+          <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 14 }}>Browse Full Menu</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   const rawVariants = dish.variants || [];
   const variants = rawVariants.map((v: any) => ({
@@ -130,7 +152,7 @@ export function DishDetailModal({ route, navigation }: any) {
 
           {/* Title and tags */}
           <Text style={styles.title}>{dish.name}</Text>
-          {dish.description ? (
+          {dish.description && !isPlaceholderDescription(dish.description) ? (
             <Text style={styles.description}>{dish.description}</Text>
           ) : null}
 

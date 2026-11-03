@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   ScrollView,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { api as typedApi, DishDto, CategoryDto } from '../services/api-client';
@@ -18,15 +19,22 @@ import { useCartStore } from '../stores/cart-store';
 import { useFavoritesStore } from '../stores/favorites-store';
 import { useTheme } from '../stores/theme-store';
 import { useI18n } from '../i18n';
-import { Header, Badge } from '../components/ui';
-import { colors as defaultColors, ColorTheme, spacing, borderRadius } from '../theme';
+import { Header, Badge, FloatingCartBar } from '../components/ui';
+import { isPlaceholderDescription } from '../shared';
+import { colors as defaultColors, ColorTheme, spacing, borderRadius, displayFontFamily } from '../theme';
 
-export function MenuScreen({ navigation }: any) {
+export function MenuScreen({ navigation, route }: any) {
   const { t, formatCurrency } = useI18n();
   const { colors } = useTheme();
   const [categories, setCategories] = useState<CategoryDto[]>([]);
   const [dishes, setDishes] = useState<DishDto[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(route?.params?.categoryId || null);
+
+  useEffect(() => {
+    if (route?.params?.categoryId) {
+      setSelectedCategory(route.params.categoryId);
+    }
+  }, [route?.params?.categoryId]);
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [vegOnly, setVegOnly] = useState(false);
@@ -295,7 +303,10 @@ export function MenuScreen({ navigation }: any) {
       <FlatList
         data={filteredDishes}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[
+          styles.listContent,
+          { paddingBottom: cartItemCount > 0 ? 80 : 24 },
+        ]}
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}
@@ -329,7 +340,7 @@ export function MenuScreen({ navigation }: any) {
                 </View>
 
                 <Text style={styles.dishName}>{item.name}</Text>
-                {item.description ? (
+                {item.description && !isPlaceholderDescription(item.description) ? (
                   <Text style={styles.dishDesc} numberOfLines={2}>
                     {item.description}
                   </Text>
@@ -393,32 +404,7 @@ export function MenuScreen({ navigation }: any) {
       />
 
       {/* Floating Cart Bar (Persistent summary when cart has items) */}
-      {cartItemCount > 0 && (
-        <TouchableOpacity
-          style={styles.floatingCartBar}
-          onPress={() => navigation.navigate('Cart')}
-          activeOpacity={0.9}
-        >
-          <View style={styles.floatingCartLeft}>
-            <View style={styles.floatingCartBadge}>
-              <Ionicons name="cart" size={16} color="#FFFFFF" />
-              <Text style={styles.floatingCartCount}>{cartItemCount}</Text>
-            </View>
-            <View>
-              <Text style={styles.floatingCartTitle}>
-                {cartItemCount} {cartItemCount === 1 ? 'item' : 'items'} added
-              </Text>
-              <Text style={styles.floatingCartSubtotal}>
-                Rs. {cartSubtotal.toLocaleString()}
-              </Text>
-            </View>
-          </View>
-          <View style={styles.floatingCartAction}>
-            <Text style={styles.floatingCartActionText}>View Cart</Text>
-            <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
-          </View>
-        </TouchableOpacity>
-      )}
+      <FloatingCartBar onPress={() => navigation.navigate('Cart')} />
 
       {/* Maya Floating AI Assistant Button */}
       <TouchableOpacity
@@ -579,10 +565,12 @@ const createStyles = (colors: ColorTheme) =>
     fontWeight: '700',
   },
   dishName: {
+    fontFamily: displayFontFamily,
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: colors.text,
     marginBottom: 4,
+    letterSpacing: -0.1,
   },
   dishDesc: {
     fontSize: 12,
@@ -672,7 +660,7 @@ const createStyles = (colors: ColorTheme) =>
   },
   mayaFab: {
     position: 'absolute',
-    bottom: 24,
+    bottom: 12,
     right: 20,
     backgroundColor: colors.surfaceElevated,
     borderRadius: borderRadius.full,
@@ -688,6 +676,7 @@ const createStyles = (colors: ColorTheme) =>
     shadowOpacity: 0.35,
     shadowRadius: 8,
     elevation: 6,
+    zIndex: 98,
   },
   mayaFabIconCircle: {
     width: 24,
@@ -704,7 +693,7 @@ const createStyles = (colors: ColorTheme) =>
     letterSpacing: 0.5,
   },
   mayaFabWithCart: {
-    bottom: 84,
+    bottom: 68,
   },
   sortWrapper: {
     paddingBottom: spacing.sm,
@@ -739,7 +728,7 @@ const createStyles = (colors: ColorTheme) =>
   },
   floatingCartBar: {
     position: 'absolute',
-    bottom: 14,
+    bottom: Platform.OS === 'ios' ? 76 : 70,
     left: 16,
     right: 16,
     backgroundColor: colors.purple,

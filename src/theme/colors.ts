@@ -14,32 +14,32 @@ export const brand = {
 } as const;
 
 export const lightColors = {
-  // Brand Backgrounds & Surfaces (User Requested Spec)
-  background: '#FAF8FB',
-  backgroundSecondary: '#F3EEF6',
+  // Brand Backgrounds & Surfaces ("Purple Haze garden dining at dusk")
+  background: '#FAF7F2',
+  backgroundSecondary: '#F3ECE2',
   surface: '#FFFFFF',
-  surfaceElevated: '#FFFFFF',
-  surfaceBorder: '#EFE7F3',
-  surfaceBorderLight: '#F7F2F9',
+  surfaceElevated: '#FDFBF7',
+  surfaceBorder: '#EAE1D5',
+  surfaceBorderLight: '#F4EFE7',
 
-  // Gold Accents (Purple Haze Signature)
-  gold: '#D8AD68',
-  goldLight: '#F3E5AB',
-  goldDark: '#B89628',
-  goldMuted: 'rgba(216, 173, 104, 0.15)',
+  // Champagne-Gold Accents (Refined & Restrained)
+  gold: '#C59A45',
+  goldLight: '#F5EDDC',
+  goldDark: '#8F6B22',
+  goldMuted: 'rgba(197, 154, 69, 0.15)',
 
-  // Purple Highlights
-  purple: '#54266D',
-  purpleLight: '#F0E7F4',
-  purpleDark: '#32183F',
-  purpleMuted: 'rgba(84, 38, 109, 0.12)',
-  purpleGlow: 'rgba(84, 38, 109, 0.25)',
+  // Deep Aubergine / Dusk Plum (Primary Brand Color)
+  purple: '#481952',
+  purpleLight: '#F3EAF4',
+  purpleDark: '#2C0D33',
+  purpleMuted: 'rgba(72, 25, 82, 0.08)',
+  purpleGlow: 'rgba(72, 25, 82, 0.22)',
 
-  // Typography (User Requested Spec)
-  text: '#211827',
-  textSecondary: '#4D3F54',
-  textMuted: '#827889',
-  textDisabled: '#B3ABB9',
+  // Typography (Editorial Dusk Charcoal)
+  text: '#1E1423',
+  textSecondary: '#524456',
+  textMuted: '#7C6E80',
+  textDisabled: '#ADA1B2',
 
   // Status & Alerts
   success: '#10B981',

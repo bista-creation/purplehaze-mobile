@@ -396,7 +396,9 @@ export const api = {
     getCategories: async (): Promise<CategoryDto[]> => {
       try {
         const res = await request<CategoryDto[]>('/menu/categories');
-        if (Array.isArray(res) && res.length > 0) return res;
+        if (Array.isArray(res) && res.length > 0) {
+          return res;
+        }
       } catch (e) {
         console.warn('[API Client] Failed to fetch live categories, using offline fallbacks:', e);
       }
@@ -409,7 +411,9 @@ export const api = {
         if (params?.categoryId) query.set('categoryId', params.categoryId);
         if (params?.isVeg !== undefined) query.set('isVeg', String(params.isVeg));
         const res = await request<DishDto[]>(`/menu/dishes?${query.toString()}`);
-        if (Array.isArray(res) && res.length > 0) return res;
+        if (Array.isArray(res) && res.length > 0) {
+          return res;
+        }
       } catch (e) {
         console.warn('[API Client] Failed to fetch live dishes, using offline fallbacks:', e);
       }

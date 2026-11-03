@@ -16,6 +16,7 @@ import { useFavoritesStore } from '../stores/favorites-store';
 import { useTheme } from '../stores/theme-store';
 import { useI18n } from '../i18n';
 import { Header } from '../components/ui';
+import { isPlaceholderDescription } from '../shared';
 import { colors as defaultColors, ColorTheme, spacing, borderRadius } from '../theme';
 
 export function FavoritesScreen({ navigation }: any) {
@@ -117,9 +118,11 @@ export function FavoritesScreen({ navigation }: any) {
 
                 <Text style={styles.dishName}>{item.name}</Text>
                 <Text style={styles.dishPrice}>{formatCurrency(item.price)}</Text>
-                <Text style={styles.dishDescription} numberOfLines={2}>
-                  {item.description || 'Authentic flavors made with fresh ingredients.'}
-                </Text>
+                {item.description && !isPlaceholderDescription(item.description) ? (
+                  <Text style={styles.dishDescription} numberOfLines={2}>
+                    {item.description}
+                  </Text>
+                ) : null}
               </View>
 
               <View style={styles.dishRight}>
