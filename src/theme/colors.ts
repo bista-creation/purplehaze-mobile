@@ -55,6 +55,11 @@ export const lightColors = {
   veg: '#16A34A',
   nonVeg: '#DC2626',
   halal: '#0891B2',
+
+  // Semantic Aliases & Fallbacks
+  primary: '#481952',
+  textPrimary: '#1E1423',
+  border: '#EAE1D5',
 } as const;
 
 export const darkColors = {
@@ -99,6 +104,11 @@ export const darkColors = {
   veg: '#22C55E',
   nonVeg: '#EF4444',
   halal: '#06B6D4',
+
+  // Semantic Aliases & Fallbacks
+  primary: '#9061F9',
+  textPrimary: '#FFFFFF',
+  border: '#372549',
 } as const;
 
 export type ColorTheme = { [K in keyof typeof lightColors]: string };

@@ -21,7 +21,7 @@ export const VenuesScreen: React.FC<any> = ({ navigation }) => {
   const [venues, setVenues] = useState<VenueDto[]>([]);
   const [selectedVenue, setSelectedVenue] = useState<VenueDto | null>(null);
   const [showInquiryModal, setShowInquiryModal] = useState(false);
-  const scrollViewRef = useRef<ScrollView>(null);
+  const scrollViewRef = useRef<any>(null);
   const venueLayouts = useRef<{ [key: string]: number }>({});
 
   const styles = useMemo(() => createStyles(colors), [colors]);

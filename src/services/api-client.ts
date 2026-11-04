@@ -115,6 +115,7 @@ export interface VenueDto {
   tagline?: string | null;
   description?: string | null;
   capacity: number | null;
+  image?: string | null;
   images: string[];
   features: string[];
 }
@@ -713,7 +714,7 @@ export const offlineVenues: VenueDto[] = [
     tagline: 'Signature open-air garden under Biratnagar evening lights',
     description:
       'Our signature open-air garden space surrounded by greenery and evening lights, perfect for weddings, outdoor celebrations, corporate gatherings, and music events.',
-    capacity: undefined,
+    capacity: null,
     image: 'https://purplehaze-nine.vercel.app/images/venues/garden-lawn.jpg',
     images: [
       'https://purplehaze-nine.vercel.app/images/venues/garden-lawn.jpg',

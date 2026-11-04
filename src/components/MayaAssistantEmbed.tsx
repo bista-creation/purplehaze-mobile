@@ -40,10 +40,15 @@ export const MayaAssistantEmbed: React.FC<MayaAssistantEmbedProps> = ({ onClose,
 
   if (Platform.OS === 'web') {
     return (
-      <View style={[styles.container, style]}>
+      <View style={[styles.container, { backgroundColor: mode === 'dark' ? '#130B1D' : '#FAF8FF' }, style]}>
         {loading && (
-          <View style={styles.loaderOverlay}>
-            <ActivityIndicator size="large" color={colors.gold || '#D4AF37'} />
+          <View
+            style={[
+              styles.loaderOverlay,
+              { backgroundColor: mode === 'dark' ? 'rgba(19, 11, 29, 0.94)' : 'rgba(250, 248, 255, 0.94)' },
+            ]}
+          >
+            <ActivityIndicator size="large" color={colors.purple} />
             <Text style={[styles.loaderText, { color: colors.textSecondary }]}>
               Connecting to Maya AI...
             </Text>
@@ -60,7 +65,7 @@ export const MayaAssistantEmbed: React.FC<MayaAssistantEmbedProps> = ({ onClose,
             borderRadius: 16,
             width: '100%',
             height: '100%',
-            backgroundColor: 'transparent',
+            backgroundColor: mode === 'dark' ? '#130B1D' : '#FAF8FF',
             boxShadow: '0 12px 40px rgba(0,0,0,0.35)',
           }}
         />
@@ -79,7 +84,7 @@ export const MayaAssistantEmbed: React.FC<MayaAssistantEmbedProps> = ({ onClose,
   if (!WebViewComponent) {
     return (
       <View style={[styles.container, styles.fallbackContainer, { backgroundColor: colors.surface }]}>
-        <Text style={[styles.fallbackTitle, { color: colors.textPrimary }]}>Maya AI Assistant</Text>
+        <Text style={[styles.fallbackTitle, { color: colors.text }]}>Maya AI Assistant</Text>
         <Text style={[styles.fallbackSub, { color: colors.textSecondary }]}>
           Please launch in browser or web mode to chat with Maya.
         </Text>
@@ -88,10 +93,15 @@ export const MayaAssistantEmbed: React.FC<MayaAssistantEmbedProps> = ({ onClose,
   }
 
   return (
-    <View style={[styles.container, style]}>
+    <View style={[styles.container, { backgroundColor: mode === 'dark' ? '#130B1D' : '#FAF8FF' }, style]}>
       {loading && (
-        <View style={styles.loaderOverlay}>
-          <ActivityIndicator size="large" color={colors.gold || '#D4AF37'} />
+        <View
+          style={[
+            styles.loaderOverlay,
+            { backgroundColor: mode === 'dark' ? 'rgba(19, 11, 29, 0.94)' : 'rgba(250, 248, 255, 0.94)' },
+          ]}
+        >
+          <ActivityIndicator size="large" color={colors.purple} />
           <Text style={[styles.loaderText, { color: colors.textSecondary }]}>
             Connecting to Maya AI...
           </Text>
@@ -130,7 +140,11 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   loaderOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1,

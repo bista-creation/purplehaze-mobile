@@ -126,7 +126,7 @@ export function MenuScreen({ navigation, route }: any) {
   }, [dishes, selectedCategory, showOnlyFavorites, favoriteDishIds, vegOnly, sortBy, searchQuery]);
 
   const handleQuickAdd = (dish: DishDto) => {
-    if (!dish.isAvailable) return;
+    if (dish.isAvailable === false) return;
     if ((dish.variants && dish.variants.length > 0) || (dish.addOns && dish.addOns.length > 0)) {
       navigation.navigate('DishDetail', { dish });
       return;
@@ -320,9 +320,10 @@ export function MenuScreen({ navigation, route }: any) {
         }
         renderItem={({ item }) => {
           const favorited = isFavorite(item.id);
+          const isAvailable = item.isAvailable !== false;
           return (
             <TouchableOpacity
-              style={[styles.dishCard, !item.isAvailable && styles.dishDisabled]}
+              style={[styles.dishCard, !isAvailable && styles.dishDisabled]}
               onPress={() => navigation.navigate('DishDetail', { dish: item })}
               activeOpacity={0.8}
             >
@@ -376,7 +377,7 @@ export function MenuScreen({ navigation, route }: any) {
                   />
                 </TouchableOpacity>
 
-                {item.isAvailable ? (
+                {isAvailable ? (
                   <TouchableOpacity
                     style={styles.addButton}
                     onPress={() => handleQuickAdd(item)}
@@ -406,21 +407,6 @@ export function MenuScreen({ navigation, route }: any) {
 
       {/* Floating Cart Bar (Persistent summary when cart has items) */}
       <FloatingCartBar onPress={() => navigation.navigate('Cart')} />
-
-      {/* Maya Floating AI Assistant Button */}
-      <TouchableOpacity
-        style={[styles.mayaFab, cartItemCount > 0 && styles.mayaFabWithCart]}
-        onPress={() => {
-          useMayaStore.getState().openMaya();
-          navigation.navigate('MayaModal');
-        }}
-        activeOpacity={0.85}
-      >
-        <View style={styles.mayaFabIconCircle}>
-          <Ionicons name="sparkles" size={18} color={colors.gold} />
-        </View>
-        <Text style={styles.mayaFabText}>Ask Maya</Text>
-      </TouchableOpacity>
     </View>
   );
 }
@@ -522,7 +508,7 @@ const createStyles = (colors: ColorTheme) =>
     fontWeight: '600',
   },
   categoryPillTextActive: {
-    color: colors.text,
+    color: '#FFFFFF',
     fontWeight: 'bold',
   },
   listContent: {
@@ -578,14 +564,14 @@ const createStyles = (colors: ColorTheme) =>
   },
   dishDesc: {
     fontSize: 12,
-    color: colors.textMuted,
+    color: colors.textSecondary,
     lineHeight: 16,
     marginBottom: spacing.xs,
   },
   dishPrice: {
     fontSize: 15,
     fontWeight: '800',
-    color: colors.gold,
+    color: colors.purple,
     marginTop: 2,
   },
   dishImageWrapper: {
@@ -659,45 +645,8 @@ const createStyles = (colors: ColorTheme) =>
     gap: spacing.md,
   },
   emptyText: {
-    color: colors.textMuted,
+    color: colors.textSecondary,
     fontSize: 15,
-  },
-  mayaFab: {
-    position: 'absolute',
-    bottom: 12,
-    right: 20,
-    backgroundColor: colors.surfaceElevated,
-    borderRadius: borderRadius.full,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    borderWidth: 1.5,
-    borderColor: colors.gold,
-    shadowColor: colors.gold,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 6,
-    zIndex: 98,
-  },
-  mayaFabIconCircle: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: colors.goldMuted,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  mayaFabText: {
-    color: colors.gold,
-    fontSize: 13,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  mayaFabWithCart: {
-    bottom: 68,
   },
   sortWrapper: {
     paddingBottom: spacing.sm,

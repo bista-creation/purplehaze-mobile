@@ -29,20 +29,20 @@ export default function MayaModal({ navigation }: any) {
         style={[
           styles.header,
           {
-            backgroundColor: mode === 'dark' ? '#1E132C' : colors.surface,
-            borderBottomColor: colors.border,
+            backgroundColor: mode === 'dark' ? '#1F132B' : colors.surface,
+            borderBottomColor: colors.surfaceBorder,
           },
         ]}
       >
         <View style={styles.headerLeft}>
-          <View style={[styles.avatarCircle, { backgroundColor: colors.gold + '22' }]}>
-            <Ionicons name="sparkles" size={18} color={colors.gold || '#D4AF37'} />
+          <View style={[styles.avatarCircle, { backgroundColor: colors.goldMuted }]}>
+            <Ionicons name="sparkles" size={18} color={mode === 'dark' ? colors.gold : colors.goldDark} />
           </View>
           <View>
             <View style={styles.nameRow}>
-              <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Maya AI</Text>
-              <View style={[styles.aiBadge, { backgroundColor: colors.gold + '25' }]}>
-                <Text style={[styles.aiBadgeText, { color: colors.gold || '#D4AF37' }]}>
+              <Text style={[styles.headerTitle, { color: colors.text }]}>Maya AI</Text>
+              <View style={[styles.aiBadge, { backgroundColor: colors.goldMuted }]}>
+                <Text style={[styles.aiBadgeText, { color: mode === 'dark' ? colors.gold : colors.goldDark }]}>
                   Live Assistant
                 </Text>
               </View>
@@ -54,17 +54,24 @@ export default function MayaModal({ navigation }: any) {
         </View>
 
         <TouchableOpacity
-          style={[styles.closeBtn, { backgroundColor: colors.surface }]}
+          style={[
+            styles.closeBtn,
+            {
+              backgroundColor: colors.surfaceElevated,
+              borderWidth: 1,
+              borderColor: colors.surfaceBorder,
+            },
+          ]}
           onPress={handleClose}
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           aria-label="Close Maya Assistant"
         >
-          <Ionicons name="close" size={22} color={colors.textPrimary} />
+          <Ionicons name="close" size={20} color={colors.text} />
         </TouchableOpacity>
       </View>
 
       {/* Embedded Assistant */}
-      <View style={styles.embedContainer}>
+      <View style={[styles.embedContainer, { backgroundColor: mode === 'dark' ? '#130B1D' : '#FAF8FF' }]}>
         <MayaAssistantEmbed onClose={handleClose} />
       </View>
     </SafeAreaView>

@@ -24,9 +24,9 @@ export const MayaFloatingWidget: React.FC = () => {
         style={[
           styles.floatingLauncher,
           {
-            backgroundColor: colors.primary,
-            borderColor: colors.gold || '#D4AF37',
-            shadowColor: '#5B21B6',
+            backgroundColor: mode === 'dark' ? colors.purpleDark : colors.purple,
+            borderColor: colors.gold,
+            shadowColor: colors.purple,
           },
         ]}
         onPress={openMaya}
@@ -63,8 +63,8 @@ export const MayaFloatingWidget: React.FC = () => {
         style={[
           styles.card,
           {
-            backgroundColor: mode === 'dark' ? '#1E132C' : '#FFFFFF',
-            borderColor: colors.gold || '#D4AF37',
+            backgroundColor: mode === 'dark' ? '#1F132B' : '#FFFFFF',
+            borderColor: colors.gold,
           },
         ]}
       >
@@ -73,27 +73,34 @@ export const MayaFloatingWidget: React.FC = () => {
           style={[
             styles.headerBar,
             {
-              borderBottomColor: colors.border,
-              backgroundColor: mode === 'dark' ? '#160c22' : '#F9F6F0',
+              borderBottomColor: colors.surfaceBorder,
+              backgroundColor: mode === 'dark' ? '#281A36' : '#FAF7F2',
             },
           ]}
         >
           <View style={styles.headerTitleRow}>
             <Text style={styles.headerSparkle}>✨</Text>
-            <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Maya AI Assistant</Text>
+            <Text style={[styles.headerTitle, { color: colors.text }]}>Maya AI Assistant</Text>
           </View>
           <TouchableOpacity
-            style={[styles.closeBtn, { backgroundColor: colors.surface }]}
+            style={[
+              styles.closeBtn,
+              {
+                backgroundColor: colors.surfaceElevated,
+                borderWidth: 1,
+                borderColor: colors.surfaceBorder,
+              },
+            ]}
             onPress={closeMaya}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             aria-label="Close Maya Assistant"
           >
-            <Ionicons name="close" size={18} color={colors.textPrimary} />
+            <Ionicons name="close" size={18} color={colors.text} />
           </TouchableOpacity>
         </View>
 
         {/* Embedded Assistant */}
-        <View style={styles.embedWrapper}>
+        <View style={[styles.embedWrapper, { backgroundColor: mode === 'dark' ? '#130B1D' : '#FAF8FF' }]}>
           <MayaAssistantEmbed onClose={closeMaya} />
         </View>
       </View>
@@ -129,7 +136,7 @@ const styles = StyleSheet.create({
   },
   launcherText: {
     color: '#FFFFFF',
-    fontWeight: '700',
+    fontWeight: '800',
     fontSize: 13,
     letterSpacing: 0.3,
   },

@@ -48,10 +48,10 @@ export function HomeScreen({ navigation }: any) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [activeBannerIndex, setActiveBannerIndex] = useState(0);
 
-  const heroScrollRef = useRef<ScrollView>(null);
+  const heroScrollRef = useRef<any>(null);
   const activeBannerIndexRef = useRef(0);
   const isInteractingRef = useRef(false);
-  const appStateRef = useRef<AppStateStatus>(AppState.currentState);
+  const appStateRef = useRef<AppStateStatus>((AppState.currentState as AppStateStatus) || 'active');
 
   const cartItemCount = getItemCount();
   const cartSubtotal = getSubtotalNpr();

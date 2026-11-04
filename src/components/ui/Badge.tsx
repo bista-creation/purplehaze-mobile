@@ -10,7 +10,8 @@ export type BadgeVariant =
   | 'success'
   | 'warning'
   | 'error'
-  | 'muted';
+  | 'muted'
+  | 'outline';
 
 export interface BadgeProps {
   label: string;
@@ -43,6 +44,8 @@ export const Badge: React.FC<BadgeProps> = ({
         return { backgroundColor: colors.errorMuted, borderColor: colors.error };
       case 'muted':
         return { backgroundColor: 'rgba(148, 163, 184, 0.1)', borderColor: colors.textDisabled };
+      case 'outline':
+        return { backgroundColor: 'transparent', borderColor: colors.goldDark };
       case 'gold':
       default:
         return { backgroundColor: colors.goldMuted, borderColor: colors.goldDark };
@@ -65,6 +68,8 @@ export const Badge: React.FC<BadgeProps> = ({
         return { color: colors.error };
       case 'muted':
         return { color: colors.textMuted };
+      case 'outline':
+        return { color: colors.goldDark };
       case 'gold':
       default:
         return { color: colors.gold };
