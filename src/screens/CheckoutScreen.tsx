@@ -636,7 +636,7 @@ const createStyles = (colors: ColorTheme) =>
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: spacing.lg,
-    paddingTop: 54,
+    paddingTop: spacing.md,
     paddingBottom: spacing.md,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,

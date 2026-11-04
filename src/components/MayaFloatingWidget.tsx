@@ -35,7 +35,7 @@ export const MayaFloatingWidget: React.FC = () => {
           },
           Platform.OS === 'web' && ({
             position: 'fixed',
-            bottom: launcherBottom,
+            bottom: launcherBottom + 3,
             right: 16,
             zIndex: 40,
           } as any),
@@ -60,7 +60,7 @@ export const MayaFloatingWidget: React.FC = () => {
         styles.widgetContainer,
         Platform.OS === 'web' && ({
           position: 'fixed',
-          bottom: 20,
+          bottom: 23,
           right: 20,
           zIndex: 40,
           width: 380,

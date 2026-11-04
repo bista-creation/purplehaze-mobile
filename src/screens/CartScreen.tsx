@@ -195,7 +195,7 @@ const createStyles = (colors: ColorTheme) =>
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
-    paddingTop: 54,
+    paddingTop: spacing.md,
     paddingBottom: spacing.md,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
@@ -216,7 +216,7 @@ const createStyles = (colors: ColorTheme) =>
   },
   emptyTopBack: {
     position: 'absolute',
-    top: 54,
+    top: spacing.md,
     left: spacing.lg,
     flexDirection: 'row',
     alignItems: 'center',

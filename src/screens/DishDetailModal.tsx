@@ -324,7 +324,7 @@ const createStyles = (colors: ColorTheme) =>
   },
   closeButton: {
     position: 'absolute',
-    top: 48,
+    top: 16,
     right: 20,
     backgroundColor: 'rgba(0,0,0,0.6)',
     width: 36,

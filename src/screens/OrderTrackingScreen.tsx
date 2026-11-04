@@ -518,7 +518,7 @@ const createStyles = (colors: ColorTheme) =>
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.lg,
-    paddingTop: 54,
+    paddingTop: spacing.md,
     paddingBottom: spacing.md,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
@@ -551,7 +551,7 @@ const createStyles = (colors: ColorTheme) =>
   },
   stateBackBtn: {
     position: 'absolute',
-    top: 54,
+    top: spacing.md,
     left: spacing.lg,
     width: 36,
     height: 36,
