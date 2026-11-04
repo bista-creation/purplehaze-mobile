@@ -14,7 +14,7 @@
     "android": {
       "package": "com.bistacreation.purplehaze",
       "adaptiveIcon": {
-        "backgroundColor": "#54266D",
+        "backgroundColor": "#FAF7F2",
         "foregroundImage": "./assets/android-icon-foreground.png"
       }
     },
