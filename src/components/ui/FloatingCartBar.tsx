@@ -174,7 +174,12 @@ const createStyles = (colors: ColorTheme) =>
       right: 16,
       maxWidth: 640,
       alignSelf: 'center',
-      zIndex: 99,
+      zIndex: 100,
+      ...Platform.select({
+        web: {
+          zIndex: 100,
+        },
+      }),
     },
     pillCard: {
       height: 50,

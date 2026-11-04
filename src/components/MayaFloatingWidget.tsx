@@ -9,6 +9,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useMayaStore } from '../stores/maya-store';
 import { useThemeStore } from '../stores/theme-store';
+import { useCartStore } from '../stores/cart-store';
 import { MayaAssistantEmbed } from './MayaAssistantEmbed';
 
 export const MayaFloatingWidget: React.FC = () => {
@@ -17,6 +18,9 @@ export const MayaFloatingWidget: React.FC = () => {
   const openMaya = useMayaStore((s) => s.openMaya);
   const colors = useThemeStore((s) => s.colors);
   const mode = useThemeStore((s) => s.mode);
+  const cartItemCount = useCartStore((s) => s.getItemCount());
+
+  const launcherBottom = cartItemCount > 0 ? 140 : 84;
 
   if (!isOpen) {
     return (
@@ -24,10 +28,17 @@ export const MayaFloatingWidget: React.FC = () => {
         style={[
           styles.floatingLauncher,
           {
+            bottom: launcherBottom,
             backgroundColor: mode === 'dark' ? colors.purpleDark : colors.purple,
             borderColor: colors.gold,
             shadowColor: colors.purple,
           },
+          Platform.OS === 'web' && ({
+            position: 'fixed',
+            bottom: launcherBottom,
+            right: 16,
+            zIndex: 40,
+          } as any),
         ]}
         onPress={openMaya}
         activeOpacity={0.85}
@@ -51,7 +62,7 @@ export const MayaFloatingWidget: React.FC = () => {
           position: 'fixed',
           bottom: 20,
           right: 20,
-          zIndex: 999999,
+          zIndex: 40,
           width: 380,
           height: 600,
           maxWidth: 'calc(100vw - 30px)',
@@ -113,7 +124,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 84,
     right: 16,
-    zIndex: 999998,
+    zIndex: 40,
     borderRadius: 28,
     borderWidth: 2,
     paddingVertical: 10,
@@ -155,7 +166,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 20,
     right: 20,
-    zIndex: 999999,
+    zIndex: 40,
     width: 380,
     height: 600,
     maxWidth: '92%',
