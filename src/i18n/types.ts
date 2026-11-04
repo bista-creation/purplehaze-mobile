@@ -82,10 +82,12 @@ export interface Translations {
   venues: {
     title: string;
     subtitle: string;
-    rooftopTitle: string;
-    rooftopDesc: string;
     hallTitle: string;
     hallDesc: string;
+    meeting100Title?: string;
+    meeting100Desc?: string;
+    meeting50Title?: string;
+    meeting50Desc?: string;
     gardenTitle: string;
     gardenDesc: string;
     capacity: string;
