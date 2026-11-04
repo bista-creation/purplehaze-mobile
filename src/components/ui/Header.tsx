@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { useI18n } from '../../i18n';
@@ -65,8 +65,8 @@ export const Header: React.FC<HeaderProps> = ({
           </View>
 
           <View style={styles.brandContainer}>
-            <Text style={[styles.brandTitle, { color: colors.purple }]}>PURPLE HAZE</Text>
-            <Text style={[styles.brandSubtitle, { color: colors.gold }]}>RESTRO {'&'} GARDEN</Text>
+            <Text style={[styles.brandTitle, { color: colors.purple }]}>Purple Haze</Text>
+            <Text style={[styles.brandSubtitle, { color: colors.gold }]}>Restro {'&'} Garden</Text>
             {showLocation && (
               <View style={styles.locationBadge}>
                 <Text style={styles.locationPin}>📍</Text>
@@ -146,18 +146,22 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   brandTitle: {
-    fontSize: 16,
-    fontWeight: '900',
+    fontFamily: Platform.select({
+      web: "'Dancing Script', cursive",
+      default: 'DancingScript-Bold',
+    }),
+    fontSize: 22,
+    fontWeight: '700',
     color: colors.purple,
-    letterSpacing: 1.2,
-    lineHeight: 18,
+    letterSpacing: 0.2,
+    lineHeight: 25,
   },
   brandSubtitle: {
     fontSize: 9,
     fontWeight: '800',
     color: colors.gold,
     letterSpacing: 1.5,
-    marginTop: 1,
+    marginTop: 0,
   },
   locationBadge: {
     flexDirection: 'row',

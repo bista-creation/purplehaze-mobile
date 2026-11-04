@@ -9,6 +9,7 @@ import { useLanguageStore } from './src/i18n';
 import { useFavoritesStore } from './src/stores/favorites-store';
 import { useThemeStore, useTheme } from './src/stores/theme-store';
 import { pushNotifications } from './src/services/push-notifications';
+import * as Font from 'expo-font';
 
 function MainAppContent() {
   const insets = useSafeAreaInsets();
@@ -50,6 +51,22 @@ export default function App() {
     useThemeStore.getState().initTheme();
     useLanguageStore.getState().initLanguage();
     useFavoritesStore.getState().initFavorites();
+
+    // 0.1 Load Dancing Script brand font
+    Font.loadAsync({
+      'DancingScript-Bold': require('./assets/fonts/DancingScript-Bold.ttf'),
+    }).catch((e) => console.warn('[App] Font load warning:', e));
+
+    if (Platform.OS === 'web' && typeof document !== 'undefined') {
+      const fontId = 'dancing-script-google-font';
+      if (!document.getElementById(fontId)) {
+        const link = document.createElement('link');
+        link.id = fontId;
+        link.rel = 'stylesheet';
+        link.href = 'https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&display=swap';
+        document.head.appendChild(link);
+      }
+    }
 
     // 1. Verify persisted tokens and load user profile
     checkAuth();
