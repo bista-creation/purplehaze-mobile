@@ -73,11 +73,21 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const data = await api.auth.register({ name, email, password, phone });
 
-      await tokenStorage.setAccessToken(data.tokens.accessToken);
-      await tokenStorage.setRefreshToken(data.tokens.refreshToken);
-      await tokenStorage.setUserSession(JSON.stringify(data.user));
+      if (data?.tokens?.accessToken && data?.user) {
+        await tokenStorage.setAccessToken(data.tokens.accessToken);
+        await tokenStorage.setRefreshToken(data.tokens.refreshToken);
+        await tokenStorage.setUserSession(JSON.stringify(data.user));
 
-      set({ user: data.user, isAuthenticated: true, isLoading: false });
+        set({ user: data.user, isAuthenticated: true, isLoading: false });
+      } else {
+        // Fallback: If tokens not in register response, auto login
+        const loginData = await api.auth.login({ email, password });
+        await tokenStorage.setAccessToken(loginData.tokens.accessToken);
+        await tokenStorage.setRefreshToken(loginData.tokens.refreshToken);
+        await tokenStorage.setUserSession(JSON.stringify(loginData.user));
+
+        set({ user: loginData.user, isAuthenticated: true, isLoading: false });
+      }
     } catch (error) {
       set({ isLoading: false });
       throw error;

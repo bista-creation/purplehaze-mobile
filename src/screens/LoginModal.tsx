@@ -25,6 +25,7 @@ export default function LoginModal({ navigation }: LoginModalProps) {
   const { colors } = useTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -61,13 +62,15 @@ export default function LoginModal({ navigation }: LoginModalProps) {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         {/* Close Button Header */}
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.closeBtn}
             onPress={handleClose}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            accessibilityLabel="Close"
+            accessibilityRole="button"
           >
             <Ionicons name="close" size={24} color="#cbd5e1" />
           </TouchableOpacity>
@@ -108,17 +111,34 @@ export default function LoginModal({ navigation }: LoginModalProps) {
           />
 
           <Text style={styles.label}>Password</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="••••••••"
-            placeholderTextColor="#64748b"
-            value={password}
-            onChangeText={(txt) => {
-              setPassword(txt);
-              setError(null);
-            }}
-            secureTextEntry
-          />
+          <View style={styles.passwordContainer}>
+            <TextInput
+              style={styles.passwordInput}
+              placeholder="••••••••"
+              placeholderTextColor="#64748b"
+              value={password}
+              onChangeText={(txt) => {
+                setPassword(txt);
+                setError(null);
+              }}
+              secureTextEntry={!showPassword}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            <TouchableOpacity
+              style={styles.eyeBtn}
+              onPress={() => setShowPassword((prev) => !prev)}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+              accessibilityRole="button"
+            >
+              <Ionicons
+                name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                size={20}
+                color={colors.textMuted}
+              />
+            </TouchableOpacity>
+          </View>
 
           <TouchableOpacity
             style={[styles.submitBtn, loading && styles.submitBtnDisabled]}
@@ -209,6 +229,28 @@ const createStyles = (colors: ColorTheme) =>
       borderWidth: 1,
       borderColor: colors.surfaceBorder,
       marginBottom: 16,
+    },
+    passwordContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+      borderRadius: borderRadius.md,
+      borderWidth: 1,
+      borderColor: colors.surfaceBorder,
+      marginBottom: 16,
+      paddingRight: 12,
+    },
+    passwordInput: {
+      flex: 1,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      color: colors.text,
+      fontSize: 15,
+    },
+    eyeBtn: {
+      padding: 4,
+      justifyContent: 'center',
+      alignItems: 'center',
     },
     submitBtn: {
       backgroundColor: colors.purple,

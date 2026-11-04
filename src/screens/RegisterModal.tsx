@@ -27,6 +27,7 @@ export default function RegisterModal({ navigation }: RegisterModalProps) {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,15 +50,25 @@ export default function RegisterModal({ navigation }: RegisterModalProps) {
       setError('Please enter a valid email address.');
       return;
     }
-    if (!password || password.length < 6) {
-      setError('Password must be at least 6 characters.');
+    if (!password || password.length < 8) {
+      setError('Password must be at least 8 characters.');
+      return;
+    }
+    if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
+      setError('Password must include at least one letter and one number.');
+      return;
+    }
+
+    const cleanPhone = phone.trim();
+    if (cleanPhone && cleanPhone.replace(/\D/g, '').length < 7) {
+      setError('Please enter a valid phone number (at least 7 digits) or leave it blank.');
       return;
     }
 
     try {
       setLoading(true);
       setError(null);
-      await register(name.trim(), email.trim(), password, phone.trim() || undefined);
+      await register(name.trim(), email.trim(), password, cleanPhone || undefined);
       handleClose();
     } catch (err: any) {
       setError(err?.message || 'Registration failed. Please try again.');
@@ -71,13 +82,15 @@ export default function RegisterModal({ navigation }: RegisterModalProps) {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         {/* Close Button Header */}
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.closeBtn}
             onPress={handleClose}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            accessibilityLabel="Close"
+            accessibilityRole="button"
           >
             <Ionicons name="close" size={24} color="#cbd5e1" />
           </TouchableOpacity>
@@ -142,18 +155,35 @@ export default function RegisterModal({ navigation }: RegisterModalProps) {
             keyboardType="phone-pad"
           />
 
-          <Text style={styles.label}>Password (min 6 characters)</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="••••••••"
-            placeholderTextColor="#64748b"
-            value={password}
-            onChangeText={(txt) => {
-              setPassword(txt);
-              setError(null);
-            }}
-            secureTextEntry
-          />
+          <Text style={styles.label}>Password (min 8 characters, letters & numbers)</Text>
+          <View style={styles.passwordContainer}>
+            <TextInput
+              style={styles.passwordInput}
+              placeholder="Min 8 characters (letters & numbers)"
+              placeholderTextColor="#64748b"
+              value={password}
+              onChangeText={(txt) => {
+                setPassword(txt);
+                setError(null);
+              }}
+              secureTextEntry={!showPassword}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            <TouchableOpacity
+              style={styles.eyeBtn}
+              onPress={() => setShowPassword((prev) => !prev)}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+              accessibilityRole="button"
+            >
+              <Ionicons
+                name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                size={20}
+                color={colors.textMuted}
+              />
+            </TouchableOpacity>
+          </View>
 
           <TouchableOpacity
             style={[styles.submitBtn, loading && styles.submitBtnDisabled]}
@@ -244,6 +274,28 @@ const createStyles = (colors: ColorTheme) =>
       borderWidth: 1,
       borderColor: colors.surfaceBorder,
       marginBottom: 14,
+    },
+    passwordContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+      borderRadius: borderRadius.md,
+      borderWidth: 1,
+      borderColor: colors.surfaceBorder,
+      marginBottom: 14,
+      paddingRight: 12,
+    },
+    passwordInput: {
+      flex: 1,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      color: colors.text,
+      fontSize: 15,
+    },
+    eyeBtn: {
+      padding: 4,
+      justifyContent: 'center',
+      alignItems: 'center',
     },
     submitBtn: {
       backgroundColor: colors.purple,
