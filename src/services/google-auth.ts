@@ -1,7 +1,19 @@
-import * as WebBrowser from 'expo-web-browser';
-import * as Linking from 'expo-linking';
+import { Platform } from 'react-native';
+import {
+  GoogleSignin,
+  statusCodes,
+  isSuccessResponse,
+  isCancelledResponse,
+  isErrorWithCode,
+} from '@react-native-google-signin/google-signin';
 
-export const GOOGLE_CLIENT_ID =
+/**
+ * Web Client ID: Configured in Google Cloud Console as Web application OAuth Client ID.
+ * Google Play Services uses this server client ID to mint an OpenID Connect id_token
+ * that our backend can securely verify against tokeninfo / JWKS.
+ */
+export const GOOGLE_WEB_CLIENT_ID =
+  process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ||
   process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ||
   '731856766862-nd6rfig6r6862qtlujhk550knvtkm1na.apps.googleusercontent.com';
 
@@ -9,39 +21,92 @@ export interface GoogleAuthResult {
   idToken: string;
 }
 
-/**
- * Initiates Google OAuth 2.0 flow via in-app browser session.
- * Obtains an OpenID Connect id_token to exchange with POST /api/v1/auth/google.
- */
-export async function promptGoogleSignIn(): Promise<GoogleAuthResult | null> {
-  const redirectUrl = Linking.createURL('auth/google/callback');
-  const nonce = Math.random().toString(36).substring(2, 15);
+let isConfigured = false;
 
-  const authUrl =
-    'https://accounts.google.com/o/oauth2/v2/auth?' +
-    `client_id=${encodeURIComponent(GOOGLE_CLIENT_ID)}` +
-    `&redirect_uri=${encodeURIComponent(redirectUrl)}` +
-    '&response_type=id_token' +
-    `&scope=${encodeURIComponent('openid email profile')}` +
-    `&nonce=${encodeURIComponent(nonce)}`;
+export function configureGoogleSignIn(): void {
+  if (isConfigured || Platform.OS === 'web') return;
 
   try {
-    const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUrl);
+    GoogleSignin.configure({
+      webClientId: GOOGLE_WEB_CLIENT_ID,
+      offlineAccess: false,
+      scopes: ['profile', 'email'],
+    });
+    isConfigured = true;
+  } catch (err) {
+    console.warn('[GoogleAuth] Configuration failed:', err);
+  }
+}
 
-    if (result.type === 'success' && result.url) {
-      const hashOrQuery = result.url.includes('#')
-        ? result.url.split('#')[1]
-        : result.url.split('?')[1] || '';
-      const params = new URLSearchParams(hashOrQuery);
-      const idToken = params.get('id_token');
+/**
+ * Native Android & iOS Google Sign-In using Google Play Services / GIDSignIn.
+ * Returns an OpenID Connect id_token to exchange with POST /api/v1/auth/google.
+ */
+export async function promptGoogleSignIn(): Promise<GoogleAuthResult | null> {
+  if (Platform.OS === 'web') {
+    // On web, direct user to website authentication or show message
+    if (typeof window !== 'undefined') {
+      window.location.href = 'https://purplehaze-nine.vercel.app/auth/login';
+    }
+    return null;
+  }
 
+  configureGoogleSignIn();
+
+  try {
+    // Ensure Google Play Services are present and up to date on Android
+    await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+
+    // Clear any previous cached account session so account picker shows if needed
+    try {
+      await GoogleSignin.signOut();
+    } catch {
+      // Non-critical if no active session
+    }
+
+    const response = await GoogleSignin.signIn();
+
+    if (isCancelledResponse(response)) {
+      // User tapped outside or cancelled the account picker
+      return null;
+    }
+
+    if (isSuccessResponse(response)) {
+      const idToken = response.data.idToken;
       if (idToken) {
         return { idToken };
       }
+      throw new Error('Google sign-in succeeded but did not return an ID token.');
     }
-  } catch (err) {
-    console.warn('[GoogleAuth] OAuth session error:', err);
-  }
 
-  return null;
+    // Fallback accessor for alternative response shapes
+    const fallbackToken =
+      (response as any)?.data?.idToken || (response as any)?.idToken;
+    if (fallbackToken) {
+      return { idToken: fallbackToken };
+    }
+
+    return null;
+  } catch (error: any) {
+    if (isErrorWithCode(error)) {
+      switch (error.code) {
+        case statusCodes.SIGN_IN_CANCELLED:
+          // User cancelled sign-in dialog
+          return null;
+        case statusCodes.IN_PROGRESS:
+          console.warn('[GoogleAuth] Sign-in is already in progress');
+          return null;
+        case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
+          throw new Error(
+            'Google Play Services is not available or outdated on this device. Please update Google Play Services and try again.'
+          );
+        default:
+          console.warn('[GoogleAuth] Native sign-in error:', error.code, error.message);
+          throw new Error(error.message || 'Google sign-in failed.');
+      }
+    }
+
+    console.warn('[GoogleAuth] Unexpected error:', error);
+    throw error;
+  }
 }

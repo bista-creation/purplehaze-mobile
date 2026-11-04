@@ -27,7 +27,8 @@
           "color": "#54266D"
         }
       ],
-      "expo-font"
+      "expo-font",
+      "@react-native-google-signin/google-signin"
     ],
     "extra": {
       "apiUrl": "https://purplehaze-nine.vercel.app/api/v1",
