@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,10 @@ import {
   RefreshControl,
   Platform,
   useWindowDimensions,
+  AppState,
+  AppStateStatus,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { api as typedApi, DishDto, CategoryDto } from '../services/api-client';
@@ -33,6 +37,8 @@ export function HomeScreen({ navigation }: any) {
   const { width: windowWidth } = useWindowDimensions();
 
   const cardWidth = Math.min(windowWidth - 32, 640);
+  const slideGap = 12;
+  const snapInterval = cardWidth + slideGap;
 
   const styles = useMemo(() => createStyles(colors), [colors]);
 
@@ -41,6 +47,11 @@ export function HomeScreen({ navigation }: any) {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [activeBannerIndex, setActiveBannerIndex] = useState(0);
+
+  const heroScrollRef = useRef<ScrollView>(null);
+  const activeBannerIndexRef = useRef(0);
+  const isInteractingRef = useRef(false);
+  const appStateRef = useRef<AppStateStatus>(AppState.currentState);
 
   const cartItemCount = getItemCount();
   const cartSubtotal = getSubtotalNpr();
@@ -74,38 +85,131 @@ export function HomeScreen({ navigation }: any) {
     return dishes.slice(2, 8);
   }, [dishes]);
 
-  const promotionalBanners = [
-    {
-      id: '1',
-      title: 'Himalayan Garden Dining',
-      subtitle: 'Experience open-air candlelit evenings & tranquil greenery',
-      tag: 'GARDEN & ROOFTOP',
-      tagColor: colors.gold,
-      imageSource: require('../../assets/banners/garden-dining.jpg'),
-      actionText: 'Reserve Table',
-      route: 'Reservations',
+  const promotionalBanners = useMemo(
+    () => [
+      {
+        id: '1',
+        title: 'Lush Garden Dining',
+        subtitle: 'Experience open-air candlelit evenings & tranquil greenery',
+        tag: 'GARDEN & ROOFTOP',
+        tagColor: colors.gold,
+        imageSource: require('../../assets/banners/garden-dining.jpg'),
+        actionText: 'Reserve Table',
+        route: 'Reservations',
+      },
+      {
+        id: '2',
+        title: 'Flavors of Nepal & Sekuwa',
+        subtitle: 'Authentic charcoal smoked delights, Mo:Mo & sizzling platters',
+        tag: 'CHEF SPECIALS',
+        tagColor: '#F59E0B',
+        imageSource: require('../../assets/banners/restaurant.jpg'),
+        actionText: 'Order Food',
+        route: 'Menu',
+      },
+      {
+        id: '3',
+        title: 'Banquets & Celebrations',
+        subtitle: 'Air-conditioned banquet halls for weddings & private gatherings',
+        tag: 'VENUES & EVENTS',
+        tagColor: '#10B981',
+        imageSource: require('../../assets/banners/banquet.jpg'),
+        actionText: 'Explore Venues',
+        route: 'Venues',
+      },
+    ],
+    [colors.gold]
+  );
+
+  // Auto-advance hero carousel every 5s; pause on touch interaction or background state
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      appStateRef.current = nextAppState;
+    });
+
+    const interval = setInterval(() => {
+      if (isInteractingRef.current) return;
+      if (appStateRef.current !== 'active') return;
+
+      const nextIndex = (activeBannerIndexRef.current + 1) % promotionalBanners.length;
+      activeBannerIndexRef.current = nextIndex;
+      setActiveBannerIndex(nextIndex);
+
+      heroScrollRef.current?.scrollTo({
+        x: nextIndex * snapInterval,
+        animated: true,
+      });
+    }, 5000);
+
+    return () => {
+      clearInterval(interval);
+      subscription.remove();
+    };
+  }, [snapInterval, promotionalBanners.length]);
+
+  const handleHeroScroll = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const offsetX = e.nativeEvent.contentOffset.x;
+      const slide = Math.min(
+        Math.max(0, Math.round(offsetX / snapInterval)),
+        promotionalBanners.length - 1
+      );
+      if (slide !== activeBannerIndexRef.current) {
+        activeBannerIndexRef.current = slide;
+        setActiveBannerIndex(slide);
+      }
     },
-    {
-      id: '2',
-      title: 'Flavors of Nepal & Sekuwa',
-      subtitle: 'Authentic charcoal smoked delights, Mo:Mo & sizzling platters',
-      tag: 'CHEF SPECIALS',
-      tagColor: '#F59E0B',
-      imageSource: require('../../assets/banners/restaurant.jpg'),
-      actionText: 'Order Food',
-      route: 'Menu',
+    [snapInterval, promotionalBanners.length]
+  );
+
+  const handleTouchStart = useCallback(() => {
+    isInteractingRef.current = true;
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    setTimeout(() => {
+      isInteractingRef.current = false;
+    }, 800);
+  }, []);
+
+  const handleScrollBeginDrag = useCallback(() => {
+    isInteractingRef.current = true;
+  }, []);
+
+  const handleScrollEndDrag = useCallback(() => {
+    setTimeout(() => {
+      isInteractingRef.current = false;
+    }, 800);
+  }, []);
+
+  const handleMomentumScrollEnd = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const offsetX = e.nativeEvent.contentOffset.x;
+      const slide = Math.min(
+        Math.max(0, Math.round(offsetX / snapInterval)),
+        promotionalBanners.length - 1
+      );
+      activeBannerIndexRef.current = slide;
+      setActiveBannerIndex(slide);
+      setTimeout(() => {
+        isInteractingRef.current = false;
+      }, 400);
     },
-    {
-      id: '3',
-      title: 'Banquets & Celebrations',
-      subtitle: 'Air-conditioned banquet halls for weddings & private gatherings',
-      tag: 'VENUES & EVENTS',
-      tagColor: '#10B981',
-      imageSource: require('../../assets/banners/banquet.jpg'),
-      actionText: 'Explore Venues',
-      route: 'Venues',
+    [snapInterval, promotionalBanners.length]
+  );
+
+  const handleDotPress = useCallback(
+    (index: number) => {
+      isInteractingRef.current = false;
+      activeBannerIndexRef.current = index;
+      setActiveBannerIndex(index);
+      heroScrollRef.current?.scrollTo({
+        x: index * snapInterval,
+        animated: true,
+      });
     },
-  ];
+    [snapInterval]
+  );
 
   return (
     <View style={styles.container}>
@@ -166,16 +270,21 @@ export function HomeScreen({ navigation }: any) {
 
         {/* Hero Promotional Carousel with Atmospheric Imagery */}
         <ScrollView
+          ref={heroScrollRef}
           horizontal
-          pagingEnabled
           showsHorizontalScrollIndicator={false}
+          snapToInterval={snapInterval}
+          decelerationRate="fast"
+          snapToAlignment="start"
           style={styles.heroScroll}
           contentContainerStyle={styles.heroContainer}
-          onScroll={(e) => {
-            const slide = Math.round(e.nativeEvent.contentOffset.x / cardWidth);
-            setActiveBannerIndex(slide);
-          }}
+          onScroll={handleHeroScroll}
           scrollEventThrottle={16}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          onScrollBeginDrag={handleScrollBeginDrag}
+          onScrollEndDrag={handleScrollEndDrag}
+          onMomentumScrollEnd={handleMomentumScrollEnd}
         >
           {promotionalBanners.map((banner) => (
             <View key={banner.id} style={[styles.heroBanner, { width: cardWidth }]}>
@@ -196,6 +305,8 @@ export function HomeScreen({ navigation }: any) {
                     style={styles.heroActionBtn}
                     onPress={() => navigation.navigate(banner.route)}
                     activeOpacity={0.85}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${banner.actionText} - ${banner.title}`}
                   >
                     <Text style={styles.heroActionText}>{banner.actionText}</Text>
                     <Ionicons name="arrow-forward" size={14} color="#FFFFFF" />
@@ -205,6 +316,59 @@ export function HomeScreen({ navigation }: any) {
             </View>
           ))}
         </ScrollView>
+
+        {/* Synchronized Hero Pagination Dots Indicator */}
+        <View style={styles.paginationDotsContainer}>
+          {promotionalBanners.map((banner, idx) => {
+            const isActive = activeBannerIndex === idx;
+            return (
+              <TouchableOpacity
+                key={banner.id}
+                onPress={() => handleDotPress(idx)}
+                style={[
+                  styles.paginationDot,
+                  isActive ? styles.paginationDotActive : styles.paginationDotInactive,
+                ]}
+                hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
+                accessibilityRole="button"
+                accessibilityLabel={`Go to slide ${idx + 1}: ${banner.title}`}
+              />
+            );
+          })}
+        </View>
+
+        {/* Compact Prominent Promotion Section */}
+        <TouchableOpacity
+          style={styles.promotionCard}
+          onPress={() => navigation.navigate('Menu')}
+          activeOpacity={0.92}
+          accessibilityRole="button"
+          accessibilityLabel="Discover today's favourites, explore menu"
+        >
+          <View style={styles.promotionGlowLine} />
+          <View style={styles.promotionRow}>
+            <View style={styles.promotionLeft}>
+              <View style={styles.promotionBadgeRow}>
+                <View style={styles.promotionTag}>
+                  <Ionicons name="sparkles" size={11} color={colors.gold} />
+                  <Text style={styles.promotionTagText}>FEATURED TODAY</Text>
+                </View>
+                <Text style={styles.promotionAvailability}>Dine-in · Takeaway · Delivery</Text>
+              </View>
+              <Text style={styles.promotionTitle}>Discover Today's Favourites</Text>
+              <Text style={styles.promotionSubtitle} numberOfLines={2}>
+                Live charcoal Sekuwa, steaming dumplings & chef's garden specials.
+              </Text>
+            </View>
+
+            <View style={styles.promotionCta}>
+              <View style={styles.promotionCtaBtn}>
+                <Text style={styles.promotionCtaText}>Explore</Text>
+                <Ionicons name="arrow-forward" size={13} color="#FFFFFF" />
+              </View>
+            </View>
+          </View>
+        </TouchableOpacity>
 
         {/* Primary Action Hub: Ordering & Booking Dominant Paths */}
         <View style={styles.primaryHubContainer}>
@@ -566,7 +730,7 @@ const createStyles = (colors: ColorTheme) =>
   },
   greetingSubtitle: {
     fontSize: 12,
-    color: colors.textMuted,
+    color: colors.textSecondary,
     marginTop: 2,
   },
   mayaButton: {
@@ -608,7 +772,7 @@ const createStyles = (colors: ColorTheme) =>
   searchPlaceholder: {
     flex: 1,
     fontSize: 13,
-    color: colors.textMuted,
+    color: colors.textSecondary,
     fontWeight: '500',
   },
   searchFilterBadge: {
@@ -620,7 +784,7 @@ const createStyles = (colors: ColorTheme) =>
     justifyContent: 'center',
   },
   heroScroll: {
-    marginBottom: spacing.lg,
+    marginBottom: 10,
   },
   heroContainer: {
     gap: 12,
@@ -645,7 +809,7 @@ const createStyles = (colors: ColorTheme) =>
   },
   heroBannerOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(19, 11, 29, 0.55)',
+    backgroundColor: 'rgba(19, 11, 29, 0.62)',
     padding: spacing.md,
     justifyContent: 'flex-end',
     borderRadius: borderRadius.xl,
@@ -676,7 +840,7 @@ const createStyles = (colors: ColorTheme) =>
   },
   heroSubtitle: {
     fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.9)',
+    color: 'rgba(255, 255, 255, 0.92)',
     marginTop: 4,
     marginBottom: 10,
     fontWeight: '500',
@@ -697,6 +861,127 @@ const createStyles = (colors: ColorTheme) =>
     fontSize: 12,
     fontWeight: '800',
     color: '#FFFFFF',
+  },
+
+  /* Carousel Pagination Dots */
+  paginationDotsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 7,
+    marginBottom: spacing.md,
+  },
+  paginationDot: {
+    height: 6,
+    borderRadius: 3,
+  },
+  paginationDotActive: {
+    width: 22,
+    backgroundColor: colors.gold,
+  },
+  paginationDotInactive: {
+    width: 6,
+    backgroundColor: colors.surfaceBorderLight,
+  },
+
+  /* Compact Prominent Promotion Section */
+  promotionCard: {
+    backgroundColor: colors.surfaceElevated,
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
+    borderRadius: borderRadius.xl,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
+    position: 'relative',
+    overflow: 'hidden',
+    shadowColor: colors.purple,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  promotionGlowLine: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 3,
+    backgroundColor: colors.gold,
+  },
+  promotionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  promotionLeft: {
+    flex: 1,
+    paddingRight: 6,
+  },
+  promotionBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 6,
+  },
+  promotionTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: colors.goldMuted,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: borderRadius.full,
+  },
+  promotionTagText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: colors.goldDark,
+    letterSpacing: 0.5,
+  },
+  promotionAvailability: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
+  promotionTitle: {
+    fontFamily: displayFontFamily,
+    fontSize: 15,
+    fontWeight: '800',
+    color: colors.text,
+    letterSpacing: -0.2,
+    marginBottom: 3,
+  },
+  promotionSubtitle: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    lineHeight: 15,
+  },
+  promotionCta: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  promotionCtaBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: colors.purple,
+    borderWidth: 1,
+    borderColor: colors.gold,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: borderRadius.full,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.12,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  promotionCtaText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 0.2,
   },
 
   /* Primary Hub: Ordering & Booking */
@@ -747,7 +1032,7 @@ const createStyles = (colors: ColorTheme) =>
     alignItems: 'center',
   },
   primaryLivePill: {
-    backgroundColor: 'rgba(84, 38, 109, 0.1)',
+    backgroundColor: colors.purpleMuted,
     paddingHorizontal: 7,
     paddingVertical: 3,
     borderRadius: borderRadius.full,
@@ -759,7 +1044,7 @@ const createStyles = (colors: ColorTheme) =>
     letterSpacing: 0.5,
   },
   primaryGardenPill: {
-    backgroundColor: 'rgba(216, 173, 104, 0.15)',
+    backgroundColor: colors.goldMuted,
     paddingHorizontal: 7,
     paddingVertical: 3,
     borderRadius: borderRadius.full,
@@ -827,7 +1112,7 @@ const createStyles = (colors: ColorTheme) =>
   },
   secondarySubtitle: {
     fontSize: 10,
-    color: colors.textMuted,
+    color: colors.textSecondary,
   },
   secondaryDivider: {
     width: 1,
@@ -852,7 +1137,7 @@ const createStyles = (colors: ColorTheme) =>
   },
   sectionSubtitle: {
     fontSize: 11,
-    color: colors.textMuted,
+    color: colors.textSecondary,
     marginTop: 1,
   },
   sectionLink: {
@@ -909,7 +1194,7 @@ const createStyles = (colors: ColorTheme) =>
   },
   loadingText: {
     fontSize: 12,
-    color: colors.textMuted,
+    color: colors.textSecondary,
   },
   dishesScroll: {
     gap: spacing.md,
@@ -977,7 +1262,7 @@ const createStyles = (colors: ColorTheme) =>
   },
   dishDesc: {
     fontSize: 10,
-    color: colors.textMuted,
+    color: colors.textSecondary,
     lineHeight: 13,
     marginBottom: 8,
   },
@@ -1037,7 +1322,7 @@ const createStyles = (colors: ColorTheme) =>
   bestsellerBadgeText: {
     fontSize: 9,
     fontWeight: '800',
-    color: colors.textMuted,
+    color: colors.textSecondary,
   },
   bestsellerTitle: {
     fontFamily: displayFontFamily,
@@ -1054,7 +1339,7 @@ const createStyles = (colors: ColorTheme) =>
   },
   bestsellerDesc: {
     fontSize: 11,
-    color: colors.textMuted,
+    color: colors.textSecondary,
     lineHeight: 14,
   },
   bestsellerRight: {
@@ -1118,7 +1403,7 @@ const createStyles = (colors: ColorTheme) =>
   },
   heritageText: {
     fontSize: 11,
-    color: colors.textMuted,
+    color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 16,
   },
