@@ -44,10 +44,7 @@ export const MayaFloatingWidget: React.FC = () => {
         activeOpacity={0.85}
         aria-label="Open Maya AI Assistant"
       >
-        <View style={styles.launcherContent}>
-          <Text style={styles.launcherIcon}>✨</Text>
-          <Text style={styles.launcherText}>Ask Maya</Text>
-        </View>
+        <Text style={styles.launcherIcon}>✨</Text>
         <View style={styles.onlineDot} />
       </TouchableOpacity>
     );
@@ -125,39 +122,29 @@ const styles = StyleSheet.create({
     bottom: 84,
     right: 16,
     zIndex: 40,
-    borderRadius: 28,
-    borderWidth: 2,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    flexDirection: 'row',
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    borderWidth: 1.5,
     alignItems: 'center',
-    shadowOffset: { width: 0, height: 6 },
+    justifyContent: 'center',
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35,
-    shadowRadius: 12,
+    shadowRadius: 8,
     elevation: 8,
     cursor: 'pointer' as any,
   },
-  launcherContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
   launcherIcon: {
-    fontSize: 16,
-  },
-  launcherText: {
-    color: '#FFFFFF',
-    fontWeight: '800',
-    fontSize: 13,
-    letterSpacing: 0.3,
+    fontSize: 20,
+    textAlign: 'center',
   },
   onlineDot: {
     position: 'absolute',
-    top: -2,
-    right: -2,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    top: -1,
+    right: -1,
+    width: 11,
+    height: 11,
+    borderRadius: 6,
     backgroundColor: '#22C55E',
     borderWidth: 2,
     borderColor: '#FFFFFF',
