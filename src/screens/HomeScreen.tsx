@@ -73,7 +73,24 @@ export function HomeScreen({ navigation }: any) {
   };
 
   useEffect(() => {
-    loadData();
+    let active = true;
+    Promise.all([
+      typedApi.menu.getCategories().catch(() => []),
+      typedApi.menu.getDishes().catch(() => []),
+    ])
+      .then(([catData, dishData]) => {
+        if (!active) return;
+        setCategories(catData || []);
+        setDishes(dishData || []);
+      })
+      .catch((e) => console.warn('[HomeScreen] Data loading error:', e))
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   // Filter curated collections
@@ -355,9 +372,9 @@ export function HomeScreen({ navigation }: any) {
                 </View>
                 <Text style={styles.promotionAvailability}>Dine-in · Takeaway · Delivery</Text>
               </View>
-              <Text style={styles.promotionTitle}>Discover Today's Favourites</Text>
+              <Text style={styles.promotionTitle}>Discover Today&apos;s Favourites</Text>
               <Text style={styles.promotionSubtitle} numberOfLines={2}>
-                Live charcoal Sekuwa, steaming dumplings & chef's garden specials.
+                Live charcoal Sekuwa, steaming dumplings &amp; chef&apos;s garden specials.
               </Text>
             </View>
 
@@ -498,7 +515,7 @@ export function HomeScreen({ navigation }: any) {
         {/* Chef Specials Section */}
         <View style={styles.sectionHeader}>
           <View>
-            <Text style={styles.sectionTitle}>Chef's Recommendations 👨‍🍳</Text>
+          <Text style={styles.sectionTitle}>Chef&apos;s Recommendations 👨‍🍳</Text>
             <Text style={styles.sectionSubtitle}>Signature culinary crafts by executive chefs</Text>
           </View>
           <TouchableOpacity onPress={() => navigation.navigate('Menu')}>

@@ -6,11 +6,13 @@ import {
   ActivityIndicator,
   View,
   Alert,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../stores/auth-store';
 import { promptGoogleSignIn } from '../../services/google-auth';
-import { colors, borderRadius, spacing } from '../../theme';
+import { supabase } from '../../services/supabase';
+import { borderRadius, spacing } from '../../theme';
 
 interface GoogleSignInButtonProps {
   onSuccess?: () => void;
@@ -29,6 +31,15 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
   const handlePress = async () => {
     setLoading(true);
     try {
+      if (Platform.OS === 'web') {
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: { redirectTo: window.location.origin },
+        });
+        if (error) throw error;
+        return;
+      }
+
       const res = await promptGoogleSignIn();
       if (!res?.idToken) {
         // User cancelled the browser prompt or dismissed
@@ -40,7 +51,9 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
       if (onSuccess) onSuccess();
     } catch (e: any) {
       console.warn('[GoogleSignIn] Error:', e);
-      const msg = e?.message || 'Google sign-in could not be completed.';
+      const msg = /unsupported provider/i.test(e?.message ?? '')
+        ? "Google sign-in isn't enabled in this Supabase project yet. Enable Google under Authentication providers."
+        : e?.message || 'Google sign-in could not be completed.';
       if (onError) {
         onError(msg);
       } else {

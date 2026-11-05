@@ -132,6 +132,46 @@ class MobileRealtimeService {
     };
   }
 
+  /**
+   * Subscribes to live administrative order events (new orders, status updates).
+   */
+  async subscribeToAdminOrders(
+    onOrderEvent: (event: "created" | "updated", payload: any) => void
+  ): Promise<() => void> {
+    const topic = REALTIME_CHANNELS.adminOrders;
+    const client = await this.getClient();
+    if (!client) return () => {};
+
+    if (this.channels.has(topic)) {
+      this.channels.get(topic)?.unsubscribe();
+    }
+
+    const channel = client
+      .channel(topic)
+      .on(
+        "broadcast",
+        { event: REALTIME_EVENTS.orderCreated },
+        (response: { payload: any }) => {
+          onOrderEvent("created", response?.payload);
+        }
+      )
+      .on(
+        "broadcast",
+        { event: REALTIME_EVENTS.orderStatusUpdated },
+        (response: { payload: OrderStatusUpdatedPayload }) => {
+          onOrderEvent("updated", response?.payload);
+        }
+      )
+      .subscribe();
+
+    this.channels.set(topic, channel);
+
+    return () => {
+      channel.unsubscribe();
+      this.channels.delete(topic);
+    };
+  }
+
   disconnectAll() {
     this.channels.forEach((ch) => ch.unsubscribe());
     this.channels.clear();

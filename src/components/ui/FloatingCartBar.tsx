@@ -9,11 +9,10 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../stores/theme-store';
 import { useCartStore } from '../../stores/cart-store';
 import { useI18n } from '../../i18n';
-import { ColorTheme, borderRadius, spacing } from '../../theme';
+import { ColorTheme, borderRadius } from '../../theme';
 
 interface FloatingCartBarProps {
   onPress: () => void;
@@ -22,15 +21,15 @@ interface FloatingCartBarProps {
 export const FloatingCartBar: React.FC<FloatingCartBarProps> = ({ onPress }) => {
   const { colors } = useTheme();
   const { formatCurrency } = useI18n();
-  const insets = useSafeAreaInsets();
 
   const cartItemCount = useCartStore((s) => s.getItemCount());
   const cartSubtotal = useCartStore((s) => s.getSubtotalNpr());
+  const hasCartItems = cartItemCount > 0;
 
   const [reduceMotion, setReduceMotion] = useState(false);
-  const fadeAnim = useRef(new Animated.Value(cartItemCount > 0 ? 1 : 0)).current;
-  const slideAnim = useRef(new Animated.Value(cartItemCount > 0 ? 0 : 10)).current;
-  const countScaleAnim = useRef(new Animated.Value(1)).current;
+  const [fadeAnim] = useState(() => new Animated.Value(hasCartItems ? 1 : 0));
+  const [slideAnim] = useState(() => new Animated.Value(hasCartItems ? 0 : 10));
+  const [countScaleAnim] = useState(() => new Animated.Value(1));
   const prevCountRef = useRef(cartItemCount);
 
   // Check user accessibility preference for reduced motion
@@ -57,7 +56,7 @@ export const FloatingCartBar: React.FC<FloatingCartBarProps> = ({ onPress }) => 
 
   // Micro-animation: gentle entry transition when cart becomes active
   useEffect(() => {
-    if (cartItemCount > 0) {
+    if (hasCartItems) {
       if (reduceMotion) {
         fadeAnim.setValue(1);
         slideAnim.setValue(0);
@@ -79,7 +78,7 @@ export const FloatingCartBar: React.FC<FloatingCartBarProps> = ({ onPress }) => 
       fadeAnim.setValue(0);
       slideAnim.setValue(10);
     }
-  }, [cartItemCount > 0, reduceMotion]);
+  }, [hasCartItems, reduceMotion, fadeAnim, slideAnim]);
 
   // Micro-animation: subtle spring on the badge count when items change
   useEffect(() => {
@@ -101,7 +100,7 @@ export const FloatingCartBar: React.FC<FloatingCartBarProps> = ({ onPress }) => 
         ]).start();
       }
     }
-  }, [cartItemCount, reduceMotion]);
+  }, [cartItemCount, reduceMotion, countScaleAnim]);
 
   // Never render when cart is empty
   if (cartItemCount <= 0) {

@@ -1,4 +1,6 @@
 import * as Notifications from "expo-notifications";
+import Constants from "expo-constants";
+import { AndroidImportance } from "expo-notifications";
 import { Platform } from "react-native";
 import { api } from "./api";
 
@@ -45,14 +47,18 @@ export const pushNotifications = {
       if (Platform.OS === "android") {
         await Notifications.setNotificationChannelAsync("default", {
           name: "Purple Haze Orders",
-          importance: Notifications.AndroidImportance.MAX,
+          importance: AndroidImportance.MAX,
           vibrationPattern: [0, 250, 250, 250],
           lightColor: "#7c3aed",
           sound: "default",
         });
       }
 
-      const tokenData = await Notifications.getExpoPushTokenAsync();
+      const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
+      if (!projectId) {
+        throw new Error("EAS project ID is missing from the app configuration.");
+      }
+      const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
       const token = tokenData.data;
       cachedPushToken = token;
 

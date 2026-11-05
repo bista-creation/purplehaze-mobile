@@ -1,7 +1,8 @@
 import { create } from 'zustand';
-import { api, type UserSessionDto } from '../services/api-client';
-import { tokenStorage } from '../services/token-storage';
-import { pushNotifications } from '../services/push-notifications';
+import type { User } from '@supabase/supabase-js';
+import type { UserSessionDto } from '../services/api-client';
+import { supabase } from '../services/supabase';
+import { onAuthExpired } from '../services/api-client';
 
 type AuthState = {
   user: UserSessionDto | null;
@@ -15,6 +16,19 @@ type AuthState = {
   setUser: (user: UserSessionDto | null) => void;
 };
 
+function toAppUser(user: User): UserSessionDto {
+  // Authorization roles are read only from app_metadata, which users cannot edit.
+  const role = String(user.app_metadata?.role ?? 'CUSTOMER').toUpperCase();
+  return {
+    id: user.id,
+    email: user.email ?? '',
+    name: user.user_metadata?.full_name ?? user.user_metadata?.name ?? null,
+    phone: user.user_metadata?.phone ?? user.phone ?? null,
+    role: role === 'ADMIN' || role === 'STAFF' ? role : 'CUSTOMER',
+    image: user.user_metadata?.avatar_url ?? null,
+  };
+}
+
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   isLoading: true,
@@ -25,98 +39,73 @@ export const useAuthStore = create<AuthState>((set) => ({
   checkAuth: async () => {
     set({ isLoading: true });
     try {
-      // 1. Try to load cached user session for instant render
-      const cached = await tokenStorage.getUserSession();
-      if (cached) {
-        try {
-          const parsed = JSON.parse(cached) as UserSessionDto;
-          set({ user: parsed, isAuthenticated: true });
-        } catch {
-          // ignore corrupted cache
-        }
-      }
-
-      const token = await tokenStorage.getAccessToken();
-      if (!token) {
-        set({ user: null, isAuthenticated: false, isLoading: false });
-        return;
-      }
-
-      // 2. Revalidate with backend
-      const user = await api.auth.getMe();
-      await tokenStorage.setUserSession(JSON.stringify(user));
-      set({ user, isAuthenticated: true, isLoading: false });
+      const { data, error } = await supabase.auth.getSession();
+      if (error) throw error;
+      const sessionUser = data.session?.user;
+      set({
+        user: sessionUser ? toAppUser(sessionUser) : null,
+        isAuthenticated: !!sessionUser,
+        isLoading: false,
+      });
     } catch {
-      await tokenStorage.clearTokens();
       set({ user: null, isAuthenticated: false, isLoading: false });
     }
   },
 
   login: async (email, password) => {
     set({ isLoading: true });
-    try {
-      const data = await api.auth.login({ email, password });
-
-      await tokenStorage.setAccessToken(data.tokens.accessToken);
-      await tokenStorage.setRefreshToken(data.tokens.refreshToken);
-      await tokenStorage.setUserSession(JSON.stringify(data.user));
-
-      set({ user: data.user, isAuthenticated: true, isLoading: false });
-    } catch (error) {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
       set({ isLoading: false });
       throw error;
     }
+    set({ user: data.user ? toAppUser(data.user) : null, isAuthenticated: !!data.user, isLoading: false });
   },
 
   register: async (name, email, password, phone) => {
     set({ isLoading: true });
-    try {
-      const data = await api.auth.register({ name, email, password, phone });
-
-      if (data?.tokens?.accessToken && data?.user) {
-        await tokenStorage.setAccessToken(data.tokens.accessToken);
-        await tokenStorage.setRefreshToken(data.tokens.refreshToken);
-        await tokenStorage.setUserSession(JSON.stringify(data.user));
-
-        set({ user: data.user, isAuthenticated: true, isLoading: false });
-      } else {
-        // Fallback: If tokens not in register response, auto login
-        const loginData = await api.auth.login({ email, password });
-        await tokenStorage.setAccessToken(loginData.tokens.accessToken);
-        await tokenStorage.setRefreshToken(loginData.tokens.refreshToken);
-        await tokenStorage.setUserSession(JSON.stringify(loginData.user));
-
-        set({ user: loginData.user, isAuthenticated: true, isLoading: false });
-      }
-    } catch (error) {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { full_name: name, ...(phone ? { phone } : {}) } },
+    });
+    if (error) {
       set({ isLoading: false });
       throw error;
     }
+    if (!data.session) {
+      set({ user: null, isAuthenticated: false, isLoading: false });
+      throw new Error('Account created. Check your email to confirm your address, then sign in.');
+    }
+    set({ user: data.user ? toAppUser(data.user) : null, isAuthenticated: !!data.user, isLoading: false });
   },
 
-  loginWithGoogle: async (idToken: string) => {
+  loginWithGoogle: async (idToken) => {
     set({ isLoading: true });
-    try {
-      const data = await api.auth.googleSignIn(idToken);
-
-      await tokenStorage.setAccessToken(data.tokens.accessToken);
-      await tokenStorage.setRefreshToken(data.tokens.refreshToken);
-      await tokenStorage.setUserSession(JSON.stringify(data.user));
-
-      set({ user: data.user, isAuthenticated: true, isLoading: false });
-    } catch (error) {
+    const { data, error } = await supabase.auth.signInWithIdToken({ provider: 'google', token: idToken });
+    if (error) {
       set({ isLoading: false });
       throw error;
     }
+    set({ user: data.user ? toAppUser(data.user) : null, isAuthenticated: !!data.user, isLoading: false });
   },
 
   logout: async () => {
+    set({ isLoading: true });
     try {
-      const pushToken = pushNotifications.getPushToken() || undefined;
-      await api.auth.logout(pushToken, false).catch(() => null);
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
     } finally {
-      await tokenStorage.clearTokens();
       set({ user: null, isAuthenticated: false, isLoading: false });
     }
   },
 }));
+
+supabase.auth.onAuthStateChange((_event, session) => {
+  const user = session?.user ? toAppUser(session.user) : null;
+  useAuthStore.setState({ user, isAuthenticated: !!user, isLoading: false });
+});
+
+onAuthExpired(() => {
+  void supabase.auth.signOut();
+});

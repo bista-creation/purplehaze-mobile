@@ -28,7 +28,8 @@
         }
       ],
       "expo-font",
-      "@react-native-google-signin/google-signin"
+      "@react-native-google-signin/google-signin",
+      "expo-router"
     ],
     "extra": {
       "apiUrl": "https://purplehaze-nine.vercel.app/api/v1",

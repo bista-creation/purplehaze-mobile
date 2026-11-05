@@ -1,6 +1,5 @@
-import Constants from "expo-constants";
-import { tokenStorage } from "./token-storage";
-import type { ApiResponse, AuthTokens } from "../shared";
+import { supabase } from "./supabase";
+import type { ApiResponse } from "../shared";
 
 function cleanUrl(url?: string): string {
   if (!url) return "";
@@ -52,34 +51,21 @@ function onRefreshed(token: string | null) {
 }
 
 async function refreshAuthTokens(): Promise<string | null> {
-  const refreshToken = await tokenStorage.getRefreshToken();
-  if (!refreshToken) return null;
-
-  const baseUrl = getApiBaseUrl();
   try {
-    const res = await fetch(`${baseUrl}/auth/refresh`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refreshToken }),
-    });
-
-    if (!res.ok) {
-      await tokenStorage.clearTokens();
+    const { data, error } = await supabase.auth.refreshSession();
+    if (error) {
+      void supabase.auth.signOut();
       return null;
     }
-
-    const json = (await res.json()) as any;
-    const tokenData = json?.data?.tokens || json?.data;
-    if (tokenData?.accessToken && tokenData?.refreshToken) {
-      await tokenStorage.setAccessToken(tokenData.accessToken);
-      await tokenStorage.setRefreshToken(tokenData.refreshToken);
-      return tokenData.accessToken;
+    if (!data.session?.access_token) {
+      void supabase.auth.signOut();
+      return null;
     }
+    return data.session.access_token;
   } catch (e) {
     console.warn("Failed to refresh token", e);
   }
 
-  await tokenStorage.clearTokens();
   return null;
 }
 
@@ -94,7 +80,8 @@ export async function request<T>(
     ? cleanEndpoint
     : `${baseUrl}${cleanEndpoint.startsWith("/") ? "" : "/"}${cleanEndpoint}`;
 
-  const token = await tokenStorage.getAccessToken();
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData.session?.access_token;
 
   const headers: Record<string, string> = {
     Accept: "application/json",

@@ -1,4 +1,4 @@
-import { tokenStorage } from './token-storage';
+import { supabase } from './supabase';
 import type { ApiResponse } from '../shared/types';
 
 function cleanUrl(url?: string): string {
@@ -27,6 +27,25 @@ export function getApiBaseUrl(): string {
 }
 
 export const API_BASE_URL = getApiBaseUrl();
+
+export function getWebsiteBaseUrl(): string {
+  if (typeof window !== 'undefined' && window.location) {
+    const host = window.location.hostname;
+    if (host === 'localhost' || host === '127.0.0.1') {
+      return `http://${host}:3000`;
+    }
+  }
+
+  const rawEnv = process.env.EXPO_PUBLIC_WEBSITE_URL;
+  const envUrl = cleanUrl(rawEnv);
+  if (envUrl) {
+    return envUrl;
+  }
+
+  return 'https://purplehaze-nine.vercel.app';
+}
+
+export const WEBSITE_BASE_URL = getWebsiteBaseUrl();
 
 export class ApiError extends Error {
   code: string;
@@ -215,17 +234,147 @@ export interface AdminOrderDto {
   customerName: string;
   customerPhone?: string;
   customerEmail?: string;
+  deliveryAddress?: string | null;
+  notes?: string | null;
   total: number;
+  subtotal?: number;
+  deliveryFee?: number;
+  tax?: number;
+  discount?: number;
   status: string;
   paymentStatus: string;
+  paymentMethod?: string;
   type: string;
   createdAt: string;
+  acceptedAt?: string | null;
+  acceptedBy?: string | null;
   items?: Array<{
     id: string;
     name: string;
     quantity: number;
-    lineTotal: number;
+    price?: number;
+    lineTotal?: number;
+    specialInstructions?: string | null;
+    variantName?: string | null;
   }>;
+  statusHistory?: Array<{
+    id: string;
+    status: string;
+    note?: string | null;
+    changedBy?: string | null;
+    createdAt: string;
+  }>;
+}
+
+export interface DispatchDeliveryDto {
+  id: string;
+  orderId: string;
+  orderNumber: string;
+  customerName: string;
+  customerPhone: string;
+  deliveryAddress: string | null;
+  total: number;
+  orderStatus: string;
+  deliveryStatus: string;
+  provider: string;
+  paymentMethod: string;
+  rider: {
+    id: string;
+    name: string | null;
+    phone: string | null;
+    vehicleType: string;
+  } | null;
+  otpLocked: boolean;
+  otpAttempts: number;
+  assignedAt: string;
+  acceptedAt: string | null;
+  pickedUpAt: string | null;
+  arrivedAt: string | null;
+  isStuckAssigned: boolean;
+  failureReason: string | null;
+  items: Array<{ name: string; quantity: number }>;
+}
+
+export interface UndispatchedOrderDto {
+  id: string;
+  orderNumber: string;
+  customerName: string;
+  customerPhone: string;
+  deliveryAddress: string | null;
+  total: number;
+  status: string;
+  paymentMethod: string;
+  createdAt: string;
+  items: Array<{ name: string; quantity: number }>;
+}
+
+export interface OnDutyRiderDto {
+  id: string;
+  userId: string;
+  name: string | null;
+  email?: string;
+  phone: string | null;
+  vehicleType: string;
+  licenseStatus: string;
+  shiftStatus: string;
+  activeDeliveriesCount: number;
+  isBlocked?: boolean;
+  licenseExpiresAt?: string | null;
+  lastActiveAt?: string | null;
+}
+
+export interface AdminOrderDetailDto {
+  id: string;
+  orderNumber: string;
+  customerName: string;
+  customerPhone: string;
+  customerEmail?: string | null;
+  deliveryAddress: string | null;
+  notes?: string | null;
+  total: number;
+  subtotal?: number;
+  deliveryFee?: number;
+  tax?: number;
+  discount?: number;
+  status: string;
+  paymentStatus: string;
+  paymentMethod: string;
+  type: string;
+  createdAt: string;
+  updatedAt?: string;
+  acceptedAt?: string | null;
+  acceptedBy?: string | null;
+  items: Array<{
+    id: string;
+    name: string;
+    quantity: number;
+    price: number;
+    lineTotal?: number;
+    specialInstructions?: string | null;
+    variantName?: string | null;
+  }>;
+  statusHistory?: Array<{
+    id: string;
+    status: string;
+    note?: string | null;
+    changedBy?: string | null;
+    createdAt: string;
+  }>;
+  delivery?: {
+    id: string;
+    status: string;
+    provider: string;
+    assignedAt?: string | null;
+    pickedUpAt?: string | null;
+    deliveredAt?: string | null;
+    rider?: {
+      id: string;
+      name: string | null;
+      phone: string | null;
+      vehicleType?: string;
+    } | null;
+  } | null;
+  deliveryOtp?: string | null;
 }
 
 export interface AdminReservationDto {
@@ -242,8 +391,28 @@ export interface AdminReservationDto {
 }
 
 // ----------------------------------------------------
-// Automatic 401 Refresh Queue
+// Automatic 401 Refresh Queue & Auth Expiration
 // ----------------------------------------------------
+
+type AuthExpiredListener = () => void;
+const authExpiredListeners = new Set<AuthExpiredListener>();
+
+export function onAuthExpired(listener: AuthExpiredListener): () => void {
+  authExpiredListeners.add(listener);
+  return () => {
+    authExpiredListeners.delete(listener);
+  };
+}
+
+function notifyAuthExpired() {
+  authExpiredListeners.forEach((listener) => {
+    try {
+      listener();
+    } catch {
+      // ignore
+    }
+  });
+}
 
 let isRefreshing = false;
 let refreshSubscribers: Array<(newToken: string | null) => void> = [];
@@ -254,34 +423,18 @@ function onTokenRefreshed(newToken: string | null) {
 }
 
 async function executeTokenRefresh(): Promise<string | null> {
-  const refreshToken = await tokenStorage.getRefreshToken();
-  if (!refreshToken) return null;
-
-  const baseUrl = getApiBaseUrl();
   try {
-    const res = await fetch(`${baseUrl}/auth/refresh`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken }),
-    });
-
-    if (!res.ok) {
-      await tokenStorage.clearTokens();
+    const { data, error } = await supabase.auth.refreshSession();
+    if (error || !data.session?.access_token) {
+      notifyAuthExpired();
       return null;
     }
-
-    const json = (await res.json()) as any;
-    const tokenData = json?.data?.tokens || json?.data;
-    if (tokenData?.accessToken && tokenData?.refreshToken) {
-      await tokenStorage.setAccessToken(tokenData.accessToken);
-      await tokenStorage.setRefreshToken(tokenData.refreshToken);
-      return tokenData.accessToken;
-    }
+    return data.session.access_token;
   } catch (error) {
     console.warn('[API Client] Token refresh network error:', error);
   }
 
-  await tokenStorage.clearTokens();
+  notifyAuthExpired();
   return null;
 }
 
@@ -300,7 +453,8 @@ async function request<T>(
     ? cleanEndpoint
     : `${baseUrl}${cleanEndpoint.startsWith('/') ? '' : '/'}${cleanEndpoint}`;
 
-  const token = await tokenStorage.getAccessToken();
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData.session?.access_token;
 
   const headers: Record<string, string> = {
     Accept: 'application/json',
@@ -332,6 +486,8 @@ async function request<T>(
 
       if (newToken) {
         return request<T>(endpoint, options, true);
+      } else {
+        notifyAuthExpired();
       }
     } else {
       return new Promise<T>((resolve, reject) => {
@@ -339,6 +495,7 @@ async function request<T>(
           if (newToken) {
             resolve(request<T>(endpoint, options, true));
           } else {
+            notifyAuthExpired();
             reject(new ApiError('UNAUTHORIZED', 'Session expired. Please sign in again.', 401));
           }
         });
@@ -467,6 +624,24 @@ export const api = {
 
     get: (id: string) => request<TrackOrderResultDto>(`/orders/${id}`),
 
+    getLocation: (orderId: string, token?: string) => {
+      const headers: Record<string, string> = {};
+      if (token) headers['x-order-token'] = token;
+      const q = token ? `?token=${encodeURIComponent(token)}` : '';
+      return request<{
+        active: boolean;
+        status: string;
+        message?: string;
+        location: {
+          latitude: number;
+          longitude: number;
+          speed?: number | null;
+          heading?: number | null;
+          updatedAt?: string;
+        } | null;
+      }>(`/orders/${orderId}/location${q}`, { headers });
+    },
+
     cancel: (id: string, reason?: string) =>
       request<{ success: boolean; status: string }>(`/orders/${id}/cancel`, {
         method: 'POST',
@@ -513,19 +688,59 @@ export const api = {
   admin: {
     getReports: () => request<AdminReportDto>('/admin/reports'),
 
-    getOrders: (params?: { status?: string; page?: number; limit?: number }) => {
+    getOrders: (params?: { status?: string; type?: string; search?: string; page?: number; limit?: number }) => {
       const q = new URLSearchParams();
-      if (params?.status) q.set('status', params.status);
+      if (params?.status && params.status !== 'ALL') q.set('status', params.status);
+      if (params?.type && params.type !== 'ALL') q.set('type', params.type);
+      if (params?.search) q.set('search', params.search);
       if (params?.page) q.set('page', String(params.page));
-      if (params?.limit) q.set('limit', String(params.limit || 30));
+      if (params?.limit) q.set('limit', String(params.limit || 50));
       return request<AdminOrderDto[]>(`/admin/orders?${q.toString()}`);
     },
+
+    getOrderDetails: (id: string) =>
+      request<AdminOrderDetailDto>(`/orders/${id}`),
 
     updateOrderStatus: (id: string, status: string, note?: string) =>
       request<{ message: string; order: any }>(`/admin/orders/${id}/status`, {
         method: 'PUT',
         body: JSON.stringify({ status, note }),
       }),
+
+    getDeliveries: () =>
+      request<{ deliveries: DispatchDeliveryDto[]; undispatchedOrders: UndispatchedOrderDto[] }>(
+        '/admin/deliveries'
+      ),
+
+    dispatchOrder: (orderId: string, riderProfileId: string) =>
+      request<{ id: string; status: string }>('/admin/deliveries/dispatch', {
+        method: 'POST',
+        body: JSON.stringify({ orderId, riderProfileId }),
+      }),
+
+    unlockDeliveryOtp: (deliveryId: string) =>
+      request<{ id: string; otpVersion: number; message: string }>(
+        `/admin/deliveries/${deliveryId}/otp-unlock`,
+        { method: 'POST' }
+      ),
+
+    acknowledgeFoodReturn: (deliveryId: string, notes?: string) =>
+      request<{ id: string; status: string; returnAcknowledgedAt: string }>(
+        `/admin/deliveries/${deliveryId}/acknowledge-return`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ notes }),
+        }
+      ),
+
+    overrideDelivery: (deliveryId: string, newStatus: string, reason: string) =>
+      request<{ id: string; status: string }>(`/admin/deliveries/${deliveryId}/override`, {
+        method: 'POST',
+        body: JSON.stringify({ newStatus, reason }),
+      }),
+
+    getRiders: () =>
+      request<OnDutyRiderDto[]>('/admin/riders'),
 
     getReservations: (params?: { status?: string; page?: number; limit?: number }) => {
       const q = new URLSearchParams();

@@ -29,13 +29,13 @@ export function MenuScreen({ navigation, route }: any) {
   const { colors } = useTheme();
   const [categories, setCategories] = useState<CategoryDto[]>([]);
   const [dishes, setDishes] = useState<DishDto[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(route?.params?.categoryId || null);
-
-  useEffect(() => {
-    if (route?.params?.categoryId) {
-      setSelectedCategory(route.params.categoryId);
-    }
-  }, [route?.params?.categoryId]);
+  const requestedCategoryId = route?.params?.categoryId ?? null;
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(requestedCategoryId);
+  const [previousRouteCategoryId, setPreviousRouteCategoryId] = useState<string | null>(requestedCategoryId);
+  if (requestedCategoryId && requestedCategoryId !== previousRouteCategoryId) {
+    setPreviousRouteCategoryId(requestedCategoryId);
+    setSelectedCategory(requestedCategoryId);
+  }
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [vegOnly, setVegOnly] = useState(false);
@@ -67,7 +67,17 @@ export function MenuScreen({ navigation, route }: any) {
   };
 
   useEffect(() => {
-    loadMenu();
+    let active = true;
+    Promise.all([typedApi.menu.getCategories(), typedApi.menu.getDishes()])
+      .then(([catData, dishData]) => {
+        if (!active) return;
+        setCategories(catData || []);
+        setDishes(dishData || []);
+      })
+      .catch((e) => console.warn('[MenuScreen] Error loading menu:', e))
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
 
     let unsubscribe: (() => void) | undefined;
     mobileRealtime
@@ -88,6 +98,7 @@ export function MenuScreen({ navigation, route }: any) {
       .catch(() => {});
 
     return () => {
+      active = false;
       if (unsubscribe) unsubscribe();
     };
   }, []);

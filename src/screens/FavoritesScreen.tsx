@@ -44,7 +44,19 @@ export function FavoritesScreen({ navigation }: any) {
   };
 
   useEffect(() => {
-    loadDishes();
+    let active = true;
+    typedApi.menu.getDishes()
+      .then((data) => {
+        if (active) setDishes(data || []);
+      })
+      .catch((e) => console.warn('[FavoritesScreen] Failed to load dishes:', e))
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   const favoriteDishes = dishes.filter((d) => favoriteDishIds.includes(d.id));

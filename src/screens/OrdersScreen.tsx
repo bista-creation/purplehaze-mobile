@@ -32,7 +32,7 @@ export default function OrdersScreen({ navigation }: OrdersScreenProps) {
   const { colors } = useTheme();
 
   const [orders, setOrders] = useState<OrderDto[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(isAuthenticated);
   const [refreshing, setRefreshing] = useState(false);
 
   // Guest lookup state
@@ -45,7 +45,6 @@ export default function OrdersScreen({ navigation }: OrdersScreenProps) {
   const fetchOrders = useCallback(async () => {
     if (!isAuthenticated) return;
     try {
-      setLoading(true);
       const data = await api.get<any>('/orders');
       const list = Array.isArray(data) ? data : data?.items || [];
       setOrders(list);
@@ -58,7 +57,14 @@ export default function OrdersScreen({ navigation }: OrdersScreenProps) {
   }, [isAuthenticated]);
 
   useEffect(() => {
-    fetchOrders();
+    let active = true;
+    Promise.resolve().then(() => {
+      if (active) void fetchOrders();
+    });
+
+    return () => {
+      active = false;
+    };
   }, [fetchOrders]);
 
   const handleRefresh = () => {

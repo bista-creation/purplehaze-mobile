@@ -43,15 +43,12 @@ export function CheckoutScreen({ navigation }: any) {
   const [zones, setZones] = useState<DeliveryZone[]>(DEFAULT_ZONES);
   const [selectedZoneId, setSelectedZoneId] = useState<string>(DEFAULT_ZONES[0].id);
 
-  const [fullName, setFullName] = useState(user?.name || "");
-  const [email, setEmail] = useState(user?.email || "");
-  const [phone, setPhone] = useState(user?.phone || "");
-
-  useEffect(() => {
-    if (user?.name && !fullName) setFullName(user.name);
-    if (user?.phone && !phone) setPhone(user.phone);
-    if (user?.email && !email) setEmail(user.email);
-  }, [user]);
+  const [fullNameInput, setFullNameInput] = useState<string | null>(null);
+  const [emailInput, setEmailInput] = useState<string | null>(null);
+  const [phoneInput, setPhoneInput] = useState<string | null>(null);
+  const fullName = fullNameInput ?? user?.name ?? "";
+  const email = emailInput ?? user?.email ?? "";
+  const phone = phoneInput ?? user?.phone ?? "";
   const [line1, setLine1] = useState("");
   const [instructions, setInstructions] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("COD");
@@ -399,7 +396,7 @@ export function CheckoutScreen({ navigation }: any) {
             placeholder="Full Name *"
             placeholderTextColor="#64748b"
             value={fullName}
-            onChangeText={setFullName}
+            onChangeText={setFullNameInput}
           />
           {!fullName.trim() && (
             <Text style={styles.fieldHint}>💡 Please enter your name so our kitchen knows who to hand this meal to.</Text>
@@ -411,7 +408,7 @@ export function CheckoutScreen({ navigation }: any) {
             keyboardType="email-address"
             autoCapitalize="none"
             value={email}
-            onChangeText={setEmail}
+            onChangeText={setEmailInput}
           />
           <TextInput
             style={styles.input}
@@ -419,7 +416,7 @@ export function CheckoutScreen({ navigation }: any) {
             placeholderTextColor="#64748b"
             keyboardType="phone-pad"
             value={phone}
-            onChangeText={setPhone}
+            onChangeText={setPhoneInput}
           />
         </View>
 

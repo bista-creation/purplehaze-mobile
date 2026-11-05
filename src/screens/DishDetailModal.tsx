@@ -23,6 +23,27 @@ export function DishDetailModal({ route, navigation }: any) {
 
   const styles = useMemo(() => createStyles(colors), [colors]);
 
+  const rawVariants = dish?.variants || [];
+  const variants = rawVariants.map((v: any) => ({
+    id: v.id,
+    name: v.name,
+    priceDelta: v.priceDelta ?? (v.price && dish ? Math.max(0, v.price - dish.price) : 0),
+    isDefault: v.isDefault ?? false,
+  }));
+
+  const rawAddOns = dish?.addOns || [];
+  const addOns = rawAddOns.map((item: any) => item.addOn || item);
+
+  const [selectedVariant, setSelectedVariant] = useState<any | null>(
+    variants.find((v) => v.isDefault) || variants[0] || null
+  );
+  const [selectedAddOns, setSelectedAddOns] = useState<any[]>([]);
+  const [spiceLevel, setSpiceLevel] = useState<'Mild' | 'Medium' | 'Spicy' | 'Extra Hot'>('Medium');
+  const [instructions, setInstructions] = useState('');
+  const [quantity, setQuantity] = useState(1);
+
+  const addItem = useCartStore((s) => s.addItem);
+
   if (!dish) {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', padding: 24 }]}>
@@ -43,27 +64,6 @@ export function DishDetailModal({ route, navigation }: any) {
       </View>
     );
   }
-
-  const rawVariants = dish.variants || [];
-  const variants = rawVariants.map((v: any) => ({
-    id: v.id,
-    name: v.name,
-    priceDelta: v.priceDelta ?? (v.price ? Math.max(0, v.price - dish.price) : 0),
-    isDefault: v.isDefault ?? false,
-  }));
-
-  const rawAddOns = dish.addOns || [];
-  const addOns = rawAddOns.map((item: any) => item.addOn || item);
-
-  const [selectedVariant, setSelectedVariant] = useState<any | null>(
-    variants.find((v) => v.isDefault) || variants[0] || null
-  );
-  const [selectedAddOns, setSelectedAddOns] = useState<any[]>([]);
-  const [spiceLevel, setSpiceLevel] = useState<'Mild' | 'Medium' | 'Spicy' | 'Extra Hot'>('Medium');
-  const [instructions, setInstructions] = useState('');
-  const [quantity, setQuantity] = useState(1);
-
-  const addItem = useCartStore((s) => s.addItem);
 
   const toggleAddOn = (addOn: any) => {
     setSelectedAddOns((prev) =>

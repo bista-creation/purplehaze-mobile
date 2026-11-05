@@ -16,7 +16,7 @@ import { useAuthStore } from '../stores/auth-store';
 import { useTheme } from '../stores/theme-store';
 import { useI18n } from '../i18n';
 import { colors as defaultColors, ColorTheme, spacing, borderRadius } from '../theme';
-import { api } from '../services/api-client';
+import { api, WEBSITE_BASE_URL } from '../services/api-client';
 
 interface ProfileScreenProps {
   navigation: any;
@@ -62,7 +62,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
   };
 
   const openPolicyPage = async (path: string) => {
-    const url = `https://purplehaze-nine.vercel.app${path}`;
+    const url = `${WEBSITE_BASE_URL}${path}`;
     try {
       await WebBrowser.openBrowserAsync(url, {
         toolbarColor: colors.background,

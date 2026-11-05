@@ -83,7 +83,9 @@ export const Header: React.FC<HeaderProps> = ({
       </View>
 
       {showTagline ? (
-        <Text style={[styles.tagline, { color: colors.textMuted }]}>"{t.common.tagline}"</Text>
+        <Text style={[styles.tagline, { color: colors.textMuted }]}>
+          {'"'}{t.common.tagline}{'"'}
+        </Text>
       ) : null}
     </View>
   );

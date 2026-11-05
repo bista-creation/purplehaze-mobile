@@ -168,7 +168,7 @@ export default function LoginModal({ navigation }: LoginModalProps) {
 
         {/* Switch to Register */}
         <View style={styles.footerRow}>
-          <Text style={styles.footerText}>Don't have an account?</Text>
+          <Text style={styles.footerText}>Don&apos;t have an account?</Text>
           <TouchableOpacity onPress={() => navigation.replace('RegisterModal')}>
             <Text style={styles.footerLink}> Sign Up</Text>
           </TouchableOpacity>

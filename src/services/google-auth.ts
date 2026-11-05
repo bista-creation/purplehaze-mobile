@@ -10,7 +10,7 @@ import {
 /**
  * Web Client ID: Configured in Google Cloud Console as Web application OAuth Client ID.
  * Google Play Services uses this server client ID to mint an OpenID Connect id_token
- * that our backend can securely verify against tokeninfo / JWKS.
+ * that Supabase Auth can exchange for a Supabase session.
  */
 export const GOOGLE_WEB_CLIENT_ID =
   process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ||
@@ -40,7 +40,7 @@ export function configureGoogleSignIn(): void {
 
 /**
  * Native Android & iOS Google Sign-In using Google Play Services / GIDSignIn.
- * Returns an OpenID Connect id_token to exchange with POST /api/v1/auth/google.
+ * Returns an OpenID Connect id_token for Supabase Auth sign-in.
  */
 export async function promptGoogleSignIn(): Promise<GoogleAuthResult | null> {
   if (Platform.OS === 'web') {
