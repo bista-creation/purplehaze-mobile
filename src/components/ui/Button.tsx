@@ -9,6 +9,7 @@ import {
   TouchableOpacityProps,
 } from 'react-native';
 import { colors, borderRadius, spacing } from '../../theme';
+import { useTheme } from '../../stores/theme-store';
 
 export type ButtonVariant = 'gold' | 'purple' | 'outline' | 'ghost' | 'danger';
 export type ButtonSize = 'sm' | 'md' | 'lg';
@@ -36,6 +37,8 @@ export const Button: React.FC<ButtonProps> = ({
   textStyle,
   ...rest
 }) => {
+  const { colors: themeColors } = useTheme();
+
   const getContainerStyle = (): ViewStyle => {
     let base: ViewStyle = styles.base;
 
@@ -67,24 +70,35 @@ export const Button: React.FC<ButtonProps> = ({
 
     if (variant === 'gold') base = { ...base, color: '#130B1D', fontWeight: '700' };
     else if (variant === 'purple') base = { ...base, color: '#FFFFFF', fontWeight: '600' };
-    else if (variant === 'outline') base = { ...base, color: colors.gold, fontWeight: '600' };
+    else if (variant === 'outline') base = { ...base, color: themeColors.goldText, fontWeight: '600' };
     else if (variant === 'ghost') base = { ...base, color: colors.textSecondary };
     else if (variant === 'danger') base = { ...base, color: '#FFFFFF', fontWeight: '600' };
 
     return base;
   };
 
+  const getVariantOverride = (): ViewStyle => {
+    if (variant === 'gold') return { backgroundColor: themeColors.gold };
+    if (variant === 'purple') return { backgroundColor: themeColors.purpleDark };
+    if (variant === 'outline') return { borderColor: themeColors.goldText };
+    if (variant === 'danger') return { backgroundColor: '#B42318' };
+    return {};
+  };
+
   return (
     <TouchableOpacity
-      style={[getContainerStyle(), style]}
+      style={[getContainerStyle(), getVariantOverride(), style]}
       disabled={disabled || loading}
+      accessibilityRole="button"
+      accessibilityLabel={title}
+      accessibilityState={{ disabled: disabled || loading, busy: loading }}
       activeOpacity={0.75}
       {...rest}
     >
       {loading ? (
         <ActivityIndicator
           size="small"
-          color={variant === 'gold' ? '#130B1D' : colors.gold}
+          color={variant === 'gold' ? '#130B1D' : themeColors.goldText}
         />
       ) : (
         <>
@@ -104,19 +118,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    minHeight: 44,
     borderRadius: borderRadius.md,
   },
   sizeSm: {
-    paddingVertical: spacing.xs + 2,
-    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 1,
+    paddingHorizontal: spacing.md - 1,
   },
   sizeMd: {
-    paddingVertical: spacing.sm + 4,
-    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm + 3,
+    paddingHorizontal: spacing.lg - 1,
   },
   sizeLg: {
-    paddingVertical: spacing.md + 2,
-    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md + 1,
+    paddingHorizontal: spacing.xl - 1,
   },
   variantGold: {
     backgroundColor: colors.gold,

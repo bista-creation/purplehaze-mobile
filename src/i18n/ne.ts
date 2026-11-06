@@ -14,6 +14,7 @@ export const ne: Translations = {
     search: 'खोज्नुहोस्',
     retry: 'पुनः प्रयास गर्नुहोस्',
     viewAll: 'सबै हेर्नुहोस्',
+    back: 'पछाडि',
   },
   navigation: {
     home: 'गृहपृष्ठ',
@@ -24,6 +25,16 @@ export const ne: Translations = {
     orders: 'अर्डरहरू',
     favorites: 'मनपर्ने',
     profile: 'प्रोफाइल',
+  },
+  home: {
+    greeting: 'नमस्ते, {name} 👋', guest: 'नमस्ते, अतिथि 👋', subtitle: 'स्वादिष्ट खाना, सुनौला साँझ र बगैंचाका सम्झनाहरू।', askMaya: 'मायालाई सोध्नुहोस्', searchPlaceholder: 'परिकार, सेकुवा, म:म, सिज्लर, बिरयानी खोज्नुहोस्...',
+    bannerGardenTitle: 'हरियाली बगैंचामा भोजन', bannerGardenSubtitle: 'खुला आकाशमुनि मैनबत्तीको उज्यालो र शान्त हरियालीको आनन्द लिनुहोस्', bannerGardenTag: 'बगैंचा र रूफटप', reserveTable: 'टेबल आरक्षण',
+    bannerFoodTitle: 'नेपाली स्वाद र सेकुवा', bannerFoodSubtitle: 'कोइलामा सेकिएका परिकार, म:म र स्वादिला प्लेटहरूको मज्जा लिनुहोस्', chefSpecials: 'शेफका विशेष परिकार', orderFood: 'खाना अर्डर',
+    bannerVenueTitle: 'ब्याङ्क्वेट र उत्सव', bannerVenueSubtitle: 'विवाह र निजी जमघटका लागि वातानुकूलित ब्याङ्क्वेट हल', venuesEvents: 'हल र कार्यक्रम', exploreVenues: 'हलहरू हेर्नुहोस्',
+    featuredToday: 'आजका विशेष परिकार', serviceAvailability: 'रेस्टुरेन्ट · टेकअवे · डेलिभरी', favouritesTitle: 'आजका मनपर्ने परिकार हेर्नुहोस्', favouritesSubtitle: 'कोइलामा सेकिएको सेकुवा, तातो म:म र शेफका बगैंचा विशेष परिकार।', explore: 'हेर्नुहोस्',
+    deliveryTime: '⚡ ३०–४५ मिनेट', garden: '🌿 बगैंचा', viewMenu: 'मेनु हेर्नुहोस्', deliveryTakeaway: 'डेलिभरी र टेकअवे', bookTable: 'टेबल बुक गर्नुहोस्', dineInRooftop: 'रेस्टुरेन्ट र रूफटप', reserveNow: 'अहिले आरक्षण गर्नुहोस्',
+    banquetsParties: 'ब्याङ्क्वेट र पार्टी', weddingsEventsHalls: 'विवाह, कार्यक्रम र हल', myOrders: 'मेरा अर्डरहरू', liveGpsStatus: 'लाइभ GPS स्थिति',
+    exploreCategories: 'खानाका विधि छान्नुहोस्', categoriesSubtitle: 'विशेष रूपमा तयार गरिएका विभिन्न स्वाद', viewAllCount: 'सबै ({count}) हेर्नुहोस् →', chefRecommendations: 'शेफका सिफारिसहरू 👨‍🍳', recommendationsSubtitle: 'कार्यकारी शेफद्वारा तयार हस्ताक्षर परिकार', noChefRecommendations: 'हाल शेफका सिफारिस गरिएका परिकार उपलब्ध छैनन्।', openDishDetails: 'परिकारको विवरण खोल्नुहोस्', addToFavorites: 'मनपर्नेमा थप्नुहोस्', removeFromFavorites: 'मनपर्नेबाट हटाउनुहोस्', fullMenu: 'पूरा मेनु →', loadingRecommendations: 'ताजा परिकारहरू तयार हुँदैछन्...', add: '+ थप्नुहोस्', bestseller: 'लोकप्रिय', signatureDish: 'विशेष परिकार', heritageTitle: 'पर्पल हेजको स्वाद', heritageDescription: 'सन् २०१५ देखि विराटनगरको एयरपोर्ट रोडमा बगैंचा, ब्याङ्क्वेट हल र विभिन्न स्वादका परिकारसहित सेवा दिँदै।', popularBestsellers: 'धेरै रुचाइएका परिकार 🔥', mostLovedDishes: 'विराटनगरका ग्राहकले सबैभन्दा बढी मन पराएका परिकार', vegLabel: 'शाकाहारी', nonVegLabel: 'मांसाहारी', gardenSeating: '🌿 बगैंचामा बस्ने ठाउँ', banquetHall: '🎪 ब्याङ्क्वेट हल', swiftDelivery: '🛵 छिटो डेलिभरी',
   },
   menu: {
     title: 'हाम्रो मेनु',
@@ -41,6 +52,7 @@ export const ne: Translations = {
     nonVeg: 'मांसाहारी',
     spicy: 'पिरो',
     emptyCategory: 'यस विधामा अहिले परिकार उपलब्ध छैन।',
+    loadingMenu: 'पर्पल हेजको मेनु लोड हुँदैछ...', favoritesFilter: 'मनपर्ने', recommendedSort: 'सिफारिस गरिएका', priceLowHigh: 'मूल्य: कमदेखि बढी', priceHighLow: 'मूल्य: बढीदेखि कम', underPrice: 'रु. ५०० भन्दा कम', soldOut: 'उपलब्ध छैन', browseFullMenu: 'पूरा मेनु हेर्नुहोस्', chefSpecialSpice: 'शेफको विशेष पिरोपना', spicePreference: 'पिरोपनाको स्तर छान्नुहोस्', chooseVariant: 'विकल्प छान्नुहोस्', optionalAddOns: 'थप्न मिल्ने परिकार', cookingInstructions: 'पकाउने निर्देशन',
   },
   cart: {
     title: 'तपाईंको कार्ट',
@@ -56,7 +68,9 @@ export const ne: Translations = {
     applyCoupon: 'लागु गर्नुहोस्',
     couponPlaceholder: 'कुपन कोड राख्नुहोस्',
     clearCart: 'कार्ट खाली गर्नुहोस्',
+    checkoutTitle: 'अर्डर पूरा गर्नुहोस्', exploreMenu: 'मेनु हेर्नुहोस्', deliveryArea: 'डेलिभरी क्षेत्र (विराटनगर)', contactDetails: 'सम्पर्क विवरण', nameHint: 'भान्साले खाना कसलाई दिने भनेर थाहा पाउन कृपया आफ्नो नाम लेख्नुहोस्।', emailReceipt: 'इमेल ठेगाना (रसिदका लागि)', phoneRequired: 'फोन नम्बर * (उदा. ९८XXXXXXXX)', deliveryAddress: 'डेलिभरी ठेगाना', addressHint: 'कृपया सडकको ठेगाना लेख्नुहोस् वा तलको लोकप्रिय क्षेत्र छान्नुहोस्।', popularAreas: 'विराटनगरका लोकप्रिय क्षेत्र (स्वतः भर्न थिच्नुहोस्):', landmarkPlaceholder: 'ठेगाना चिनाउने विवरण (उदा. हरियो गेट नजिक, दोस्रो तला)', promoCode: 'प्रोमो कोड', couponCode: 'कुपन कोड लेख्नुहोस्', paymentMethod: 'भुक्तानी विधि', cashOnDelivery: 'सामान पाएपछि नगद', payOnArrival: 'अर्डर आइपुगेपछि भुक्तानी गर्नुहोस्', instantVerified: 'तुरुन्त र प्रमाणित डिजिटल भुक्तानी', payWithWallet: '{wallet} एप वा ई-बैंकिङबाट भुक्तानी', pendingApproval: 'व्यापारीको स्वीकृति पर्खँदै', merchantOnboarding: 'व्यापारी दर्ता प्रक्रिया जारी छ', orderSummary: 'अर्डर विवरण', totalAmount: 'कुल रकम',
   },
+  favorites: { title: 'मेरा मनपर्ने ❤️', savedCount: 'छिटो अर्डर गर्न सुरक्षित', dishSingular: 'परिकार', dishPlural: 'परिकार', emptyTitle: 'अहिलेसम्म मनपर्ने परिकार छैन', emptySubtitle: 'आफ्नो मनपर्ने सूचीमा परिकार थप्न मेनुमा त्यसको मुटु चिह्न थिच्नुहोस्।', exploreMenu: 'मेनु हेर्नुहोस् 🍲', add: 'थप्नुहोस् +', veg: 'शाकाहारी', nonVeg: 'मांसाहारी' },
   reservations: {
     title: 'टेबल आरक्षण',
     subtitle: 'ताराहरूको मुनि आफ्नो टेबल सुरक्षित गर्नुहोस्',
@@ -110,10 +124,17 @@ export const ne: Translations = {
     outForDelivery: 'डेलिभरीमा निस्कियो',
     completed: 'डेलिभर भयो',
     cancelled: 'रद्द भयो',
+    track: 'अर्डर ट्र्याक गर्नुहोस्', reorder: 'फेरि अर्डर गर्नुहोस्', trackViewOrders: 'अर्डर हेर्नुहोस् र ट्र्याक गर्नुहोस्', signInToAccount: 'खातामा लग इन गर्नुहोस्', guestLookup: 'वा अतिथि अर्डर खोज्नुहोस्', findOrder: 'मेरो अर्डर खोज्नुहोस्', noOrdersYet: 'अहिलेसम्म अर्डर छैन', browseMenu: 'मेनु हेर्नुहोस्',
+    guestSubtitle: 'पूरा अर्डर इतिहास हेर्न लग इन गर्नुहोस् वा तल अतिथि अर्डर ट्र्याक गर्नुहोस्।', requiredFields: 'आवश्यक विवरण', enterOrderAndPhone: 'कृपया अर्डर नम्बर र फोन नम्बर दुवै लेख्नुहोस्।', noMatchingOrder: 'मिल्दो अर्डर भेटिएन।', noItemsToReorder: 'फेरि अर्डर गर्न यस अर्डरमा कुनै परिकार भेटिएन।', reorderSuccess: 'यस अर्डरका परिकारहरू तपाईंको कार्टमा थपिएका छन्।', emptySubtitle: 'अर्डर गरेपछि यहाँ देखिनेछ र भान्सा तयारी तथा डेलिभरी ट्र्याक गर्न सक्नुहुनेछ।',
   },
   profile: {
     title: 'प्रोफाइल तथा खाता',
     guestUser: 'अतिथि ग्राहक',
+    profilePhoto: 'प्रोफाइल फोटो',
+    savedAddresses: 'सुरक्षित डेलिभरी ठेगाना',
+    noSavedAddresses: 'अहिलेसम्म ठेगाना सुरक्षित गरिएको छैन। वेबसाइटको खाता पृष्ठमा थपेपछि यहाँ देखिनेछ।',
+    addressLoadFailed: 'सुरक्षित ठेगाना लोड गर्न सकिएन।',
+    defaultAddress: 'मुख्य',
     signInPrompt: 'आफ्नो अर्डर, ठेगाना र विवरण सुरक्षित राख्न लग इन गर्नुहोस्।',
     signIn: 'लग इन गर्नुहोस्',
     register: 'नयाँ खाता खोल्नुहोस्',
@@ -129,6 +150,7 @@ export const ne: Translations = {
     contactUs: 'सम्पर्क र स्थान',
     deleteAccount: 'खाता मेटाउनुहोस्',
     confirmDelete: 'के तपाईं निश्चित हुनुहुन्छ? सबै व्यक्तिगत विवरण स्थायी रूपमा मेटिनेछ।',
+    signOutConfirm: 'के तपाईं लग आउट गर्न चाहनुहुन्छ?', accountDeleted: 'खाता मेटाइयो', accountDeletedMessage: 'तपाईंको खाता र व्यक्तिगत विवरण पूर्ण रूपमा हटाइयो।', deleteFailed: 'खाता मेटाउन सकिएन।', adminHub: 'मोबाइल एडमिन खोल्नुहोस्', adminHubDescription: 'लाइभ अर्डर, भान्सा व्यवस्थापन, टेबल बुकिङ र परिकारको स्टक।', adminSection: 'रेस्टुरेन्ट सञ्चालन केन्द्र', diningOrders: 'खाना र अर्डर', appearanceTheme: 'रूप र थिम', displayMode: 'प्रदर्शन शैली', light: 'उज्यालो', dark: 'गाढा', system: 'स्वचालित', whatsappInquiries: 'व्हाट्सएपमा सोधपुछ', legalPolicies: 'कानुनी जानकारी र नीतिहरू',
   },
   auth: {
     welcomeBack: 'स्वागत छ!',
@@ -146,5 +168,6 @@ export const ne: Translations = {
     haveAccount: 'पहिले नै खाता छ? लग इन गर्नुहोस्',
     noAccount: 'खाता छैन? दर्ता गर्नुहोस्',
     forgotPassword: 'पासवर्ड बिर्सनुभयो?',
+    loginEyebrow: 'फेरि स्वागत छ', loginTitle: 'तपाईंको टेबल पर्खिरहेको छ।', loginHeroSubtitle: 'खाना अर्डर गर्न, डेलिभरी हेर्न र मनपर्ने परिकार सुरक्षित राख्न लग इन गर्नुहोस्।', registerEyebrow: 'हाम्रो साथमा जोडिनुहोस्', registerTitle: 'आफ्नो खाता खोल्नुहोस्।', registerHeroSubtitle: 'छिटो चेकआउट, सुरक्षित ठेगाना र हरेक स्वादिलो भोजनको विवरण।', optional: '(वैकल्पिक)', hidePassword: 'पासवर्ड लुकाउनुहोस्', showPassword: 'पासवर्ड देखाउनुहोस्', continueWith: 'वा यसबाट जारी राख्नुहोस्', newToBrand: 'पर्पल हेजमा नयाँ हुनुहुन्छ?', createAccountLink: 'खाता खोल्नुहोस्', alreadyAtTable: 'पहिले नै सदस्य हुनुहुन्छ?', signInLink: 'लग इन',
   },
 };

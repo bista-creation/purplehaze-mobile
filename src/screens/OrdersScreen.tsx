@@ -15,6 +15,7 @@ import { api } from '../services/api';
 import { useAuthStore } from '../stores/auth-store';
 import { useCartStore } from '../stores/cart-store';
 import { useTheme } from '../stores/theme-store';
+import { useI18n } from '../i18n';
 import { ColorTheme, colors as defaultColors, spacing, borderRadius } from '../theme';
 import { STATUS_META } from '../shared/constants';
 import type { OrderDto } from '../shared/types';
@@ -23,13 +24,10 @@ interface OrdersScreenProps {
   navigation: any;
 }
 
-function formatRs(paisa: number): string {
-  return `Rs. ${Math.round(paisa / 100).toLocaleString()}`;
-}
-
 export default function OrdersScreen({ navigation }: OrdersScreenProps) {
   const { isAuthenticated } = useAuthStore();
   const { colors } = useTheme();
+  const { t, formatCurrency, isNepali } = useI18n();
 
   const [orders, setOrders] = useState<OrderDto[]>([]);
   const [loading, setLoading] = useState(isAuthenticated);
@@ -74,7 +72,7 @@ export default function OrdersScreen({ navigation }: OrdersScreenProps) {
 
   const handleGuestLookup = async () => {
     if (!guestOrderNum.trim() || !guestPhone.trim()) {
-      Alert.alert('Required Fields', 'Please enter both your Order Number and Phone Number.');
+      Alert.alert(t.orders.requiredFields, t.orders.enterOrderAndPhone);
       return;
     }
     setGuestLoading(true);
@@ -82,15 +80,16 @@ export default function OrdersScreen({ navigation }: OrdersScreenProps) {
       const data = await api.get<OrderDto>(
         `/orders/track?orderNumber=${encodeURIComponent(guestOrderNum.trim())}&phone=${encodeURIComponent(guestPhone.trim())}`
       );
-      if (data?.id) {
+      if (data?.orderNumber) {
         navigation.navigate('OrderTracking', {
-          orderId: data.id,
+          // Guest tracking intentionally returns a sanitized DTO without the database id.
+          orderId: data.id || data.orderNumber,
           orderNumber: data.orderNumber,
-          phone: data.customerPhone,
+          phone: guestPhone.trim(),
         });
       }
     } catch (err: any) {
-      Alert.alert('Error', err?.message || 'No matching order found.');
+      Alert.alert(t.common.error, err?.message || t.orders.noMatchingOrder);
     } finally {
       setGuestLoading(false);
     }
@@ -98,7 +97,7 @@ export default function OrdersScreen({ navigation }: OrdersScreenProps) {
 
   const handleReorder = (order: OrderDto) => {
     if (!order.items || order.items.length === 0) {
-      Alert.alert('Notice', 'No items found in this order to reorder.');
+      Alert.alert(t.common.error, t.orders.noItemsToReorder);
       return;
     }
     const addItem = useCartStore.getState().addItem;
@@ -114,12 +113,12 @@ export default function OrdersScreen({ navigation }: OrdersScreenProps) {
         quantity: item.quantity,
       });
     }
-    Alert.alert('Reorder', 'Items from this order have been placed into your cart!', [
+    Alert.alert(t.orders.reorder, t.orders.reorderSuccess, [
       {
-        text: 'View Cart',
+        text: t.navigation.cart,
         onPress: () => navigation.navigate('Cart'),
       },
-      { text: 'OK' },
+      { text: t.common.close },
     ]);
   };
 
@@ -149,7 +148,7 @@ export default function OrdersScreen({ navigation }: OrdersScreenProps) {
             ]}
           >
             <Text style={[styles.statusBadgeText, { color: meta.color }]}>
-              {meta.label}
+              {isNepali ? ({ PENDING: t.orders.pending, CONFIRMED: t.orders.confirmed, PREPARING: t.orders.preparing, READY: t.orders.ready, OUT_FOR_DELIVERY: t.orders.outForDelivery, COMPLETED: t.orders.completed, CANCELLED: t.orders.cancelled } as Record<string, string>)[item.status] || meta.label : meta.label}
             </Text>
           </View>
         </View>
@@ -158,7 +157,7 @@ export default function OrdersScreen({ navigation }: OrdersScreenProps) {
           <Text style={styles.itemsSummary} numberOfLines={2}>
             {item.items?.map((it) => `${it.quantity}x ${it.name}`).join(', ')}
           </Text>
-          <Text style={styles.amountText}>Total: {formatRs(item.total)}</Text>
+          <Text style={styles.amountText}>{t.cart.total}: {formatCurrency(item.total)}</Text>
         </View>
 
         <View style={styles.cardActions}>
@@ -167,11 +166,11 @@ export default function OrdersScreen({ navigation }: OrdersScreenProps) {
             onPress={() => navigation.navigate('OrderTracking', { orderId: item.id })}
           >
             <Ionicons name="navigate-outline" size={16} color="#c084fc" />
-            <Text style={styles.trackBtnText}>Track Order</Text>
+            <Text style={styles.trackBtnText}>{t.orders.track}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.reorderBtn} onPress={() => handleReorder(item)}>
             <Ionicons name="refresh-outline" size={16} color="#fff" />
-            <Text style={styles.reorderBtnText}>Reorder</Text>
+            <Text style={styles.reorderBtnText}>{t.orders.reorder}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -183,9 +182,9 @@ export default function OrdersScreen({ navigation }: OrdersScreenProps) {
       <View style={styles.container}>
         <View style={styles.guestContainer}>
           <Ionicons name="receipt-outline" size={64} color="#7c3aed" />
-          <Text style={styles.guestTitle}>Track & View Orders</Text>
+          <Text style={styles.guestTitle}>{t.orders.trackViewOrders}</Text>
           <Text style={styles.guestSubtitle}>
-            Log in to see your entire order history, or track a guest order below.
+            {t.orders.guestSubtitle}
           </Text>
 
           <TouchableOpacity
@@ -193,17 +192,17 @@ export default function OrdersScreen({ navigation }: OrdersScreenProps) {
             onPress={() => navigation.navigate('LoginModal')}
           >
             <Ionicons name="log-in-outline" size={20} color="#fff" />
-            <Text style={styles.loginBtnText}>Sign In to Account</Text>
+            <Text style={styles.loginBtnText}>{t.orders.signInToAccount}</Text>
           </TouchableOpacity>
 
           <View style={styles.dividerRow}>
             <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>OR GUEST LOOKUP</Text>
+            <Text style={styles.dividerText}>{t.orders.guestLookup}</Text>
             <View style={styles.dividerLine} />
           </View>
 
           <View style={styles.guestForm}>
-            <Text style={styles.inputLabel}>Order Number</Text>
+            <Text style={styles.inputLabel}>{t.orders.orderNumber}</Text>
             <TextInput
               style={styles.input}
               placeholder="e.g. PH-20261102-1234"
@@ -213,7 +212,7 @@ export default function OrdersScreen({ navigation }: OrdersScreenProps) {
               autoCapitalize="characters"
             />
 
-            <Text style={styles.inputLabel}>Phone Number</Text>
+            <Text style={styles.inputLabel}>{t.orders.phone}</Text>
             <TextInput
               style={styles.input}
               placeholder="e.g. 9800000000"
@@ -231,7 +230,7 @@ export default function OrdersScreen({ navigation }: OrdersScreenProps) {
               {guestLoading ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={styles.lookupBtnText}>Find My Order</Text>
+                <Text style={styles.lookupBtnText}>{t.orders.findOrder}</Text>
               )}
             </TouchableOpacity>
           </View>
@@ -249,15 +248,15 @@ export default function OrdersScreen({ navigation }: OrdersScreenProps) {
       ) : orders.length === 0 ? (
         <View style={styles.centerContainer}>
           <Ionicons name="receipt-outline" size={64} color="#64748b" />
-          <Text style={styles.emptyTitle}>No Orders Yet</Text>
+          <Text style={styles.emptyTitle}>{t.orders.noOrdersYet}</Text>
           <Text style={styles.emptySubtitle}>
-            When you place an order, it will appear here so you can track kitchen preparation & delivery live!
+            {t.orders.emptySubtitle}
           </Text>
           <TouchableOpacity
             style={styles.browseBtn}
             onPress={() => navigation.navigate('Menu')}
           >
-            <Text style={styles.browseBtnText}>Explore Menu</Text>
+            <Text style={styles.browseBtnText}>{t.orders.browseMenu}</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -354,7 +353,7 @@ const createStyles = (colors: ColorTheme) =>
       alignItems: 'center',
       marginTop: 6,
     },
-    lookupBtnText: { color: colors.gold, fontSize: 15, fontWeight: '700' },
+    lookupBtnText: { color: colors.goldText, fontSize: 15, fontWeight: '700' },
     emptyTitle: { fontSize: 20, fontWeight: 'bold', color: colors.text, marginTop: 16 },
     emptySubtitle: {
       fontSize: 14,
@@ -404,7 +403,7 @@ const createStyles = (colors: ColorTheme) =>
       marginBottom: 12,
     },
     itemsSummary: { color: colors.textSecondary, fontSize: 13, lineHeight: 18 },
-    amountText: { color: colors.gold, fontWeight: 'bold', fontSize: 15, marginTop: 6 },
+    amountText: { color: colors.goldText, fontWeight: 'bold', fontSize: 15, marginTop: 6 },
     cardActions: { flexDirection: 'row', gap: 10 },
     trackBtn: {
       flex: 1,
@@ -418,7 +417,7 @@ const createStyles = (colors: ColorTheme) =>
       borderColor: colors.purple,
       gap: 6,
     },
-    trackBtnText: { color: colors.purple, fontWeight: '700', fontSize: 13 },
+    trackBtnText: { color: colors.purpleText, fontWeight: '700', fontSize: 13 },
     reorderBtn: {
       flex: 1,
       flexDirection: 'row',

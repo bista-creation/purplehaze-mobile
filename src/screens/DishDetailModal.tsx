@@ -59,7 +59,7 @@ export function DishDetailModal({ route, navigation }: any) {
           onPress={() => navigation?.navigate?.('MainTabs', { screen: 'Menu' })}
           activeOpacity={0.8}
         >
-          <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 14 }}>Browse Full Menu</Text>
+          <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 14 }}>{t.menu.browseFullMenu}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -145,7 +145,7 @@ export function DishDetailModal({ route, navigation }: any) {
             {dish.isSpicy && (
               <View style={styles.spicyTag}>
                 <Ionicons name="flame" size={13} color={colors.nonVeg} />
-                <Text style={styles.spicyTagText}>Chef Special Spice</Text>
+                <Text style={styles.spicyTagText}>{t.menu.chefSpecialSpice}</Text>
               </View>
             )}
           </View>
@@ -158,7 +158,7 @@ export function DishDetailModal({ route, navigation }: any) {
 
           {/* Spice Level Customization */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Spice Level Preference</Text>
+            <Text style={styles.sectionTitle}>{t.menu.spicePreference}</Text>
             <View style={styles.spiceRow}>
               {(['Mild', 'Medium', 'Spicy', 'Extra Hot'] as const).map((level) => {
                 const isSelected = spiceLevel === level;
@@ -186,7 +186,7 @@ export function DishDetailModal({ route, navigation }: any) {
           {/* Variants section */}
           {variants.length > 0 && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Choose Variant</Text>
+              <Text style={styles.sectionTitle}>{t.menu.chooseVariant}</Text>
               <View style={styles.optionsList}>
                 {variants.map((v) => {
                   const isSelected = selectedVariant?.id === v.id;
@@ -219,7 +219,7 @@ export function DishDetailModal({ route, navigation }: any) {
           {/* Add-ons section */}
           {addOns.length > 0 && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Optional Add-ons</Text>
+              <Text style={styles.sectionTitle}>{t.menu.optionalAddOns}</Text>
               <View style={styles.optionsList}>
                 {addOns.map((addOn: any) => {
                   const isSelected = selectedAddOns.some((a) => a.id === addOn.id);
@@ -256,7 +256,7 @@ export function DishDetailModal({ route, navigation }: any) {
 
           {/* Special instructions */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Cooking Instructions</Text>
+            <Text style={styles.sectionTitle}>{t.menu.cookingInstructions}</Text>
             <TextInput
               style={styles.textArea}
               placeholder="e.g. Less spicy, extra sauce, well done..."
@@ -441,7 +441,7 @@ const createStyles = (colors: ColorTheme) =>
   sectionTitle: {
     fontSize: 15,
     fontWeight: 'bold',
-    color: colors.gold,
+    color: colors.goldText,
     marginBottom: spacing.sm,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -499,7 +499,7 @@ const createStyles = (colors: ColorTheme) =>
     fontWeight: '500',
   },
   optionPriceDelta: {
-    color: colors.gold,
+    color: colors.goldText,
     fontSize: 13,
     fontWeight: 'bold',
   },
@@ -520,7 +520,7 @@ const createStyles = (colors: ColorTheme) =>
     right: 0,
     backgroundColor: colors.surface,
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
+    paddingTop: spacing.screenTop,
     paddingBottom: 28,
     flexDirection: 'row',
     alignItems: 'center',

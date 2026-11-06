@@ -12,9 +12,11 @@ import {
 import * as WebBrowser from "expo-web-browser";
 import { Ionicons } from "@expo/vector-icons";
 import { api } from "../services/api";
+import type { SavedAddressDto } from "../services/api-client";
 import { useCartStore } from "../stores/cart-store";
 import { useAuthStore } from "../stores/auth-store";
 import { useTheme } from "../stores/theme-store";
+import { useI18n } from "../i18n";
 import { colors as defaultColors, ColorTheme, spacing, borderRadius } from "../theme";
 import type { OrderSummaryDto, PaymentMethod } from "../shared";
 
@@ -25,6 +27,19 @@ export interface DeliveryZone {
   minOrder: number;
 }
 
+function readPaymentCallback(url?: string): { status: string | null; reason: string } {
+  if (!url) return { status: null, reason: '' };
+  try {
+    const callback = new URL(url);
+    return {
+      status: callback.searchParams.get('status')?.toUpperCase() ?? null,
+      reason: callback.searchParams.get('reason') ?? '',
+    };
+  } catch {
+    return { status: null, reason: '' };
+  }
+}
+
 const DEFAULT_ZONES: DeliveryZone[] = [
   { id: 'zone-airport', name: 'Airport Road & nearby', fee: 3000, minOrder: 25000 },
   { id: 'zone-central', name: 'Central Biratnagar', fee: 5000, minOrder: 30000 },
@@ -33,6 +48,7 @@ const DEFAULT_ZONES: DeliveryZone[] = [
 
 export function CheckoutScreen({ navigation }: any) {
   const { colors } = useTheme();
+  const { t, formatCurrency, isNepali } = useI18n();
   const items = useCartStore((s) => s.items);
   const clearCart = useCartStore((s) => s.clearCart);
   const user = useAuthStore((s) => s.user);
@@ -73,6 +89,25 @@ export function CheckoutScreen({ navigation }: any) {
       })
       .catch(() => {});
   }, []);
+
+  // Reuse the account's website-saved default address in mobile checkout.
+  useEffect(() => {
+    if (!user?.id) return;
+    let active = true;
+    api.get<SavedAddressDto[]>('/profile/addresses')
+      .then((addresses) => {
+        if (!active) return;
+        const address = addresses.find((item) => item.isDefault) ?? addresses[0];
+        if (!address) return;
+        setLine1((current) => current || [address.line1, address.line2].filter(Boolean).join(', '));
+        setFullNameInput((current) => current ?? address.fullName);
+        setPhoneInput((current) => current ?? address.phone);
+      })
+      .catch(() => {
+        // Address lookup is optional; customers can still enter it manually.
+      });
+    return () => { active = false; };
+  }, [user?.id]);
 
   // Recalculate totals with server on cart/coupon/zone changes
   useEffect(() => {
@@ -198,49 +233,87 @@ export function CheckoutScreen({ navigation }: any) {
         "idempotency-key": idempotencyKey,
       });
 
+      let paymentFeedback: { title: string; message: string } | null = null;
+
       // Digital payment: initiate eSewa / Khalti via in-app browser
       if (paymentMethod === "ESEWA" || paymentMethod === "KHALTI") {
-        const initData = await api.post<any>("/payments/initiate", {
-          orderId: result.orderId,
-          provider: paymentMethod,
-          appScheme: "purplehaze",
-        });
+        try {
+          const initData = await api.post<any>("/payments/initiate", {
+            orderId: result.orderId,
+            provider: paymentMethod,
+            appScheme: "purplehaze",
+            token: result.publicToken,
+          });
 
-        if (initData.paymentUrl) {
-          // Khalti flow
-          const browserResult = await WebBrowser.openAuthSessionAsync(
-            initData.paymentUrl,
-            "purplehaze://payment-result",
-          );
-
-          if (browserResult.type === "success") {
-            // Server-side verification is executed on callback
-            Alert.alert("Payment Complete", "Your transaction has been verified!");
+          if (initData.alreadyPaid && initData.status === 'PAID') {
+            paymentFeedback = {
+              title: 'Payment complete',
+              message: 'This order is already paid and verified.',
+            };
+          } else if (initData.paymentUrl) {
+            const browserResult = await WebBrowser.openAuthSessionAsync(
+              initData.paymentUrl,
+              "purplehaze://payment-result",
+            );
+            if (browserResult.type === 'success') {
+              const callback = readPaymentCallback('url' in browserResult ? browserResult.url : undefined);
+              paymentFeedback = callback.status === 'PAID'
+                ? { title: 'Payment complete', message: 'Your transaction was verified by the server.' }
+                : { title: 'Payment not confirmed', message: callback.reason || 'The order is placed, but payment is still pending. Check the order status before trying again.' };
+            } else {
+              paymentFeedback = {
+                title: 'Payment pending',
+                message: 'The order is placed, but the payment window was closed before confirmation.',
+              };
+            }
+          } else if (initData.formUrl) {
+            // eSewa form URL
+            const queryParams = new URLSearchParams(initData.params).toString();
+            const esewaPayUrl = `${initData.formUrl}?${queryParams}`;
+            const browserResult = await WebBrowser.openAuthSessionAsync(
+              esewaPayUrl,
+              "purplehaze://payment-result",
+            );
+            if (browserResult.type === 'success') {
+              const callback = readPaymentCallback('url' in browserResult ? browserResult.url : undefined);
+              paymentFeedback = callback.status === 'PAID'
+                ? { title: 'Payment complete', message: 'Your payment was verified by the server.' }
+                : { title: 'Payment not confirmed', message: callback.reason || 'The order is placed, but payment is still pending. Check the order status before trying again.' };
+            } else {
+              paymentFeedback = {
+                title: 'Payment pending',
+                message: 'The order is placed, but the payment window was closed before confirmation.',
+              };
+            }
+          } else {
+            paymentFeedback = {
+              title: 'Payment pending',
+              message: 'The order is placed, but the payment provider did not return a payment page.',
+            };
           }
-        } else if (initData.formUrl) {
-          // eSewa form URL
-          const queryParams = new URLSearchParams(initData.params).toString();
-          const esewaPayUrl = `${initData.formUrl}?${queryParams}`;
-
-          const browserResult = await WebBrowser.openAuthSessionAsync(
-            esewaPayUrl,
-            "purplehaze://payment-result",
-          );
-
-          if (browserResult.type === "success") {
-            Alert.alert("Payment Complete", "Your payment has been verified!");
-          }
+        } catch (paymentError: any) {
+          paymentFeedback = {
+            title: 'Order placed · payment pending',
+            message: paymentError?.message || 'The order was saved, but payment could not be started. Check its status before trying again.',
+          };
         }
       }
 
       clearCart();
-
-      navigation.replace("OrderTracking", {
+      const openOrderTracking = () => navigation.replace("OrderTracking", {
         orderId: result.orderId,
         orderNumber: result.orderNumber,
         phone: phone.trim(),
         token: result.publicToken,
       });
+
+      if (paymentFeedback) {
+        Alert.alert(paymentFeedback.title, paymentFeedback.message, [
+          { text: t.orders.track, onPress: openOrderTracking },
+        ], { cancelable: false });
+      } else {
+        openOrderTracking();
+      }
     } catch (e: any) {
       Alert.alert("Order Failed", e.message || "Failed to place your order. Please try again.");
     } finally {
@@ -267,22 +340,22 @@ export function CheckoutScreen({ navigation }: any) {
           <TouchableOpacity onPress={handleBack} style={styles.backBtn}>
             <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Checkout</Text>
+          <Text style={styles.headerTitle}>{t.cart.checkoutTitle}</Text>
           <View style={{ width: 24 }} />
         </View>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.xl }}>
           <Ionicons name="cart-outline" size={60} color={colors.gold} />
           <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text, marginTop: spacing.md, marginBottom: spacing.sm }}>
-            Your Cart is Empty
+            {t.cart.emptyTitle}
           </Text>
           <Text style={{ fontSize: 14, color: colors.textMuted, textAlign: 'center', marginBottom: spacing.lg }}>
-            Please add some delicious dishes before proceeding to checkout.
+            {t.cart.emptySubtitle}
           </Text>
           <TouchableOpacity
             style={[styles.placeOrderBtn, { backgroundColor: colors.purple, paddingHorizontal: spacing.xl, marginTop: spacing.md }]}
             onPress={() => navigation?.navigate?.('MainTabs', { screen: 'Menu' })}
           >
-            <Text style={{ color: '#fff', fontWeight: '700' }}>Explore Menu</Text>
+            <Text style={{ color: '#fff', fontWeight: '700' }}>{t.cart.exploreMenu}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -296,7 +369,7 @@ export function CheckoutScreen({ navigation }: any) {
         <TouchableOpacity onPress={handleBack} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Checkout</Text>
+        <Text style={styles.headerTitle}>{t.cart.checkoutTitle}</Text>
         <View style={{ width: 24 }} />
       </View>
 
@@ -315,7 +388,7 @@ export function CheckoutScreen({ navigation }: any) {
             <Text
               style={[styles.typeText, deliveryType === "DELIVERY" && styles.typeTextActive]}
             >
-              Delivery (Biratnagar)
+              {isNepali ? 'डेलिभरी (विराटनगर)' : 'Delivery (Biratnagar)'}
             </Text>
           </TouchableOpacity>
 
@@ -331,7 +404,7 @@ export function CheckoutScreen({ navigation }: any) {
             <Text
               style={[styles.typeText, deliveryType === "PICKUP" && styles.typeTextActive]}
             >
-              Takeaway Pickup
+              {isNepali ? 'टेकअवे पिकअप' : 'Takeaway Pickup'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -339,7 +412,7 @@ export function CheckoutScreen({ navigation }: any) {
         {/* Delivery Area / Zone Selection */}
         {deliveryType === "DELIVERY" && (
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Delivery Area (Biratnagar)</Text>
+            <Text style={styles.cardTitle}>{t.cart.deliveryArea}</Text>
             <View style={{ gap: spacing.sm, marginTop: spacing.xs }}>
               {zones.map((zone) => {
                 const isSelected = selectedZoneId === zone.id;
@@ -370,7 +443,7 @@ export function CheckoutScreen({ navigation }: any) {
                           { color: isSelected ? colors.text : colors.textSecondary },
                         ]}
                       >
-                        {zone.name}
+                      {isNepali ? ({ 'zone-airport': 'एयरपोर्ट रोड र वरपर', 'zone-central': 'मध्य विराटनगर', 'zone-outer': 'बाहिरी विराटनगर' }[zone.id] || zone.name) : zone.name}
                       </Text>
                     </View>
                     <Text
@@ -379,7 +452,7 @@ export function CheckoutScreen({ navigation }: any) {
                         { color: isSelected ? colors.gold : colors.textMuted },
                       ]}
                     >
-                      Rs. {(zone.fee / 100).toFixed(0)}
+                      {formatCurrency(zone.fee)}
                     </Text>
                   </TouchableOpacity>
                 );
@@ -390,20 +463,20 @@ export function CheckoutScreen({ navigation }: any) {
 
         {/* Customer Information */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Contact Details</Text>
+          <Text style={styles.cardTitle}>{t.cart.contactDetails}</Text>
           <TextInput
             style={[styles.input, !fullName.trim() && styles.inputWarning]}
-            placeholder="Full Name *"
+            placeholder={`${t.auth.fullName} *`}
             placeholderTextColor="#64748b"
             value={fullName}
             onChangeText={setFullNameInput}
           />
           {!fullName.trim() && (
-            <Text style={styles.fieldHint}>💡 Please enter your name so our kitchen knows who to hand this meal to.</Text>
+            <Text style={styles.fieldHint}>💡 {t.cart.nameHint}</Text>
           )}
           <TextInput
             style={styles.input}
-            placeholder="Email Address (for order receipt)"
+            placeholder={t.cart.emailReceipt}
             placeholderTextColor="#64748b"
             keyboardType="email-address"
             autoCapitalize="none"
@@ -412,7 +485,7 @@ export function CheckoutScreen({ navigation }: any) {
           />
           <TextInput
             style={styles.input}
-            placeholder="Phone Number * (e.g. 98XXXXXXXX)"
+            placeholder={t.cart.phoneRequired}
             placeholderTextColor="#64748b"
             keyboardType="phone-pad"
             value={phone}
@@ -423,21 +496,21 @@ export function CheckoutScreen({ navigation }: any) {
         {/* Delivery Address */}
         {deliveryType === "DELIVERY" && (
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Delivery Address</Text>
+            <Text style={styles.cardTitle}>{t.cart.deliveryAddress}</Text>
             <TextInput
               style={[styles.input, !line1.trim() && styles.inputWarning]}
-              placeholder="Street name, Chowk, or Landmark *"
+              placeholder={isNepali ? 'सडक, चोक वा चिनारी ठाउँ *' : 'Street name, Chowk, or Landmark *'}
               placeholderTextColor="#64748b"
               value={line1}
               onChangeText={setLine1}
             />
             {!line1.trim() && (
-              <Text style={styles.fieldHint}>💡 Please enter your street address or choose a popular area below.</Text>
+              <Text style={styles.fieldHint}>💡 {t.cart.addressHint}</Text>
             )}
 
             {/* Quick Landmark Chips */}
             <View style={styles.landmarksContainer}>
-              <Text style={styles.landmarksLabel}>Popular Biratnagar areas (tap to auto-fill):</Text>
+              <Text style={styles.landmarksLabel}>{t.cart.popularAreas}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.landmarksScroll}>
                 {[
                   'Airport Road',
@@ -463,7 +536,7 @@ export function CheckoutScreen({ navigation }: any) {
 
             <TextInput
               style={[styles.input, styles.instructionsInput]}
-              placeholder="Landmark instructions (e.g. Near green gate, 2nd floor)"
+              placeholder={t.cart.landmarkPlaceholder}
               placeholderTextColor="#64748b"
               value={instructions}
               onChangeText={setInstructions}
@@ -474,18 +547,18 @@ export function CheckoutScreen({ navigation }: any) {
 
         {/* Coupon Code */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Promo Code</Text>
+          <Text style={styles.cardTitle}>{t.cart.promoCode}</Text>
           <View style={styles.couponRow}>
             <TextInput
               style={[styles.input, styles.couponInput]}
-              placeholder="Enter coupon code"
+              placeholder={t.cart.couponCode}
               placeholderTextColor="#64748b"
               autoCapitalize="characters"
               value={couponCode}
               onChangeText={setCouponCode}
             />
             <TouchableOpacity style={styles.applyCouponBtn} onPress={applyCoupon}>
-              <Text style={styles.applyCouponText}>Apply</Text>
+              <Text style={styles.applyCouponText}>{t.cart.applyCoupon}</Text>
             </TouchableOpacity>
           </View>
           {appliedCoupon && (
@@ -501,7 +574,7 @@ export function CheckoutScreen({ navigation }: any) {
 
         {/* Payment Method */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Payment Method</Text>
+          <Text style={styles.cardTitle}>{t.cart.paymentMethod}</Text>
 
           <TouchableOpacity
             style={[styles.paymentRow, paymentMethod === "COD" && styles.paymentRowActive]}
@@ -509,8 +582,8 @@ export function CheckoutScreen({ navigation }: any) {
           >
             <Ionicons name="cash-outline" size={20} color="#22c55e" />
             <View style={styles.paymentTextCol}>
-              <Text style={styles.paymentName}>Cash on Delivery</Text>
-              <Text style={styles.paymentSub}>Pay when your order arrives</Text>
+              <Text style={styles.paymentName}>{t.cart.cashOnDelivery}</Text>
+              <Text style={styles.paymentSub}>{t.cart.payOnArrival}</Text>
             </View>
             <View style={[styles.radioCircle, paymentMethod === "COD" && styles.radioActive]} />
           </TouchableOpacity>
@@ -521,8 +594,8 @@ export function CheckoutScreen({ navigation }: any) {
           >
             <Ionicons name="wallet-outline" size={20} color="#4ade80" />
             <View style={styles.paymentTextCol}>
-              <Text style={styles.paymentName}>eSewa Mobile Wallet</Text>
-              <Text style={styles.paymentSub}>Instant & verified digital payment</Text>
+              <Text style={styles.paymentName}>eSewa {isNepali ? 'मोबाइल वालेट' : 'Mobile Wallet'}</Text>
+              <Text style={styles.paymentSub}>{t.cart.instantVerified}</Text>
             </View>
             <View style={[styles.radioCircle, paymentMethod === "ESEWA" && styles.radioActive]} />
           </TouchableOpacity>
@@ -533,8 +606,8 @@ export function CheckoutScreen({ navigation }: any) {
           >
             <Ionicons name="phone-portrait-outline" size={20} color="#a855f7" />
             <View style={styles.paymentTextCol}>
-              <Text style={styles.paymentName}>Khalti Digital Wallet</Text>
-              <Text style={styles.paymentSub}>Pay with Khalti app or eBanking</Text>
+              <Text style={styles.paymentName}>Khalti {isNepali ? 'डिजिटल वालेट' : 'Digital Wallet'}</Text>
+              <Text style={styles.paymentSub}>{t.cart.payWithWallet.replace('{wallet}', 'Khalti')}</Text>
             </View>
             <View style={[styles.radioCircle, paymentMethod === "KHALTI" && styles.radioActive]} />
           </TouchableOpacity>
@@ -546,10 +619,10 @@ export function CheckoutScreen({ navigation }: any) {
               <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
                 <Text style={[styles.paymentName, { color: "#94a3b8" }]}>Fonepay Direct</Text>
                 <View style={styles.pendingBadge}>
-                  <Text style={styles.pendingBadgeText}>Pending Merchant Approval</Text>
+                  <Text style={styles.pendingBadgeText}>{t.cart.pendingApproval}</Text>
                 </View>
               </View>
-              <Text style={styles.paymentSub}>Merchant onboarding in progress</Text>
+              <Text style={styles.paymentSub}>{t.cart.merchantOnboarding}</Text>
             </View>
             <View style={[styles.radioCircle, styles.radioCircleDisabled]} />
           </View>
@@ -557,30 +630,30 @@ export function CheckoutScreen({ navigation }: any) {
 
         {/* Final Price Breakdown */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Order Summary</Text>
+          <Text style={styles.cardTitle}>{t.cart.orderSummary}</Text>
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Subtotal</Text>
+            <Text style={styles.summaryLabel}>{t.cart.subtotal}</Text>
             <Text style={styles.summaryVal}>
-              Rs. {((calculation?.subtotal ?? 0) / 100).toFixed(0)}
+              {formatCurrency(calculation?.subtotal ?? 0)}
             </Text>
           </View>
           {deliveryType === "DELIVERY" && (
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Delivery Fee</Text>
-              <Text style={styles.summaryVal}>Rs. {deliveryFeeNpr.toFixed(0)}</Text>
+              <Text style={styles.summaryLabel}>{t.cart.deliveryFee}</Text>
+              <Text style={styles.summaryVal}>{formatCurrency(deliveryFeeNpr)}</Text>
             </View>
           )}
           {discountNpr > 0 && (
             <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: "#22c55e" }]}>Discount</Text>
+              <Text style={[styles.summaryLabel, { color: "#22c55e" }]}>{t.cart.discount}</Text>
               <Text style={[styles.summaryVal, { color: "#22c55e" }]}>
-                -Rs. {discountNpr.toFixed(0)}
+                -{formatCurrency(discountNpr)}
               </Text>
             </View>
           )}
           <View style={[styles.summaryRow, styles.totalRow]}>
-            <Text style={styles.totalLabel}>Total Amount</Text>
-            <Text style={styles.totalVal}>Rs. {totalNpr.toFixed(0)}</Text>
+            <Text style={styles.totalLabel}>{t.cart.totalAmount}</Text>
+            <Text style={styles.totalVal}>{formatCurrency(totalNpr)}</Text>
           </View>
         </View>
       </ScrollView>
@@ -633,7 +706,7 @@ const createStyles = (colors: ColorTheme) =>
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
+    paddingTop: spacing.screenTop,
     paddingBottom: spacing.md,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
@@ -698,7 +771,7 @@ const createStyles = (colors: ColorTheme) =>
   },
   fieldHint: {
     fontSize: 11,
-    color: colors.gold,
+    color: colors.goldText,
     marginTop: -4,
     marginBottom: 8,
     paddingHorizontal: 2,
@@ -732,7 +805,7 @@ const createStyles = (colors: ColorTheme) =>
   landmarkChipText: {
     fontSize: 11,
     fontWeight: '600',
-    color: colors.gold,
+    color: colors.goldText,
   },
   suggestionBanner: {
     flexDirection: 'row',
@@ -749,7 +822,7 @@ const createStyles = (colors: ColorTheme) =>
   suggestionText: {
     flex: 1,
     fontSize: 12,
-    color: colors.gold,
+    color: colors.goldText,
     lineHeight: 16,
   },
   zoneItem: {
@@ -904,7 +977,7 @@ const createStyles = (colors: ColorTheme) =>
     fontWeight: "bold",
   },
   totalVal: {
-    color: colors.gold,
+    color: colors.goldText,
     fontSize: 18,
     fontWeight: "bold",
   },

@@ -13,6 +13,7 @@
     },
     "android": {
       "package": "com.bistacreation.purplehaze",
+      "versionCode": 8,
       "adaptiveIcon": {
         "backgroundColor": "#FAF7F2",
         "foregroundImage": "./assets/android-icon-foreground.png"

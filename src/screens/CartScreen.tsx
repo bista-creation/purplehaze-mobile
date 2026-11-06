@@ -48,7 +48,7 @@ export function CartScreen({ navigation }: any) {
           activeOpacity={0.7}
         >
           <Ionicons name="arrow-back" size={20} color={colors.text} />
-          <Text style={[styles.emptyTopBackText, { color: colors.text }]}>Back</Text>
+          <Text style={[styles.emptyTopBackText, { color: colors.text }]}>{t.common.back}</Text>
         </TouchableOpacity>
 
         <View style={styles.emptyIconCircle}>
@@ -69,7 +69,7 @@ export function CartScreen({ navigation }: any) {
           onPress={() => navigation?.navigate?.('MainTabs', { screen: 'Home' })}
           activeOpacity={0.8}
         >
-          <Text style={[styles.homeButtonText, { color: colors.gold }]}>Back to Home</Text>
+          <Text style={[styles.homeButtonText, { color: colors.goldText }]}>{t.navigation.home}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -195,7 +195,7 @@ const createStyles = (colors: ColorTheme) =>
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
+    paddingTop: spacing.screenTop,
     paddingBottom: spacing.md,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
@@ -243,7 +243,7 @@ const createStyles = (colors: ColorTheme) =>
   },
   itemCountText: {
     fontSize: 12,
-    color: colors.gold,
+    color: colors.goldText,
     fontWeight: '600',
     marginTop: 2,
   },
@@ -321,7 +321,7 @@ const createStyles = (colors: ColorTheme) =>
   },
   itemVariant: {
     fontSize: 12,
-    color: colors.gold,
+    color: colors.goldText,
     fontWeight: '600',
     marginBottom: 2,
   },
@@ -350,7 +350,7 @@ const createStyles = (colors: ColorTheme) =>
   itemPrice: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: colors.gold,
+    color: colors.goldText,
   },
   qtyContainer: {
     flexDirection: 'row',
@@ -396,7 +396,7 @@ const createStyles = (colors: ColorTheme) =>
   billValue: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: colors.gold,
+    color: colors.goldText,
   },
   checkoutBtn: {
     backgroundColor: colors.purple,

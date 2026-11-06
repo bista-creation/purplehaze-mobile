@@ -24,23 +24,48 @@ import { useAuthStore } from '../stores/auth-store';
 import { useTheme } from '../stores/theme-store';
 import { useMayaStore } from '../stores/maya-store';
 import { useI18n } from '../i18n';
+import type { Translations } from '../i18n';
 import { Header, Badge, FloatingCartBar } from '../components/ui';
 import { isPlaceholderDescription } from '../shared';
 import { colors as defaultColors, ColorTheme, spacing, borderRadius, displayFontFamily } from '../theme';
 
+function localizedCategoryLabel(category: CategoryDto, translations: Translations, isNepali: boolean): string {
+  if (/momo|momo/i.test(category.slug)) return 'म:म';
+  if (/nepali/i.test(category.slug)) return translations.menu.nepali;
+  if (/indian|tandoor|curry/i.test(category.slug)) return translations.menu.indian;
+  if (/asian/i.test(category.slug)) return translations.menu.asian;
+  if (/continental|sizzler/i.test(category.slug)) return translations.menu.continental;
+  if (/beverage|drink|bar/i.test(category.slug)) return isNepali ? 'पेय पदार्थ' : 'Beverages';
+  return category.name;
+}
+
+function normalizeCategoryKey(value?: string | null): string {
+  return (value || '')
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+}
+
+function isChefRecommendationCategory(category: CategoryDto): boolean {
+  const matches = (value?: string | null) => /chef(?:s)?recommendations?/.test(normalizeCategoryKey(value));
+  return matches(category.slug) || matches(category.name);
+}
+
 export function HomeScreen({ navigation }: any) {
-  const { t, formatCurrency } = useI18n();
-  const { colors } = useTheme();
+  const { t, formatCurrency, isNepali } = useI18n();
+  const { colors, isDark } = useTheme();
   const user = useAuthStore((s) => s.user);
   const { items, addItem, getItemCount, getSubtotalNpr } = useCartStore();
   const { favoriteDishIds, toggleFavorite, isFavorite } = useFavoritesStore();
   const { width: windowWidth } = useWindowDimensions();
 
   const cardWidth = Math.min(windowWidth - 32, 640);
+  const recommendationCardWidth = Math.min(260, Math.max(210, windowWidth * 0.64));
   const slideGap = 12;
   const snapInterval = cardWidth + slideGap;
 
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
 
   const [categories, setCategories] = useState<CategoryDto[]>([]);
   const [dishes, setDishes] = useState<DishDto[]>([]);
@@ -93,10 +118,25 @@ export function HomeScreen({ navigation }: any) {
     };
   }, []);
 
-  // Filter curated collections
+  // Recommendations are sourced only from the matching live menu category.
+  const recommendationCategory = useMemo(
+    () => categories.find(isChefRecommendationCategory),
+    [categories]
+  );
+
   const chefSpecials = useMemo(() => {
-    return dishes.slice(0, 6);
-  }, [dishes]);
+    if (!recommendationCategory) return [];
+
+    const categorySlug = normalizeCategoryKey(recommendationCategory.slug);
+    const categoryName = normalizeCategoryKey(recommendationCategory.name);
+    return dishes.filter((dish) =>
+      dish.isAvailable && (
+        dish.categoryId === recommendationCategory.id ||
+        normalizeCategoryKey(dish.categorySlug) === categorySlug ||
+        normalizeCategoryKey(dish.categoryName) === categoryName
+      )
+    );
+  }, [dishes, recommendationCategory]);
 
   const bestsellers = useMemo(() => {
     return dishes.slice(2, 8);
@@ -106,36 +146,36 @@ export function HomeScreen({ navigation }: any) {
     () => [
       {
         id: '1',
-        title: 'Lush Garden Dining',
-        subtitle: 'Experience open-air candlelit evenings & tranquil greenery',
-        tag: 'GARDEN & ROOFTOP',
+        title: t.home.bannerGardenTitle,
+        subtitle: t.home.bannerGardenSubtitle,
+        tag: t.home.bannerGardenTag,
         tagColor: colors.gold,
         imageSource: require('../../assets/banners/garden-dining.jpg'),
-        actionText: 'Reserve Table',
+        actionText: t.home.reserveTable,
         route: 'Reservations',
       },
       {
         id: '2',
-        title: 'Flavors of Nepal & Sekuwa',
-        subtitle: 'Authentic charcoal smoked delights, Mo:Mo & sizzling platters',
-        tag: 'CHEF SPECIALS',
+        title: t.home.bannerFoodTitle,
+        subtitle: t.home.bannerFoodSubtitle,
+        tag: t.home.chefSpecials,
         tagColor: '#F59E0B',
         imageSource: require('../../assets/banners/restaurant.jpg'),
-        actionText: 'Order Food',
+        actionText: t.home.orderFood,
         route: 'Menu',
       },
       {
         id: '3',
-        title: 'Banquets & Celebrations',
-        subtitle: 'Air-conditioned banquet halls for weddings & private gatherings',
-        tag: 'VENUES & EVENTS',
+        title: t.home.bannerVenueTitle,
+        subtitle: t.home.bannerVenueSubtitle,
+        tag: t.home.venuesEvents,
         tagColor: '#10B981',
         imageSource: require('../../assets/banners/banquet.jpg'),
-        actionText: 'Explore Venues',
+        actionText: t.home.exploreVenues,
         route: 'Venues',
       },
     ],
-    [colors.gold]
+    [colors.gold, t.home]
   );
 
   // Auto-advance hero carousel every 5s; pause on touch interaction or background state
@@ -252,9 +292,9 @@ export function HomeScreen({ navigation }: any) {
         <View style={styles.greetingSection}>
           <View style={{ flex: 1, paddingRight: spacing.sm }}>
             <Text style={styles.greetingGreeting}>
-              {user?.name ? `Namaste, ${user.name.split(' ')[0]} 👋` : 'Namaste, Guest 👋'}
+              {user?.name ? t.home.greeting.replace('{name}', user.name.split(' ')[0]) : t.home.guest}
             </Text>
-            <Text style={styles.greetingSubtitle}>Good food. Golden evenings. Garden memories.</Text>
+            <Text style={styles.greetingSubtitle}>{t.home.subtitle}</Text>
           </View>
 
           <TouchableOpacity
@@ -266,7 +306,7 @@ export function HomeScreen({ navigation }: any) {
             activeOpacity={0.8}
           >
             <Text style={styles.mayaIcon}>✨</Text>
-            <Text style={styles.mayaText}>Ask Maya</Text>
+            <Text style={styles.mayaText}>{t.home.askMaya}</Text>
           </TouchableOpacity>
         </View>
 
@@ -278,7 +318,7 @@ export function HomeScreen({ navigation }: any) {
         >
           <Ionicons name="search" size={18} color={colors.textMuted} />
           <Text style={styles.searchPlaceholder}>
-            Search dishes, Sekuwa, Mo:Mo, Sizzler, Biryani...
+            {t.home.searchPlaceholder}
           </Text>
           <View style={styles.searchFilterBadge}>
             <Ionicons name="options-outline" size={14} color={colors.purple} />
@@ -360,28 +400,28 @@ export function HomeScreen({ navigation }: any) {
           onPress={() => navigation.navigate('Menu')}
           activeOpacity={0.92}
           accessibilityRole="button"
-          accessibilityLabel="Discover today's favourites, explore menu"
+          accessibilityLabel={`${t.home.favouritesTitle}, ${t.home.explore}`}
         >
           <View style={styles.promotionGlowLine} />
           <View style={styles.promotionRow}>
             <View style={styles.promotionLeft}>
               <View style={styles.promotionBadgeRow}>
                 <View style={styles.promotionTag}>
-                  <Ionicons name="sparkles" size={11} color={colors.gold} />
-                  <Text style={styles.promotionTagText}>FEATURED TODAY</Text>
+                  <Ionicons name="sparkles" size={11} color={isDark ? colors.purple : colors.gold} />
+                <Text style={styles.promotionTagText}>{t.home.featuredToday}</Text>
                 </View>
-                <Text style={styles.promotionAvailability}>Dine-in · Takeaway · Delivery</Text>
+                <Text style={styles.promotionAvailability}>{t.home.serviceAvailability}</Text>
               </View>
-              <Text style={styles.promotionTitle}>Discover Today&apos;s Favourites</Text>
+              <Text style={styles.promotionTitle}>{t.home.favouritesTitle}</Text>
               <Text style={styles.promotionSubtitle} numberOfLines={2}>
-                Live charcoal Sekuwa, steaming dumplings &amp; chef&apos;s garden specials.
+                {t.home.favouritesSubtitle}
               </Text>
             </View>
 
             <View style={styles.promotionCta}>
               <View style={styles.promotionCtaBtn}>
-                <Text style={styles.promotionCtaText}>Explore</Text>
-                <Ionicons name="arrow-forward" size={13} color="#FFFFFF" />
+                <Text style={styles.promotionCtaText}>{t.home.explore}</Text>
+                <Ionicons name="arrow-forward" size={13} color={isDark ? '#FFFFFF' : '#3B0764'} />
               </View>
             </View>
           </View>
@@ -399,13 +439,13 @@ export function HomeScreen({ navigation }: any) {
                 <Ionicons name="restaurant" size={20} color="#FFFFFF" />
               </View>
               <View style={styles.primaryLivePill}>
-                <Text style={styles.primaryLivePillText}>⚡ 30-45 MINS</Text>
+                <Text style={styles.primaryLivePillText}>{t.home.deliveryTime}</Text>
               </View>
             </View>
-            <Text style={styles.primaryCardTitle}>Order Food</Text>
-            <Text style={styles.primaryCardSubtitle}>Delivery & Takeaway</Text>
+            <Text style={styles.primaryCardTitle}>{t.home.orderFood}</Text>
+            <Text style={styles.primaryCardSubtitle}>{t.home.deliveryTakeaway}</Text>
             <View style={styles.primaryCardCta}>
-              <Text style={styles.primaryCardCtaText}>View Menu</Text>
+              <Text style={styles.primaryCardCtaText}>{t.home.viewMenu}</Text>
               <Ionicons name="arrow-forward" size={13} color={colors.purple} />
             </View>
           </TouchableOpacity>
@@ -420,13 +460,13 @@ export function HomeScreen({ navigation }: any) {
                 <Ionicons name="calendar" size={20} color="#FFFFFF" />
               </View>
               <View style={styles.primaryGardenPill}>
-                <Text style={styles.primaryGardenPillText}>🌿 GARDEN</Text>
+                <Text style={styles.primaryGardenPillText}>{t.home.garden}</Text>
               </View>
             </View>
-            <Text style={styles.primaryCardTitle}>Book Table</Text>
-            <Text style={styles.primaryCardSubtitle}>Dine-in & Rooftop</Text>
+            <Text style={styles.primaryCardTitle}>{t.home.bookTable}</Text>
+            <Text style={styles.primaryCardSubtitle}>{t.home.dineInRooftop}</Text>
             <View style={styles.primaryCardCta}>
-              <Text style={[styles.primaryCardCtaText, { color: colors.goldDark }]}>Reserve Now</Text>
+              <Text style={[styles.primaryCardCtaText, { color: colors.goldDark }]}>{t.home.reserveNow}</Text>
               <Ionicons name="arrow-forward" size={13} color={colors.goldDark} />
             </View>
           </TouchableOpacity>
@@ -443,8 +483,8 @@ export function HomeScreen({ navigation }: any) {
               <Ionicons name="sparkles" size={16} color="#10B981" />
             </View>
             <View>
-              <Text style={styles.secondaryTitle}>Banquets & Parties</Text>
-              <Text style={styles.secondarySubtitle}>Weddings, Events, Halls</Text>
+              <Text style={styles.secondaryTitle}>{t.home.banquetsParties}</Text>
+              <Text style={styles.secondarySubtitle}>{t.home.weddingsEventsHalls}</Text>
             </View>
             <Ionicons name="chevron-forward" size={14} color={colors.textMuted} style={{ marginLeft: 'auto' }} />
           </TouchableOpacity>
@@ -460,8 +500,8 @@ export function HomeScreen({ navigation }: any) {
               <Ionicons name="receipt" size={16} color="#3B82F6" />
             </View>
             <View>
-              <Text style={styles.secondaryTitle}>My Orders</Text>
-              <Text style={styles.secondarySubtitle}>Live GPS status</Text>
+              <Text style={styles.secondaryTitle}>{t.home.myOrders}</Text>
+              <Text style={styles.secondarySubtitle}>{t.home.liveGpsStatus}</Text>
             </View>
             <Ionicons name="chevron-forward" size={14} color={colors.textMuted} style={{ marginLeft: 'auto' }} />
           </TouchableOpacity>
@@ -470,11 +510,11 @@ export function HomeScreen({ navigation }: any) {
         {/* Food Categories Carousel with Non-truncated Two-Line Labels */}
         <View style={styles.sectionHeader}>
           <View>
-            <Text style={styles.sectionTitle}>Explore Categories</Text>
-            <Text style={styles.sectionSubtitle}>Handcrafted multi-cuisine selections</Text>
+            <Text style={styles.sectionTitle}>{t.home.exploreCategories}</Text>
+            <Text style={styles.sectionSubtitle}>{t.home.categoriesSubtitle}</Text>
           </View>
           <TouchableOpacity onPress={() => navigation.navigate('Menu')}>
-            <Text style={styles.sectionLink}>View All ({categories.length}) →</Text>
+            <Text style={styles.sectionLink}>{t.home.viewAllCount.replace('{count}', String(categories.length))}</Text>
           </TouchableOpacity>
         </View>
 
@@ -506,7 +546,7 @@ export function HomeScreen({ navigation }: any) {
                 </Text>
               </View>
               <Text style={styles.categoryName} numberOfLines={2}>
-                {cat.name}
+                {localizedCategoryLabel(cat, t, isNepali)}
               </Text>
             </TouchableOpacity>
           ))}
@@ -515,18 +555,23 @@ export function HomeScreen({ navigation }: any) {
         {/* Chef Specials Section */}
         <View style={styles.sectionHeader}>
           <View>
-          <Text style={styles.sectionTitle}>Chef&apos;s Recommendations 👨‍🍳</Text>
-            <Text style={styles.sectionSubtitle}>Signature culinary crafts by executive chefs</Text>
+          <Text style={styles.sectionTitle}>{t.home.chefRecommendations}</Text>
+            <Text style={styles.sectionSubtitle}>{t.home.recommendationsSubtitle}</Text>
           </View>
           <TouchableOpacity onPress={() => navigation.navigate('Menu')}>
-            <Text style={styles.sectionLink}>Full Menu →</Text>
+            <Text style={styles.sectionLink}>{t.home.fullMenu}</Text>
           </TouchableOpacity>
         </View>
 
         {isLoading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="small" color={colors.purple} />
-            <Text style={styles.loadingText}>Crafting fresh recommendations...</Text>
+            <Text style={styles.loadingText}>{t.home.loadingRecommendations}</Text>
+          </View>
+        ) : chefSpecials.length === 0 ? (
+          <View style={styles.emptyRecommendations}>
+            <Ionicons name="restaurant-outline" size={20} color={colors.textMuted} />
+            <Text style={styles.emptyRecommendationsText}>{t.home.noChefRecommendations}</Text>
           </View>
         ) : (
           <ScrollView
@@ -539,9 +584,12 @@ export function HomeScreen({ navigation }: any) {
               return (
                 <TouchableOpacity
                   key={dish.id}
-                  style={styles.dishCard}
+                  style={[styles.dishCard, { width: recommendationCardWidth }]}
                   onPress={() => navigation.navigate('DishDetail', { dish })}
                   activeOpacity={0.9}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${dish.name}, ${formatCurrency(dish.price)}`}
+                  accessibilityHint={t.home.openDishDetails}
                 >
                   <View style={styles.dishImageWrap}>
                     {dish.image ? (
@@ -565,6 +613,8 @@ export function HomeScreen({ navigation }: any) {
                       style={styles.favBtn}
                       onPress={() => toggleFavorite(dish.id)}
                       activeOpacity={0.8}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${favorited ? t.home.removeFromFavorites : t.home.addToFavorites} ${dish.name}`}
                     >
                       <Ionicons
                         name={favorited ? 'heart' : 'heart-outline'}
@@ -601,8 +651,10 @@ export function HomeScreen({ navigation }: any) {
                           });
                         }}
                         activeOpacity={0.8}
+                        accessibilityRole="button"
+                        accessibilityLabel={`${t.home.add} ${dish.name}`}
                       >
-                        <Text style={styles.addDishBtnText}>+ ADD</Text>
+                        <Text style={styles.addDishBtnText}>{t.home.add}</Text>
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -617,8 +669,8 @@ export function HomeScreen({ navigation }: any) {
           <>
             <View style={styles.sectionHeader}>
               <View>
-                <Text style={styles.sectionTitle}>Popular Bestsellers 🔥</Text>
-                <Text style={styles.sectionSubtitle}>Most loved dishes ordered by Biratnagar foodies</Text>
+                <Text style={styles.sectionTitle}>{t.home.popularBestsellers}</Text>
+                <Text style={styles.sectionSubtitle}>{t.home.mostLovedDishes}</Text>
               </View>
             </View>
 
@@ -641,7 +693,7 @@ export function HomeScreen({ navigation }: any) {
                           ]}
                         />
                         <Text style={styles.bestsellerBadgeText}>
-                          {dish.isVeg ? 'VEG' : 'NON-VEG'}
+                          {dish.isVeg ? t.home.vegLabel : t.home.nonVegLabel}
                         </Text>
                       </View>
 
@@ -680,7 +732,7 @@ export function HomeScreen({ navigation }: any) {
                         }}
                         activeOpacity={0.8}
                       >
-                        <Text style={styles.bestsellerAddBtnText}>ADD +</Text>
+                        <Text style={styles.bestsellerAddBtnText}>{t.home.add}</Text>
                       </TouchableOpacity>
                     </View>
                   </TouchableOpacity>
@@ -697,14 +749,12 @@ export function HomeScreen({ navigation }: any) {
             style={styles.heritageLogo}
             resizeMode="contain"
           />
-          <Text style={styles.heritageTitle}>Purple Haze Restro {'&'} Garden</Text>
-          <Text style={styles.heritageText}>
-            Established 2015 on Airport Road, Biratnagar. Offering a calm, leafy garden oasis, banquet hall facilities, and multi-cuisine culinary delights.
-          </Text>
+          <Text style={styles.heritageTitle}>{t.home.heritageTitle}</Text>
+          <Text style={styles.heritageText}>{t.home.heritageDescription}</Text>
           <View style={styles.heritageBadges}>
-            <Text style={styles.heritagePill}>🌿 Garden Seating</Text>
-            <Text style={styles.heritagePill}>🎪 Banquet Hall</Text>
-            <Text style={styles.heritagePill}>🛵 Swift Delivery</Text>
+            <Text style={styles.heritagePill}>{t.home.gardenSeating}</Text>
+            <Text style={styles.heritagePill}>{t.home.banquetHall}</Text>
+            <Text style={styles.heritagePill}>{t.home.swiftDelivery}</Text>
           </View>
         </View>
 
@@ -718,7 +768,7 @@ export function HomeScreen({ navigation }: any) {
   );
 }
 
-const createStyles = (colors: ColorTheme) =>
+const createStyles = (colors: ColorTheme, isDark: boolean) =>
   StyleSheet.create({
   container: {
     flex: 1,
@@ -729,7 +779,7 @@ const createStyles = (colors: ColorTheme) =>
   },
   scrollContent: {
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
+    paddingTop: spacing.screenTop,
     maxWidth: 720,
     width: '100%',
     alignSelf: 'center',
@@ -903,15 +953,15 @@ const createStyles = (colors: ColorTheme) =>
 
   /* Compact Prominent Promotion Section */
   promotionCard: {
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: isDark ? '#FFFFFF' : '#3B0764',
     borderWidth: 1,
-    borderColor: colors.surfaceBorder,
+    borderColor: isDark ? '#E5DCF6' : '#F5B942',
     borderRadius: borderRadius.xl,
     padding: spacing.md,
     marginBottom: spacing.lg,
     position: 'relative',
     overflow: 'hidden',
-    shadowColor: colors.purple,
+    shadowColor: isDark ? '#5B21B6' : '#130B1D',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 6,
@@ -923,7 +973,7 @@ const createStyles = (colors: ColorTheme) =>
     left: 0,
     right: 0,
     height: 3,
-    backgroundColor: colors.gold,
+    backgroundColor: isDark ? '#8B5CF6' : '#F5B942',
   },
   promotionRow: {
     flexDirection: 'row',
@@ -945,7 +995,7 @@ const createStyles = (colors: ColorTheme) =>
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: colors.goldMuted,
+    backgroundColor: isDark ? '#EDE9FE' : 'rgba(245, 185, 66, 0.18)',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: borderRadius.full,
@@ -953,25 +1003,25 @@ const createStyles = (colors: ColorTheme) =>
   promotionTagText: {
     fontSize: 9,
     fontWeight: '800',
-    color: colors.goldDark,
+    color: isDark ? '#5B21B6' : colors.goldText,
     letterSpacing: 0.5,
   },
   promotionAvailability: {
     fontSize: 10,
     fontWeight: '600',
-    color: colors.textSecondary,
+    color: isDark ? '#655C72' : 'rgba(255,255,255,0.76)',
   },
   promotionTitle: {
     fontFamily: displayFontFamily,
     fontSize: 15,
     fontWeight: '800',
-    color: colors.text,
+    color: isDark ? '#3B0764' : '#FFFFFF',
     letterSpacing: -0.2,
     marginBottom: 3,
   },
   promotionSubtitle: {
     fontSize: 11,
-    color: colors.textSecondary,
+    color: isDark ? '#655C72' : 'rgba(255,255,255,0.78)',
     lineHeight: 15,
   },
   promotionCta: {
@@ -982,9 +1032,9 @@ const createStyles = (colors: ColorTheme) =>
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: colors.purple,
+    backgroundColor: isDark ? '#5B21B6' : '#F5B942',
     borderWidth: 1,
-    borderColor: colors.gold,
+    borderColor: isDark ? '#5B21B6' : '#F5B942',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: borderRadius.full,
@@ -997,7 +1047,7 @@ const createStyles = (colors: ColorTheme) =>
   promotionCtaText: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: isDark ? '#FFFFFF' : '#3B0764',
     letterSpacing: 0.2,
   },
 
@@ -1215,7 +1265,26 @@ const createStyles = (colors: ColorTheme) =>
   },
   dishesScroll: {
     gap: spacing.md,
+    paddingRight: spacing.md,
     paddingBottom: spacing.xl,
+  },
+  emptyRecommendations: {
+    minHeight: 64,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
+    borderRadius: borderRadius.lg,
+  },
+  emptyRecommendationsText: {
+    flexShrink: 1,
+    fontSize: 12,
+    color: colors.textMuted,
   },
   dishCard: {
     width: 175,
@@ -1232,7 +1301,7 @@ const createStyles = (colors: ColorTheme) =>
   },
   dishImageWrap: {
     width: '100%',
-    height: 120,
+    height: 145,
     position: 'relative',
     backgroundColor: colors.surfaceElevated,
   },
@@ -1261,8 +1330,11 @@ const createStyles = (colors: ColorTheme) =>
     top: 6,
     right: 6,
     backgroundColor: 'rgba(0,0,0,0.5)',
-    borderRadius: 12,
-    padding: 4,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   dishInfo: {
     padding: spacing.sm,
@@ -1278,9 +1350,9 @@ const createStyles = (colors: ColorTheme) =>
     letterSpacing: -0.1,
   },
   dishDesc: {
-    fontSize: 10,
+    fontSize: 11,
     color: colors.textSecondary,
-    lineHeight: 13,
+    lineHeight: 15,
     marginBottom: 8,
   },
   dishBottomRow: {
@@ -1296,12 +1368,16 @@ const createStyles = (colors: ColorTheme) =>
   },
   addDishBtn: {
     backgroundColor: colors.purple,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    minWidth: 82,
+    minHeight: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: borderRadius.md,
   },
   addDishBtnText: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '800',
     color: '#FFFFFF',
   },

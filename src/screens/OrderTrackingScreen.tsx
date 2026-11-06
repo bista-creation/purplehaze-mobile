@@ -16,6 +16,7 @@ import { mobileRealtime } from '../services/realtime';
 import { STATUS_META, type OrderStatus } from '../shared/constants';
 import type { OrderDto } from '../shared/types';
 import { useTheme } from '../stores/theme-store';
+import { useAuthStore } from '../stores/auth-store';
 import { ColorTheme, spacing, borderRadius } from '../theme';
 
 interface OrderTrackingScreenProps {
@@ -66,6 +67,7 @@ function hasValidCoordinates(loc?: { latitude: number; longitude: number } | nul
 
 export default function OrderTrackingScreen({ route, navigation }: OrderTrackingScreenProps) {
   const { orderId, orderNumber, phone, token } = route.params || {};
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { colors } = useTheme();
   const [order, setOrder] = useState<OrderDto | null>(null);
   const [loading, setLoading] = useState(true);
@@ -114,7 +116,10 @@ export default function OrderTrackingScreen({ route, navigation }: OrderTracking
   }, [orderId, orderNumber, phone, token]);
 
   const fetchRiderLocation = useCallback(async () => {
-    if (!orderId) return;
+    if (!orderId || (!token && !isAuthenticated)) {
+      setRiderLocation(null);
+      return;
+    }
     try {
       const endpoint = token
         ? `/orders/${orderId}/location?token=${encodeURIComponent(token)}`
@@ -138,7 +143,7 @@ export default function OrderTrackingScreen({ route, navigation }: OrderTracking
     } catch {
       // silent fallback
     }
-  }, [orderId, token]);
+  }, [orderId, token, isAuthenticated]);
 
   useEffect(() => {
     void (async () => {
@@ -149,7 +154,9 @@ export default function OrderTrackingScreen({ route, navigation }: OrderTracking
     let unsubscribe = () => {};
     const targetId = order?.id || orderId;
 
-    if (targetId) {
+    // Order-number + phone guest lookups deliberately omit internal IDs and public tokens.
+    // Keep those on the sanitized polling path; subscribe only with an authorized order ID.
+    if (targetId && (token || isAuthenticated)) {
       mobileRealtime
         .subscribeToOrder(
           targetId,
@@ -195,7 +202,7 @@ export default function OrderTrackingScreen({ route, navigation }: OrderTracking
         clearInterval(pollTimerRef.current);
       }
     };
-  }, [fetchOrder, fetchRiderLocation, orderId, order?.id]);
+  }, [fetchOrder, fetchRiderLocation, orderId, order?.id, token, isAuthenticated]);
 
   const gpsStatus = useMemo(() => {
     const valid = hasValidCoordinates(riderLocation);
@@ -339,7 +346,7 @@ export default function OrderTrackingScreen({ route, navigation }: OrderTracking
           ]}
           onPress={() => navigation?.navigate?.('MainTabs', { screen: 'Orders' })}
         >
-          <Text style={{ color: colors.gold, fontWeight: '700' }}>View All Orders</Text>
+          <Text style={{ color: colors.goldText, fontWeight: '700' }}>View All Orders</Text>
         </TouchableOpacity>
       </View>
     );
@@ -831,7 +838,7 @@ function createStyles(colors: ColorTheme) {
       color: colors.text,
     },
     stepLabelCurrent: {
-      color: colors.gold,
+      color: colors.goldText,
       fontWeight: '700',
     },
     stepLabelUpcoming: {
@@ -907,7 +914,7 @@ function createStyles(colors: ColorTheme) {
     otpValue: {
       fontSize: 26,
       fontWeight: '900',
-      color: colors.gold,
+      color: colors.goldText,
       letterSpacing: 4,
     },
     otpHint: {
@@ -954,13 +961,13 @@ function createStyles(colors: ColorTheme) {
     detailValue: { color: colors.text, fontSize: 13, fontWeight: '600' },
     orderItemRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
     itemName: { color: colors.text, fontSize: 14, fontWeight: '600' },
-    itemVariant: { color: colors.gold, fontSize: 12, marginTop: 2 },
+    itemVariant: { color: colors.goldText, fontSize: 12, marginTop: 2 },
     itemNotes: { color: colors.textMuted, fontSize: 11, fontStyle: 'italic', marginTop: 2 },
     itemPrice: { color: colors.text, fontSize: 14, fontWeight: '700' },
     divider: { height: 1, backgroundColor: colors.surfaceBorder, marginVertical: 12 },
     totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     totalLabel: { fontSize: 15, fontWeight: '700', color: colors.text },
-    totalValue: { fontSize: 18, fontWeight: 'bold', color: colors.gold },
+    totalValue: { fontSize: 18, fontWeight: 'bold', color: colors.goldText },
     actionRow: { flexDirection: 'row', gap: 12, marginTop: 8 },
     callBtn: {
       flex: 1,

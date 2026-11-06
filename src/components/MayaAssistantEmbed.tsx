@@ -3,6 +3,46 @@ import { View, StyleSheet, Platform, ActivityIndicator, Text } from 'react-nativ
 import { useThemeStore } from '../stores/theme-store';
 
 const ASSISTANT_URL = 'https://mani-ai-psi.vercel.app/embed/purple-haze';
+const NATIVE_CLOSE_BRIDGE = `(function() {
+  if (window.__purpleHazeMayaCloseBridge) return true;
+  window.__purpleHazeMayaCloseBridge = true;
+  var sendClose = function() {
+    if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+      window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'mani-ai:close' }));
+    }
+  };
+  window.addEventListener('message', function(event) {
+    var data = event.data;
+    if (typeof data === 'string') {
+      try { data = JSON.parse(data); } catch (_) {}
+    }
+    if (data === 'mani-ai:close' || (data && (data.type === 'mani-ai:close' || data.action === 'close'))) {
+      sendClose();
+    }
+  });
+  document.addEventListener('click', function(event) {
+    var target = event.target;
+    var closeButton = target && target.closest && target.closest('button[aria-label="Close Assistant"], button[title="Close Assistant"]');
+    if (closeButton) {
+      event.preventDefault();
+      event.stopPropagation();
+      if (event.stopImmediatePropagation) event.stopImmediatePropagation();
+      sendClose();
+    }
+  }, true);
+  return true;
+})();`;
+
+function isMayaCloseMessage(value: unknown): boolean {
+  let data = value;
+  if (typeof data === 'string') {
+    try { data = JSON.parse(data); } catch {
+      return data === 'mani-ai:close';
+    }
+  }
+  return !!data && typeof data === 'object' &&
+    ('type' in data && data.type === 'mani-ai:close' || 'action' in data && data.action === 'close');
+}
 
 interface MayaAssistantEmbedProps {
   onClose?: () => void;
@@ -21,16 +61,7 @@ export const MayaAssistantEmbed: React.FC<MayaAssistantEmbedProps> = ({ onClose,
   useEffect(() => {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
       const handleMessage = (event: MessageEvent) => {
-        try {
-          const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
-          if (data && (data.type === 'mani-ai:close' || data.action === 'close')) {
-            onClose?.();
-          }
-        } catch {
-          if (event.data && (event.data.type === 'mani-ai:close' || event.data.action === 'close')) {
-            onClose?.();
-          }
-        }
+        if (isMayaCloseMessage(event.data)) onClose?.();
       };
 
       window.addEventListener('message', handleMessage);
@@ -110,21 +141,14 @@ export const MayaAssistantEmbed: React.FC<MayaAssistantEmbedProps> = ({ onClose,
       <WebViewComponent
         source={{ uri: assistantSrc }}
         style={{ flex: 1, backgroundColor: 'transparent' }}
+        injectedJavaScript={NATIVE_CLOSE_BRIDGE}
         onLoad={() => setLoading(false)}
         allowsInlineMediaPlayback
         mediaPlaybackRequiresUserAction={false}
         javaScriptEnabled
         domStorageEnabled
         onMessage={(event: any) => {
-          try {
-            const raw = event.nativeEvent.data;
-            const data = typeof raw === 'string' ? JSON.parse(raw) : raw;
-            if (data && (data.type === 'mani-ai:close' || data.action === 'close')) {
-              onClose?.();
-            }
-          } catch {
-            // ignore
-          }
+          if (isMayaCloseMessage(event.nativeEvent.data)) onClose?.();
         }}
       />
     </View>

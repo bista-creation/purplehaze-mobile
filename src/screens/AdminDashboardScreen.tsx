@@ -1738,7 +1738,7 @@ export default function AdminDashboardScreen({ navigation }: AdminDashboardScree
                           <Text
                             style={[
                               styles.riderNameText,
-                              isSelected && { color: colors.gold, fontWeight: 'bold' },
+                              isSelected && { color: colors.goldText, fontWeight: 'bold' },
                             ]}
                           >
                             {r.name || 'Fleet Rider'}
@@ -1940,7 +1940,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
-    paddingTop: spacing.md,
+    paddingTop: spacing.screenTop,
     paddingBottom: spacing.sm,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
@@ -2001,7 +2001,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(217, 119, 6, 0.4)',
   },
   webConsoleText: {
-    color: colors.gold,
+    color: colors.goldText,
     fontSize: 12,
     fontWeight: 'bold',
     marginLeft: 4,
@@ -2050,7 +2050,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   tabTextActive: {
-    color: colors.gold,
+    color: colors.goldText,
   },
   scrollContent: {
     padding: spacing.md,
@@ -2294,7 +2294,7 @@ const styles = StyleSheet.create({
   orderTotal: {
     fontSize: 13,
     fontWeight: 'bold',
-    color: colors.gold,
+    color: colors.goldText,
   },
   actionButtonsRow: {
     flexDirection: 'row',
@@ -2514,7 +2514,7 @@ const styles = StyleSheet.create({
   },
   overrideBtnText: {
     fontSize: 11,
-    color: colors.gold,
+    color: colors.goldText,
     fontWeight: '600',
   },
   exceptionAlertBanner: {
@@ -2651,7 +2651,7 @@ const styles = StyleSheet.create({
   modalSectionTitle: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: colors.gold,
+    color: colors.goldText,
     marginBottom: 4,
     textTransform: 'uppercase',
   },
@@ -2692,7 +2692,7 @@ const styles = StyleSheet.create({
   itemDetailQty: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: colors.gold,
+    color: colors.goldText,
     width: 24,
   },
   itemDetailName: {
@@ -2776,7 +2776,7 @@ const styles = StyleSheet.create({
   dispatchNoticeText: {
     flex: 1,
     fontSize: 11,
-    color: colors.gold,
+    color: colors.goldText,
   },
   overrideOptionsRow: {
     flexDirection: 'row',

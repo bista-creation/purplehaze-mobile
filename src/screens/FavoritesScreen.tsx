@@ -67,9 +67,9 @@ export function FavoritesScreen({ navigation }: any) {
 
       <View style={styles.headerTitleRow}>
         <View>
-          <Text style={styles.pageTitle}>My Favorites ❤️</Text>
+          <Text style={styles.pageTitle}>{t.favorites.title}</Text>
           <Text style={styles.pageSubtitle}>
-            {favoriteDishes.length} {favoriteDishes.length === 1 ? 'dish' : 'dishes'} saved for quick ordering
+            {favoriteDishes.length} {favoriteDishes.length === 1 ? t.favorites.dishSingular : t.favorites.dishPlural} {t.favorites.savedCount}
           </Text>
         </View>
       </View>
@@ -83,16 +83,16 @@ export function FavoritesScreen({ navigation }: any) {
           <View style={styles.emptyHeartCircle}>
             <Ionicons name="heart-dislike-outline" size={48} color={colors.purple} />
           </View>
-          <Text style={styles.emptyTitle}>No Favorite Dishes Yet</Text>
+          <Text style={styles.emptyTitle}>{t.favorites.emptyTitle}</Text>
           <Text style={styles.emptySubtitle}>
-            Tap the heart icon on any dish in the menu to add it to your personal favorites collection.
+            {t.favorites.emptySubtitle}
           </Text>
           <TouchableOpacity
             style={styles.exploreMenuBtn}
             onPress={() => navigation.navigate('Menu')}
             activeOpacity={0.85}
           >
-            <Text style={styles.exploreMenuBtnText}>Explore Menu 🍲</Text>
+            <Text style={styles.exploreMenuBtnText}>{t.favorites.exploreMenu}</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -125,7 +125,7 @@ export function FavoritesScreen({ navigation }: any) {
                       { backgroundColor: item.isVeg ? colors.veg : colors.nonVeg },
                     ]}
                   />
-                  <Text style={styles.vegText}>{item.isVeg ? 'VEG' : 'NON-VEG'}</Text>
+                  <Text style={styles.vegText}>{item.isVeg ? t.favorites.veg : t.favorites.nonVeg}</Text>
                 </View>
 
                 <Text style={styles.dishName}>{item.name}</Text>
@@ -171,7 +171,7 @@ export function FavoritesScreen({ navigation }: any) {
                   }}
                   activeOpacity={0.85}
                 >
-                  <Text style={styles.addButtonText}>ADD +</Text>
+                  <Text style={styles.addButtonText}>{t.favorites.add}</Text>
                 </TouchableOpacity>
               </View>
             </TouchableOpacity>
@@ -190,7 +190,7 @@ const createStyles = (colors: ColorTheme) =>
   },
   headerTitleRow: {
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
+    paddingTop: spacing.screenTop,
     paddingBottom: spacing.sm,
   },
   pageTitle: {

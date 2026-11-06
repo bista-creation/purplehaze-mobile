@@ -370,7 +370,7 @@ const createStyles = (colors: ColorTheme) =>
   counterValue: {
     fontSize: 15,
     fontWeight: '700',
-    color: colors.gold,
+    color: colors.goldText,
   },
   row: {
     flexDirection: 'row',
@@ -391,7 +391,7 @@ const createStyles = (colors: ColorTheme) =>
     marginBottom: spacing.md,
   },
   successTitle: {
-    color: colors.gold,
+    color: colors.goldText,
     marginBottom: spacing.sm,
   },
   successMessage: {

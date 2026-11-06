@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../stores/theme-store';
+import { useI18n } from '../../i18n';
 import { colors, borderRadius, spacing } from '../../theme';
 
 export interface InputProps extends TextInputProps {
@@ -30,7 +31,8 @@ export const Input: React.FC<InputProps> = ({
   style,
   ...rest
 }) => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
+  const { t } = useI18n();
   const [isFocused, setIsFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -44,8 +46,8 @@ export const Input: React.FC<InputProps> = ({
             backgroundColor: colors.surface,
             borderColor: colors.surfaceBorder,
           },
-          isFocused ? { borderColor: colors.gold } : null,
-          error ? { borderColor: colors.error } : null,
+          isFocused && !error ? { borderColor: isDark ? colors.gold : colors.goldDark, borderWidth: 2 } : null,
+          error ? { borderColor: colors.error, borderWidth: 2 } : null,
         ]}
       >
         {leftIcon ? (
@@ -60,6 +62,8 @@ export const Input: React.FC<InputProps> = ({
         <TextInput
           style={[styles.input, { color: colors.text }, style]}
           placeholderTextColor={colors.textDisabled}
+          accessibilityLabel={rest.accessibilityLabel ?? label}
+          accessibilityHint={rest.accessibilityHint ?? error}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           secureTextEntry={isPassword ? !showPassword : secureTextEntry}
@@ -71,6 +75,8 @@ export const Input: React.FC<InputProps> = ({
             onPress={() => setShowPassword(!showPassword)}
             style={styles.eyeIcon}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityRole="button"
+            accessibilityLabel={showPassword ? t.auth.hidePassword : t.auth.showPassword}
           >
             <Ionicons
               name={showPassword ? 'eye-off-outline' : 'eye-outline'}
@@ -80,7 +86,7 @@ export const Input: React.FC<InputProps> = ({
           </TouchableOpacity>
         ) : null}
       </View>
-      {error ? <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text> : null}
+      {error ? <Text style={[styles.errorText, { color: colors.error }]} accessibilityRole="alert">{error}</Text> : null}
     </View>
   );
 };

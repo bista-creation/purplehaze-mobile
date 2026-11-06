@@ -1,36 +1,87 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
+  Image,
   Alert,
   Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
-import { Image } from 'react-native';
-import { Header, Card, Typography, Button, Badge, GoogleSignInButton } from '../components/ui';
+import { Header, Card, Typography, Button, GoogleSignInButton } from '../components/ui';
 import { useAuthStore } from '../stores/auth-store';
 import { useTheme } from '../stores/theme-store';
 import { useI18n } from '../i18n';
-import { colors as defaultColors, ColorTheme, spacing, borderRadius } from '../theme';
+import { ColorTheme, spacing, borderRadius } from '../theme';
 import { api, WEBSITE_BASE_URL } from '../services/api-client';
+import type { SavedAddressDto } from '../services/api-client';
 
 interface ProfileScreenProps {
   navigation: any;
 }
 
 export default function ProfileScreen({ navigation }: ProfileScreenProps) {
-  const { user, isAuthenticated, logout } = useAuthStore();
-  const { mode, setMode, colors } = useTheme();
-  const { t, language, setLanguage } = useI18n();
+  const { user, isAuthenticated, isLoading, logout } = useAuthStore();
+  const { mode, preference, setMode, colors } = useTheme();
+  const { t, language, setLanguage, isNepali } = useI18n();
+  const [failedAvatarUri, setFailedAvatarUri] = useState<string | null>(null);
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddressDto[]>([]);
+  const [addressesLoading, setAddressesLoading] = useState(false);
+  const [addressesError, setAddressesError] = useState(false);
+  const [addressReload, setAddressReload] = useState(0);
 
   const styles = useMemo(() => createStyles(colors), [colors]);
 
+  useEffect(() => {
+    const redirectToSignIn = () => {
+      const auth = useAuthStore.getState();
+      if (navigation.isFocused() && !auth.isLoading && !auth.isAuthenticated) {
+        navigation.navigate('LoginModal', { returnTo: 'Profile' });
+      }
+    };
+
+    const unsubscribe = navigation.addListener('focus', redirectToSignIn);
+    redirectToSignIn();
+    return unsubscribe;
+  }, [navigation, isAuthenticated, isLoading]);
+
+  useEffect(() => {
+    let active = true;
+    const loadAddresses = async () => {
+      if (!isAuthenticated) return;
+      setAddressesLoading(true);
+      setAddressesError(false);
+      try {
+        const addresses = await api.profile.addresses();
+        if (active) setSavedAddresses(addresses);
+      } catch {
+        if (active) setAddressesError(true);
+      } finally {
+        if (active) setAddressesLoading(false);
+      }
+    };
+    void loadAddresses();
+    const unsubscribe = navigation.addListener('focus', loadAddresses);
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, [navigation, isAuthenticated, user?.id, addressReload]);
+
+  if (isLoading || !isAuthenticated) {
+    return (
+      <View style={[styles.container, styles.redirecting]}>
+        <ActivityIndicator color={colors.purple} />
+      </View>
+    );
+  }
+
   const handleLogout = () => {
-    Alert.alert(t.profile.signOut, 'Are you sure you want to sign out?', [
+    Alert.alert(t.profile.signOut, t.profile.signOutConfirm, [
       { text: t.common.cancel, style: 'cancel' },
       {
         text: t.profile.signOut,
@@ -52,9 +103,9 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
           try {
             await api.profile.deleteAccount();
             await logout();
-            Alert.alert('Account Deleted', 'Your account and personal data have been completely removed.');
+            Alert.alert(t.profile.accountDeleted, t.profile.accountDeletedMessage);
           } catch (e: any) {
-            Alert.alert(t.common.error, e.message || 'Could not delete account.');
+            Alert.alert(t.common.error, e.message || t.profile.deleteFailed);
           }
         },
       },
@@ -88,11 +139,21 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
         <Card variant="elevated" style={styles.userCard}>
           <View style={styles.userRow}>
             <View style={styles.avatar}>
-              <Ionicons
-                name={isAuthenticated ? 'person' : 'person-outline'}
-                size={28}
-                color={colors.gold}
-              />
+              {user?.image && failedAvatarUri !== user.image ? (
+                <Image
+                  source={{ uri: user.image }}
+                  style={styles.avatarImage}
+                  resizeMode="cover"
+                  onError={() => setFailedAvatarUri(user.image ?? null)}
+                  accessibilityLabel={t.profile.profilePhoto}
+                />
+              ) : (
+                <Ionicons
+                  name={isAuthenticated ? 'person' : 'person-outline'}
+                  size={28}
+                  color={colors.gold}
+                />
+              )}
             </View>
             <View style={styles.userInfo}>
               <Typography variant="h2" style={{ color: colors.text }}>
@@ -111,20 +172,66 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
                   title={t.profile.signIn}
                   variant="gold"
                   size="md"
-                  onPress={() => navigation.navigate('LoginModal')}
+                  onPress={() => navigation.navigate('LoginModal', { returnTo: 'Profile' })}
                   style={{ flex: 1, marginRight: spacing.sm }}
                 />
                 <Button
                   title={t.profile.register}
                   variant="outline"
                   size="md"
-                  onPress={() => navigation.navigate('RegisterModal')}
+                  onPress={() => navigation.navigate('RegisterModal', { returnTo: 'Profile' })}
                   style={{ flex: 1 }}
                 />
               </View>
               <GoogleSignInButton style={{ marginTop: spacing.sm }} />
             </View>
           ) : null}
+        </Card>
+
+        <Typography variant="title" style={styles.sectionHeader}>
+          {t.profile.savedAddresses}
+        </Typography>
+        <Card variant="surface" style={styles.addressGroup}>
+          {addressesLoading ? (
+            <View style={styles.addressMessage}>
+              <ActivityIndicator color={colors.purple} />
+            </View>
+          ) : addressesError ? (
+            <TouchableOpacity style={styles.addressMessage} onPress={() => setAddressReload((value) => value + 1)}>
+              <Ionicons name="refresh-outline" size={18} color={colors.gold} />
+              <Typography variant="bodySmall" color={colors.textMuted} style={styles.addressMessageText}>
+                {t.profile.addressLoadFailed}
+              </Typography>
+            </TouchableOpacity>
+          ) : savedAddresses.length === 0 ? (
+            <View style={styles.addressMessage}>
+              <Ionicons name="location-outline" size={18} color={colors.textMuted} />
+              <Typography variant="bodySmall" color={colors.textMuted} style={styles.addressMessageText}>
+                {t.profile.noSavedAddresses}
+              </Typography>
+            </View>
+          ) : savedAddresses.map((address, index) => (
+            <View key={address.id} style={[styles.savedAddressRow, index > 0 ? styles.savedAddressBorder : null]}>
+              <View style={styles.savedAddressIcon}>
+                <Ionicons name="location" size={17} color={colors.gold} />
+              </View>
+              <View style={styles.savedAddressInfo}>
+                <View style={styles.savedAddressTitleRow}>
+                  <Typography variant="body" bold>{address.label}</Typography>
+                  {address.isDefault ? (
+                    <Text style={styles.defaultAddressBadge}>{t.profile.defaultAddress}</Text>
+                  ) : null}
+                </View>
+                <Typography variant="bodySmall" color={colors.textMuted}>
+                  {[address.line1, address.line2, address.city, address.state, address.postalCode, address.country]
+                    .filter(Boolean).join(', ')}
+                </Typography>
+                <Typography variant="caption" color={colors.textMuted}>
+                  {address.fullName} · {address.phone}
+                </Typography>
+              </View>
+            </View>
+          ))}
         </Card>
 
         {/* Admin Management Hub Card for Staff / Admins */}
@@ -139,15 +246,15 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
               </View>
               <View style={styles.livePulseContainer}>
                 <View style={styles.liveDot} />
-                <Text style={styles.livePulseText}>Kitchen Live</Text>
+                <Text style={styles.livePulseText}>{isNepali ? 'भान्सा लाइभ' : 'Kitchen Live'}</Text>
               </View>
             </View>
 
             <Typography variant="h2" style={{ color: colors.text, marginTop: spacing.xs }}>
-              Restaurant Operations Hub
+              {t.profile.adminSection}
             </Typography>
             <Typography variant="bodySmall" color={colors.textMuted} style={{ marginTop: 2 }}>
-              Live orders, kitchen management, table bookings, and dish 86/stock.
+              {t.profile.adminHubDescription}
             </Typography>
 
             <View style={styles.adminActionRow}>
@@ -157,7 +264,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
                 activeOpacity={0.8}
               >
                 <Ionicons name="speedometer-outline" size={18} color="#000" />
-                <Text style={styles.openAdminBtnText}>Open Mobile Admin Hub</Text>
+                <Text style={styles.openAdminBtnText}>{t.profile.adminHub}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -173,7 +280,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
 
         {/* Quick Actions */}
         <Typography variant="title" style={styles.sectionHeader}>
-          Dining & Orders
+          {t.profile.diningOrders}
         </Typography>
 
         <Card variant="surface" style={styles.menuGroup}>
@@ -224,36 +331,40 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
 
         {/* App Appearance & Theme */}
         <Typography variant="title" style={styles.sectionHeader}>
-          Appearance & Theme
+          {t.profile.appearanceTheme}
         </Typography>
         <Card variant="surface" style={styles.menuGroup}>
-          <View style={styles.languageRow}>
+          <View style={[styles.languageRow, styles.themePreferenceRow]}>
             <View style={styles.menuLeft}>
               <Ionicons
-                name={mode === 'dark' ? 'moon' : 'sunny'}
+                name={preference === 'system' ? 'phone-portrait-outline' : mode === 'dark' ? 'moon' : 'sunny'}
                 size={20}
                 color={colors.gold}
                 style={styles.menuIcon}
               />
-              <Typography variant="body" bold>Display Mode</Typography>
+              <Typography variant="body" bold>{t.profile.displayMode}</Typography>
             </View>
-            <View style={styles.langPills}>
-              <TouchableOpacity
-                style={[styles.langPill, mode === 'light' ? styles.langPillActive : null]}
-                onPress={() => setMode('light')}
-              >
-                <Text style={[styles.langPillText, mode === 'light' ? styles.langPillTextActive : null]}>
-                  Light
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.langPill, mode === 'dark' ? styles.langPillActive : null]}
-                onPress={() => setMode('dark')}
-              >
-                <Text style={[styles.langPillText, mode === 'dark' ? styles.langPillTextActive : null]}>
-                  Dark
-                </Text>
-              </TouchableOpacity>
+            <View style={styles.langPills} accessibilityLabel={t.profile.displayMode}>
+              {([
+                ['system', t.profile.system],
+                ['light', t.profile.light],
+                ['dark', t.profile.dark],
+              ] as const).map(([value, label]) => {
+                const selected = preference === value;
+                return (
+                  <TouchableOpacity
+                    key={value}
+                    style={[styles.langPill, styles.themePill, selected ? styles.langPillActive : null]}
+                    onPress={() => { void setMode(value); }}
+                    accessibilityRole="radio"
+                    accessibilityLabel={label}
+                    accessibilityState={{ selected }}
+                    hitSlop={4}
+                  >
+                    <Text style={[styles.langPillText, selected ? styles.langPillTextActive : null]}>{label}</Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           </View>
         </Card>
@@ -297,7 +408,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
           <TouchableOpacity style={styles.menuItem} onPress={callRestaurant}>
             <View style={styles.menuLeft}>
               <Ionicons name="call-outline" size={20} color={colors.gold} style={styles.menuIcon} />
-              <Typography variant="body">Call Front Desk (+977 9852022202)</Typography>
+              <Typography variant="body">{isNepali ? 'रिसेप्सनमा फोन गर्नुहोस्' : 'Call Front Desk'} (+977 9852022202)</Typography>
             </View>
             <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
           </TouchableOpacity>
@@ -308,7 +419,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
           >
             <View style={styles.menuLeft}>
               <Ionicons name="logo-whatsapp" size={20} color="#25D366" style={styles.menuIcon} />
-              <Typography variant="body">WhatsApp Inquiries</Typography>
+              <Typography variant="body">{t.profile.whatsappInquiries}</Typography>
             </View>
             <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
           </TouchableOpacity>
@@ -316,7 +427,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
 
         {/* Policies (Loaded from live site) */}
         <Typography variant="title" style={styles.sectionHeader}>
-          Legal & Policies
+          {t.profile.legalPolicies}
         </Typography>
         <Card variant="surface" style={styles.menuGroup}>
           <TouchableOpacity style={styles.menuItem} onPress={() => openPolicyPage('/privacy')}>
@@ -386,6 +497,10 @@ const createStyles = (colors: ColorTheme) =>
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  redirecting: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   scrollContent: {
     padding: spacing.md,
@@ -484,6 +599,60 @@ const createStyles = (colors: ColorTheme) =>
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.md,
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+  },
+  addressGroup: {
+    padding: 0,
+    marginBottom: spacing.lg,
+    overflow: 'hidden',
+  },
+  addressMessage: {
+    minHeight: 64,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  addressMessageText: {
+    flex: 1,
+    marginLeft: spacing.sm,
+  },
+  savedAddressRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    padding: spacing.md,
+  },
+  savedAddressBorder: {
+    borderTopWidth: 1,
+    borderTopColor: colors.surfaceBorder,
+  },
+  savedAddressIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.surfaceElevated,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.sm,
+  },
+  savedAddressInfo: {
+    flex: 1,
+    gap: 3,
+  },
+  savedAddressTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  defaultAddressBadge: {
+    color: colors.goldText,
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
   },
   userInfo: {
     flex: 1,
@@ -530,9 +699,19 @@ const createStyles = (colors: ColorTheme) =>
     paddingVertical: 12,
     paddingHorizontal: spacing.md,
   },
+  themePreferenceRow: {
+    flexWrap: 'wrap',
+    rowGap: spacing.sm,
+  },
   langPills: {
     flexDirection: 'row',
     gap: spacing.xs,
+    flexWrap: 'wrap',
+    justifyContent: 'flex-end',
+  },
+  themePill: {
+    minHeight: 44,
+    justifyContent: 'center',
   },
   langPill: {
     paddingVertical: 6,
@@ -574,7 +753,7 @@ const createStyles = (colors: ColorTheme) =>
   brandFooterTitle: {
     fontSize: 13,
     fontWeight: '700',
-    color: colors.gold,
+    color: colors.goldText,
     letterSpacing: 0.5,
   },
   brandFooterSub: {

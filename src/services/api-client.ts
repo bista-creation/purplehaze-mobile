@@ -1,5 +1,5 @@
-import { supabase } from './supabase';
 import type { ApiResponse } from '../shared/types';
+import { tokenStorage } from './token-storage';
 
 function cleanUrl(url?: string): string {
   if (!url) return '';
@@ -72,6 +72,20 @@ export interface UserSessionDto {
   phone?: string | null;
   role: 'CUSTOMER' | 'STAFF' | 'ADMIN';
   image?: string | null;
+}
+
+export interface SavedAddressDto {
+  id: string;
+  label: string;
+  fullName: string;
+  phone: string;
+  line1: string;
+  line2: string | null;
+  city: string;
+  state: string;
+  postalCode: string | null;
+  country: string;
+  isDefault: boolean;
 }
 
 export interface AuthTokensDto {
@@ -171,15 +185,35 @@ export interface OrderItemDto {
 }
 
 export interface CreateOrderDto {
-  customerName: string;
-  customerEmail: string;
-  customerPhone: string;
-  deliveryAddress?: string;
-  type?: 'DELIVERY' | 'PICKUP' | 'DINE_IN';
-  paymentMethod?: 'COD' | 'ESEWA' | 'KHALTI';
+  details: {
+    customerName: string;
+    customerEmail: string;
+    customerPhone: string;
+    type: 'DELIVERY' | 'PICKUP' | 'DINE_IN';
+    line1?: string;
+    line2?: string;
+    city?: string;
+    state?: string;
+    zoneId?: string;
+    tableNumber?: string;
+    notes?: string;
+    paymentMethod: 'COD' | 'ESEWA' | 'KHALTI';
+    couponCode?: string;
+    scheduledFor?: string;
+    saveAddress?: boolean;
+  };
   items: OrderItemDto[];
-  notes?: string;
   idempotencyKey?: string;
+}
+
+export interface CreatedOrderDto {
+  orderId: string;
+  orderNumber: string;
+  publicToken: string;
+  confirmationUrl?: string;
+  paymentMethod: string;
+  digitalPayment: boolean;
+  total: number;
 }
 
 export interface TrackOrderResultDto {
@@ -424,12 +458,29 @@ function onTokenRefreshed(newToken: string | null) {
 
 async function executeTokenRefresh(): Promise<string | null> {
   try {
-    const { data, error } = await supabase.auth.refreshSession();
-    if (error || !data.session?.access_token) {
+    const refreshToken = await tokenStorage.getRefreshToken();
+    if (!refreshToken) {
       notifyAuthExpired();
       return null;
     }
-    return data.session.access_token;
+    const response = await fetch(`${cleanUrl(getApiBaseUrl())}/auth/refresh`, {
+      method: 'POST',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken }),
+    });
+    const json = await response.json().catch(() => ({})) as ApiResponse<{ tokens: AuthTokensDto; user: UserSessionDto }>;
+    const data = json.data;
+    if (!response.ok || !data?.tokens?.accessToken || !data.tokens.refreshToken) {
+      await tokenStorage.clearTokens();
+      notifyAuthExpired();
+      return null;
+    }
+    await Promise.all([
+      tokenStorage.setAccessToken(data.tokens.accessToken),
+      tokenStorage.setRefreshToken(data.tokens.refreshToken),
+      tokenStorage.setUserSession(JSON.stringify(data.user)),
+    ]);
+    return data.tokens.accessToken;
   } catch (error) {
     console.warn('[API Client] Token refresh network error:', error);
   }
@@ -442,7 +493,7 @@ async function executeTokenRefresh(): Promise<string | null> {
 // Base Request Handler with Auto-Retry
 // ----------------------------------------------------
 
-async function request<T>(
+export async function request<T>(
   endpoint: string,
   options: RequestInit = {},
   isRetry = false
@@ -453,8 +504,7 @@ async function request<T>(
     ? cleanEndpoint
     : `${baseUrl}${cleanEndpoint.startsWith('/') ? '' : '/'}${cleanEndpoint}`;
 
-  const { data: sessionData } = await supabase.auth.getSession();
-  const token = sessionData.session?.access_token;
+  const token = await tokenStorage.getAccessToken();
 
   const headers: Record<string, string> = {
     Accept: 'application/json',
@@ -535,10 +585,10 @@ export const api = {
         body: JSON.stringify(userData),
       }),
 
-    logout: (pushToken?: string, allDevices = false) =>
+    logout: (pushToken?: string, allDevices = false, refreshToken?: string) =>
       request<{ message: string }>('/auth/logout', {
         method: 'POST',
-        body: JSON.stringify({ pushToken, allDevices }),
+        body: JSON.stringify({ pushToken, allDevices, refreshToken }),
       }),
 
     getMe: () => request<UserSessionDto>('/auth/me'),
@@ -554,7 +604,7 @@ export const api = {
     getCategories: async (): Promise<CategoryDto[]> => {
       try {
         const res = await request<CategoryDto[]>('/menu/categories');
-        if (Array.isArray(res) && res.length > 0) {
+        if (Array.isArray(res)) {
           return res;
         }
       } catch (e) {
@@ -563,19 +613,22 @@ export const api = {
       return offlineCategories;
     },
 
-    getDishes: async (params?: { categoryId?: string; isVeg?: boolean }): Promise<DishDto[]> => {
+    getDishes: async (params?: { categorySlug?: string; isVeg?: boolean }): Promise<DishDto[]> => {
       try {
         const query = new URLSearchParams();
-        if (params?.categoryId) query.set('categoryId', params.categoryId);
+        if (params?.categorySlug) query.set('category', params.categorySlug);
         if (params?.isVeg !== undefined) query.set('isVeg', String(params.isVeg));
         const res = await request<DishDto[]>(`/menu/dishes?${query.toString()}`);
-        if (Array.isArray(res) && res.length > 0) {
+        if (Array.isArray(res)) {
           return res;
         }
       } catch (e) {
         console.warn('[API Client] Failed to fetch live dishes, using offline fallbacks:', e);
       }
-      return offlineDishes;
+      return offlineDishes.filter((dish) =>
+        (!params?.categorySlug || dish.categorySlug === params.categorySlug) &&
+        (params?.isVeg === undefined || dish.isVeg === params.isVeg)
+      );
     },
 
     getDishBySlug: (slug: string) => request<DishDto>(`/menu/dishes/${slug}`),
@@ -587,7 +640,7 @@ export const api = {
     getVenues: async (): Promise<VenueDto[]> => {
       try {
         const res = await request<VenueDto[]>('/venues');
-        if (Array.isArray(res) && res.length > 0) return res;
+        if (Array.isArray(res)) return res;
       } catch (e) {
         console.warn('[API Client] Failed to fetch venues, using offline fallbacks:', e);
       }
@@ -611,16 +664,15 @@ export const api = {
 
   orders: {
     create: (data: CreateOrderDto) =>
-      request<{ orderId: string; orderNumber: string; total: number }>('/orders', {
+      request<CreatedOrderDto>('/orders', {
         method: 'POST',
         body: JSON.stringify(data),
       }),
 
     track: (orderNumber: string, phone: string) =>
-      request<TrackOrderResultDto>('/orders/track', {
-        method: 'POST',
-        body: JSON.stringify({ orderNumber, phone }),
-      }),
+      request<TrackOrderResultDto>(
+        `/orders/track?orderNumber=${encodeURIComponent(orderNumber)}&phone=${encodeURIComponent(phone)}`
+      ),
 
     get: (id: string) => request<TrackOrderResultDto>(`/orders/${id}`),
 
@@ -651,6 +703,8 @@ export const api = {
 
   profile: {
     get: () => request<UserSessionDto>('/profile'),
+
+    addresses: () => request<SavedAddressDto[]>('/profile/addresses'),
 
     update: (data: { name: string; phone?: string }) =>
       request<UserSessionDto>('/profile', {

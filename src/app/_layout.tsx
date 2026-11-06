@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { Platform, StatusBar as NativeStatusBar, StyleSheet, View } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { Platform, StatusBar as NativeStatusBar, StyleSheet, View, useColorScheme } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,8 +18,8 @@ function AppRouter() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const user = useAuthStore((state) => state.user);
   const canAccessAdmin = user?.role === 'ADMIN' || user?.role === 'STAFF';
-  const topPadding = Math.max(insets.top, Platform.OS === 'android' ? NativeStatusBar.currentHeight || 0 : 0) + 5;
-  const bottomPadding = Math.max(insets.bottom, 0) + 3;
+  const topPadding = Math.max(insets.top, Platform.OS === 'android' ? NativeStatusBar.currentHeight || 0 : 0);
+  const bottomPadding = Math.max(insets.bottom, 0);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.surface, paddingTop: topPadding, paddingBottom: bottomPadding }]}>
@@ -42,9 +42,10 @@ function AppRouter() {
 
 export default function RootLayout() {
   const checkAuth = useAuthStore((state) => state.checkAuth);
+  const systemColorScheme = useColorScheme();
+  const themeInitializationStarted = useRef(false);
 
   useEffect(() => {
-    useThemeStore.getState().initTheme();
     useLanguageStore.getState().initLanguage();
     useFavoritesStore.getState().initFavorites();
     void Font.loadAsync({ 'DancingScript-Bold': require('../../assets/fonts/DancingScript-Bold.ttf') });
@@ -55,6 +56,16 @@ export default function RootLayout() {
     });
     return () => notificationSubscription();
   }, [checkAuth]);
+
+  useEffect(() => {
+    const themeStore = useThemeStore.getState();
+    if (!themeInitializationStarted.current) {
+      themeInitializationStarted.current = true;
+      void themeStore.initTheme(systemColorScheme);
+    } else {
+      themeStore.setSystemScheme(systemColorScheme);
+    }
+  }, [systemColorScheme]);
 
   return <SafeAreaProvider><AppRouter /></SafeAreaProvider>;
 }

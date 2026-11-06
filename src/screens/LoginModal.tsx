@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
+  BackHandler,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -13,31 +14,57 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../stores/auth-store';
 import { useTheme } from '../stores/theme-store';
+import { useI18n } from '../i18n';
 import { GoogleSignInButton } from '../components/ui';
-import { colors as defaultColors, ColorTheme, spacing, borderRadius } from '../theme';
+import { AuthBrandHeader } from '../components/ui/AuthBrandHeader';
+import { ColorTheme, spacing, borderRadius } from '../theme';
 
 interface LoginModalProps {
   navigation: any;
+  route?: any;
 }
 
-export default function LoginModal({ navigation }: LoginModalProps) {
+export default function LoginModal({ navigation, route }: LoginModalProps) {
   const { login } = useAuthStore();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const returnToProfile = route?.params?.returnTo === 'Profile';
 
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   const handleClose = () => {
+    if (returnToProfile) {
+      navigation.navigate('MainTabs', { screen: 'Home' });
+      return;
+    }
     if (navigation?.canGoBack?.()) {
       navigation.goBack();
     } else {
       navigation?.navigate?.('MainTabs', { screen: 'Home' });
     }
   };
+
+  const handleAuthSuccess = () => {
+    if (returnToProfile && navigation?.canGoBack?.()) {
+      navigation.goBack();
+      return;
+    }
+    handleClose();
+  };
+
+  useEffect(() => {
+    if (Platform.OS !== 'android' || !returnToProfile) return;
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      navigation.navigate('MainTabs', { screen: 'Home' });
+      return true;
+    });
+    return () => subscription.remove();
+  }, [navigation, returnToProfile]);
 
   const handleLogin = async () => {
     if (!email.trim() || !password) {
@@ -49,7 +76,7 @@ export default function LoginModal({ navigation }: LoginModalProps) {
       setLoading(true);
       setError(null);
       await login(email.trim(), password);
-      handleClose();
+      handleAuthSuccess();
     } catch (err: any) {
       setError(err?.message || 'Login failed. Please check your credentials.');
     } finally {
@@ -63,27 +90,13 @@ export default function LoginModal({ navigation }: LoginModalProps) {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        {/* Close Button Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.closeBtn}
-            onPress={handleClose}
-            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-            accessibilityLabel="Close"
-            accessibilityRole="button"
-          >
-            <Ionicons name="close" size={24} color="#cbd5e1" />
-          </TouchableOpacity>
-        </View>
-
-        {/* Brand Header */}
-        <View style={styles.brandContainer}>
-          <View style={styles.logoBadge}>
-            <Ionicons name="restaurant" size={32} color="#a855f7" />
+        <AuthBrandHeader onClose={handleClose} message={t.common.tagline} />
+        <View style={styles.panel}>
+          <View style={styles.intro}>
+            <Text style={styles.eyebrow}>{t.auth.loginEyebrow}</Text>
+            <Text style={styles.title}>{t.auth.loginTitle}</Text>
+            <Text style={styles.subtitle}>{t.auth.loginHeroSubtitle}</Text>
           </View>
-          <Text style={styles.title}>Welcome Back</Text>
-          <Text style={styles.subtitle}>Sign in to your Purple Haze account</Text>
-        </View>
 
         {/* Error banner */}
         {error && (
@@ -95,10 +108,10 @@ export default function LoginModal({ navigation }: LoginModalProps) {
 
         {/* Form Inputs */}
         <View style={styles.form}>
-          <Text style={styles.label}>Email Address</Text>
+          <Text style={styles.label}>{t.auth.email}</Text>
           <TextInput
             style={styles.input}
-            placeholder="you@example.com"
+            placeholder={t.auth.emailPlaceholder}
             placeholderTextColor="#64748b"
             value={email}
             onChangeText={(txt) => {
@@ -110,7 +123,7 @@ export default function LoginModal({ navigation }: LoginModalProps) {
             autoCorrect={false}
           />
 
-          <Text style={styles.label}>Password</Text>
+          <Text style={styles.label}>{t.auth.password}</Text>
           <View style={styles.passwordContainer}>
             <TextInput
               style={styles.passwordInput}
@@ -129,7 +142,7 @@ export default function LoginModal({ navigation }: LoginModalProps) {
               style={styles.eyeBtn}
               onPress={() => setShowPassword((prev) => !prev)}
               hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-              accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+              accessibilityLabel={showPassword ? t.auth.hidePassword : t.auth.showPassword}
               accessibilityRole="button"
             >
               <Ionicons
@@ -148,30 +161,31 @@ export default function LoginModal({ navigation }: LoginModalProps) {
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.submitBtnText}>Sign In</Text>
+              <Text style={styles.submitBtnText}>{t.profile.signIn}</Text>
             )}
           </TouchableOpacity>
 
           {/* Social Divider */}
           <View style={styles.dividerRow}>
             <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>OR</Text>
+            <Text style={styles.dividerText}>{t.auth.continueWith}</Text>
             <View style={styles.dividerLine} />
           </View>
 
           {/* Sign In with Google */}
           <GoogleSignInButton
-            onSuccess={() => navigation.goBack()}
+            onSuccess={handleAuthSuccess}
             onError={(msg) => setError(msg)}
           />
         </View>
 
         {/* Switch to Register */}
         <View style={styles.footerRow}>
-          <Text style={styles.footerText}>Don&apos;t have an account?</Text>
-          <TouchableOpacity onPress={() => navigation.replace('RegisterModal')}>
-            <Text style={styles.footerLink}> Sign Up</Text>
+          <Text style={styles.footerText}>{t.auth.newToBrand}</Text>
+          <TouchableOpacity onPress={() => navigation.replace('RegisterModal', returnToProfile ? { returnTo: 'Profile' } : undefined)}>
+            <Text style={styles.footerLink}> {t.auth.createAccountLink}</Text>
           </TouchableOpacity>
+        </View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -181,30 +195,12 @@ export default function LoginModal({ navigation }: LoginModalProps) {
 const createStyles = (colors: ColorTheme) =>
   StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
-    content: { padding: spacing.xl, paddingBottom: 40 },
-    header: { alignItems: 'flex-end', marginTop: 12 },
-    closeBtn: {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
-      backgroundColor: colors.surfaceBorder,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    brandContainer: { alignItems: 'center', marginVertical: 20 },
-    logoBadge: {
-      width: 64,
-      height: 64,
-      borderRadius: 32,
-      backgroundColor: colors.surface,
-      borderWidth: 1.5,
-      borderColor: colors.gold,
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginBottom: 16,
-    },
-    title: { fontSize: 24, fontWeight: 'bold', color: colors.text },
-    subtitle: { fontSize: 14, color: colors.textMuted, marginTop: 6 },
+    content: { flexGrow: 1, paddingBottom: 24 },
+    panel: { width: '100%', maxWidth: 540, alignSelf: 'center', marginTop: -22, paddingHorizontal: spacing.xl, paddingTop: 28, paddingBottom: 34, backgroundColor: colors.background, borderTopLeftRadius: 26, borderTopRightRadius: 26 },
+    intro: { marginBottom: 22 },
+    eyebrow: { color: '#7C3AED', fontSize: 11, fontWeight: '700', letterSpacing: 1.8, marginBottom: 8 },
+    title: { fontFamily: 'serif', fontSize: 29, lineHeight: 35, fontWeight: '700', color: colors.text },
+    subtitle: { fontSize: 14, lineHeight: 21, color: colors.textMuted, marginTop: 8 },
     errorBanner: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -217,27 +213,27 @@ const createStyles = (colors: ColorTheme) =>
       gap: 8,
     },
     errorText: { color: colors.error, fontSize: 13, flex: 1 },
-    form: { marginTop: 8 },
-    label: { color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 6 },
+    form: { marginTop: 0 },
+    label: { color: colors.textSecondary, fontSize: 12, fontWeight: '700', letterSpacing: 0.25, marginBottom: 7 },
     input: {
       backgroundColor: colors.surface,
-      borderRadius: borderRadius.md,
-      paddingHorizontal: 14,
-      paddingVertical: 12,
+      borderRadius: 13,
+      paddingHorizontal: 15,
+      paddingVertical: 14,
       color: colors.text,
       fontSize: 15,
       borderWidth: 1,
-      borderColor: colors.surfaceBorder,
-      marginBottom: 16,
+      borderColor: colors.surfaceBorderLight,
+      marginBottom: 17,
     },
     passwordContainer: {
       flexDirection: 'row',
       alignItems: 'center',
       backgroundColor: colors.surface,
-      borderRadius: borderRadius.md,
+      borderRadius: 13,
       borderWidth: 1,
-      borderColor: colors.surfaceBorder,
-      marginBottom: 16,
+      borderColor: colors.surfaceBorderLight,
+      marginBottom: 17,
       paddingRight: 12,
     },
     passwordInput: {
@@ -253,28 +249,28 @@ const createStyles = (colors: ColorTheme) =>
       alignItems: 'center',
     },
     submitBtn: {
-      backgroundColor: colors.purple,
-      paddingVertical: 14,
-      borderRadius: borderRadius.md,
+      backgroundColor: '#5B21B6',
+      paddingVertical: 15,
+      borderRadius: 14,
       alignItems: 'center',
       marginTop: 8,
       borderWidth: 1,
-      borderColor: colors.gold,
+      borderColor: '#F5B942',
     },
     submitBtnDisabled: { opacity: 0.6 },
-    submitBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+    submitBtnText: { color: '#fff', fontSize: 15, fontWeight: '700', letterSpacing: 0.25 },
     footerRow: {
       flexDirection: 'row',
       justifyContent: 'center',
       alignItems: 'center',
-      marginTop: 24,
+      marginTop: 22,
     },
     footerText: { color: colors.textMuted, fontSize: 14 },
-    footerLink: { color: colors.purple, fontSize: 14, fontWeight: '700' },
+    footerLink: { color: colors.purpleText, fontSize: 14, fontWeight: '700' },
     dividerRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      marginVertical: 18,
+      marginVertical: 17,
       gap: 12,
     },
     dividerLine: {
@@ -284,7 +280,7 @@ const createStyles = (colors: ColorTheme) =>
     },
     dividerText: {
       color: colors.textMuted,
-      fontSize: 12,
+      fontSize: 9,
       fontWeight: '700',
       letterSpacing: 1,
     },

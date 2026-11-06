@@ -11,7 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../stores/auth-store';
 import { promptGoogleSignIn } from '../../services/google-auth';
-import { supabase } from '../../services/supabase';
+import { getWebsiteBaseUrl } from '../../services/api-client';
 import { borderRadius, spacing } from '../../theme';
 
 interface GoogleSignInButtonProps {
@@ -32,11 +32,7 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
     setLoading(true);
     try {
       if (Platform.OS === 'web') {
-        const { error } = await supabase.auth.signInWithOAuth({
-          provider: 'google',
-          options: { redirectTo: window.location.origin },
-        });
-        if (error) throw error;
+        window.location.href = `${getWebsiteBaseUrl()}/login`;
         return;
       }
 
@@ -51,9 +47,7 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
       if (onSuccess) onSuccess();
     } catch (e: any) {
       console.warn('[GoogleSignIn] Error:', e);
-      const msg = /unsupported provider/i.test(e?.message ?? '')
-        ? "Google sign-in isn't enabled in this Supabase project yet. Enable Google under Authentication providers."
-        : e?.message || 'Google sign-in could not be completed.';
+      const msg = e?.message || 'Google sign-in could not be completed.';
       if (onError) {
         onError(msg);
       } else {

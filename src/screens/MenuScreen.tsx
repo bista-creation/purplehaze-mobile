@@ -25,7 +25,7 @@ import { isPlaceholderDescription } from '../shared';
 import { colors as defaultColors, ColorTheme, spacing, borderRadius, displayFontFamily } from '../theme';
 
 export function MenuScreen({ navigation, route }: any) {
-  const { t, formatCurrency } = useI18n();
+  const { t, formatCurrency, isNepali } = useI18n();
   const { colors } = useTheme();
   const [categories, setCategories] = useState<CategoryDto[]>([]);
   const [dishes, setDishes] = useState<DishDto[]>([]);
@@ -159,7 +159,7 @@ export function MenuScreen({ navigation, route }: any) {
     return (
       <View style={styles.centerContainer}>
         <ActivityIndicator size="large" color={colors.gold} />
-        <Text style={styles.loadingText}>Loading Purple Haze Menu...</Text>
+        <Text style={styles.loadingText}>{t.menu.loadingMenu}</Text>
       </View>
     );
   }
@@ -249,7 +249,7 @@ export function MenuScreen({ navigation, route }: any) {
                   showOnlyFavorites && styles.categoryPillTextActive,
                 ]}
               >
-                Favorites {favoriteDishIds.length > 0 ? `(${favoriteDishIds.length})` : ''}
+                {t.menu.favoritesFilter} {favoriteDishIds.length > 0 ? `(${favoriteDishIds.length})` : ''}
               </Text>
             </View>
           </TouchableOpacity>
@@ -272,7 +272,7 @@ export function MenuScreen({ navigation, route }: any) {
                   selectedCategory === cat.id && !showOnlyFavorites && styles.categoryPillTextActive,
                 ]}
               >
-                {cat.name}
+                {/nepali/i.test(cat.slug) ? t.menu.nepali : /indian|tandoor|curry/i.test(cat.slug) ? t.menu.indian : /asian/i.test(cat.slug) ? t.menu.asian : /continental|sizzler/i.test(cat.slug) ? t.menu.continental : /beverage|drink|bar/i.test(cat.slug) && isNepali ? 'पेय पदार्थ' : cat.name}
               </Text>
             </TouchableOpacity>
           ))}
@@ -286,27 +286,27 @@ export function MenuScreen({ navigation, route }: any) {
             style={[styles.sortChip, sortBy === 'default' && styles.sortChipActive]}
             onPress={() => setSortBy('default')}
           >
-            <Text style={[styles.sortChipText, sortBy === 'default' && styles.sortChipTextActive]}>Recommended</Text>
+            <Text style={[styles.sortChipText, sortBy === 'default' && styles.sortChipTextActive]}>{t.menu.recommendedSort}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.sortChip, sortBy === 'price-asc' && styles.sortChipActive]}
             onPress={() => setSortBy(sortBy === 'price-asc' ? 'default' : 'price-asc')}
           >
             <Ionicons name="arrow-up" size={12} color={sortBy === 'price-asc' ? colors.gold : colors.textMuted} />
-            <Text style={[styles.sortChipText, sortBy === 'price-asc' && styles.sortChipTextActive]}>Price: Low to High</Text>
+            <Text style={[styles.sortChipText, sortBy === 'price-asc' && styles.sortChipTextActive]}>{t.menu.priceLowHigh}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.sortChip, sortBy === 'price-desc' && styles.sortChipActive]}
             onPress={() => setSortBy(sortBy === 'price-desc' ? 'default' : 'price-desc')}
           >
             <Ionicons name="arrow-down" size={12} color={sortBy === 'price-desc' ? colors.gold : colors.textMuted} />
-            <Text style={[styles.sortChipText, sortBy === 'price-desc' && styles.sortChipTextActive]}>Price: High to Low</Text>
+            <Text style={[styles.sortChipText, sortBy === 'price-desc' && styles.sortChipTextActive]}>{t.menu.priceHighLow}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.sortChip, sortBy === 'under-500' && styles.sortChipActive]}
             onPress={() => setSortBy(sortBy === 'under-500' ? 'default' : 'under-500')}
           >
-            <Text style={[styles.sortChipText, sortBy === 'under-500' && styles.sortChipTextActive]}>Under Rs. 500</Text>
+            <Text style={[styles.sortChipText, sortBy === 'under-500' && styles.sortChipTextActive]}>{t.menu.underPrice}</Text>
           </TouchableOpacity>
         </ScrollView>
       </View>
@@ -401,7 +401,7 @@ export function MenuScreen({ navigation, route }: any) {
                   </TouchableOpacity>
                 ) : (
                   <View style={styles.soldOutBadge}>
-                    <Text style={styles.soldOutText}>Sold Out</Text>
+                    <Text style={styles.soldOutText}>{t.menu.soldOut}</Text>
                   </View>
                 )}
               </View>
@@ -442,7 +442,7 @@ const createStyles = (colors: ColorTheme) =>
   searchRow: {
     flexDirection: 'row',
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
+    paddingTop: spacing.screenTop,
     gap: spacing.sm,
   },
   searchBox: {

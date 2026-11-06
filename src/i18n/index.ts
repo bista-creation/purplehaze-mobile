@@ -18,7 +18,8 @@ export const useLanguageStore = create<LanguageState>((set) => ({
   translations: en,
   setLanguage: async (lang: Language) => {
     try {
-      await SecureStore.setItemAsync(LANGUAGE_KEY, lang);
+      if (typeof localStorage !== 'undefined') localStorage.setItem(LANGUAGE_KEY, lang);
+      else await SecureStore.setItemAsync(LANGUAGE_KEY, lang);
     } catch {
       // In-memory fallback
     }
@@ -29,7 +30,9 @@ export const useLanguageStore = create<LanguageState>((set) => ({
   },
   initLanguage: async () => {
     try {
-      const saved = await SecureStore.getItemAsync(LANGUAGE_KEY);
+      const saved = typeof localStorage !== 'undefined'
+        ? localStorage.getItem(LANGUAGE_KEY)
+        : await SecureStore.getItemAsync(LANGUAGE_KEY);
       if (saved === 'ne' || saved === 'en') {
         set({
           language: saved,

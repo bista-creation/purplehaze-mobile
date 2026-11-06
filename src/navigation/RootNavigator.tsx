@@ -36,8 +36,8 @@ export type RootStackParamList = {
   Orders: undefined;
   Reservations: undefined;
   Venues: undefined;
-  LoginModal: undefined;
-  RegisterModal: undefined;
+  LoginModal: { returnTo?: 'Profile' } | undefined;
+  RegisterModal: { returnTo?: 'Profile' } | undefined;
   MayaModal: undefined;
   AdminDashboard: undefined;
 };
@@ -68,9 +68,9 @@ function MainTabs() {
           backgroundColor: colors.surface,
           borderTopColor: colors.surfaceBorder,
           borderTopWidth: 1,
-          height: 62,
-          paddingBottom: 8,
-          paddingTop: 6,
+          height: 60,
+          paddingBottom: 5,
+          paddingTop: 4,
         },
         tabBarActiveTintColor: colors.purple,
         tabBarInactiveTintColor: colors.textMuted,
@@ -252,6 +252,7 @@ export function RootNavigator() {
           options={{
             presentation: 'modal',
             headerShown: false,
+          gestureEnabled: false,
           }}
         />
         <Stack.Screen
@@ -283,6 +284,7 @@ export function RootNavigator() {
           options={{
             presentation: 'modal',
             headerShown: false,
+          gestureEnabled: false,
           }}
         />
         <Stack.Screen

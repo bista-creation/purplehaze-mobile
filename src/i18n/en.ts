@@ -14,6 +14,7 @@ export const en: Translations = {
     search: 'Search',
     retry: 'Retry',
     viewAll: 'View All',
+    back: 'Back',
   },
   navigation: {
     home: 'Home',
@@ -24,6 +25,16 @@ export const en: Translations = {
     orders: 'Orders',
     favorites: 'Favorites',
     profile: 'Profile',
+  },
+  home: {
+    greeting: 'Namaste, {name} 👋', guest: 'Namaste, Guest 👋', subtitle: 'Good food. Golden evenings. Garden memories.', askMaya: 'Ask Maya', searchPlaceholder: 'Search dishes, Sekuwa, Mo:Mo, Sizzler, Biryani...',
+    bannerGardenTitle: 'Lush Garden Dining', bannerGardenSubtitle: 'Experience open-air candlelit evenings & tranquil greenery', bannerGardenTag: 'GARDEN & ROOFTOP', reserveTable: 'Reserve Table',
+    bannerFoodTitle: 'Flavors of Nepal & Sekuwa', bannerFoodSubtitle: 'Authentic charcoal smoked delights, Mo:Mo & sizzling platters', chefSpecials: 'CHEF SPECIALS', orderFood: 'Order Food',
+    bannerVenueTitle: 'Banquets & Celebrations', bannerVenueSubtitle: 'Air-conditioned banquet halls for weddings & private gatherings', venuesEvents: 'VENUES & EVENTS', exploreVenues: 'Explore Venues',
+    featuredToday: 'FEATURED TODAY', serviceAvailability: 'Dine-in · Takeaway · Delivery', favouritesTitle: "Discover Today's Favourites", favouritesSubtitle: "Live charcoal Sekuwa, steaming dumplings & chef's garden specials.", explore: 'Explore',
+    deliveryTime: '⚡ 30–45 MINS', garden: '🌿 GARDEN', viewMenu: 'View Menu', deliveryTakeaway: 'Delivery & Takeaway', bookTable: 'Book Table', dineInRooftop: 'Dine-in & Rooftop', reserveNow: 'Reserve Now',
+    banquetsParties: 'Banquets & Parties', weddingsEventsHalls: 'Weddings, Events, Halls', myOrders: 'My Orders', liveGpsStatus: 'Live GPS status',
+    exploreCategories: 'Explore Categories', categoriesSubtitle: 'Handcrafted multi-cuisine selections', viewAllCount: 'View All ({count}) →', chefRecommendations: "Chef's Recommendations 👨‍🍳", recommendationsSubtitle: 'Signature culinary crafts by executive chefs', noChefRecommendations: 'No chef recommendations are available right now.', openDishDetails: 'Opens dish details', addToFavorites: 'Add to favorites', removeFromFavorites: 'Remove from favorites', fullMenu: 'Full Menu →', loadingRecommendations: 'Crafting fresh recommendations...', add: '+ ADD', bestseller: 'BESTSELLER', signatureDish: 'Signature dish', heritageTitle: 'A Taste of Purple Haze', heritageDescription: 'Established 2015 on Airport Road, Biratnagar. Offering a calm, leafy garden oasis, banquet hall facilities, and multi-cuisine culinary delights.', popularBestsellers: 'Popular Bestsellers 🔥', mostLovedDishes: 'Most loved dishes ordered by Biratnagar foodies', vegLabel: 'VEG', nonVegLabel: 'NON-VEG', gardenSeating: '🌿 Garden Seating', banquetHall: '🎪 Banquet Hall', swiftDelivery: '🛵 Swift Delivery',
   },
   menu: {
     title: 'Our Menu',
@@ -41,6 +52,7 @@ export const en: Translations = {
     nonVeg: 'Non-Veg',
     spicy: 'Spicy',
     emptyCategory: 'No dishes available in this section right now.',
+    loadingMenu: 'Loading Purple Haze Menu...', favoritesFilter: 'Favorites', recommendedSort: 'Recommended', priceLowHigh: 'Price: Low to High', priceHighLow: 'Price: High to Low', underPrice: 'Under Rs. 500', soldOut: 'Sold Out', browseFullMenu: 'Browse Full Menu', chefSpecialSpice: 'Chef Special Spice', spicePreference: 'Spice Level Preference', chooseVariant: 'Choose Variant', optionalAddOns: 'Optional Add-ons', cookingInstructions: 'Cooking Instructions',
   },
   cart: {
     title: 'Your Cart',
@@ -56,7 +68,9 @@ export const en: Translations = {
     applyCoupon: 'Apply',
     couponPlaceholder: 'Enter Promo Code',
     clearCart: 'Clear Cart',
+    checkoutTitle: 'Checkout', exploreMenu: 'Explore Menu', deliveryArea: 'Delivery Area (Biratnagar)', contactDetails: 'Contact Details', nameHint: 'Please enter your name so our kitchen knows who to hand this meal to.', emailReceipt: 'Email Address (for order receipt)', phoneRequired: 'Phone Number * (e.g. 98XXXXXXXX)', deliveryAddress: 'Delivery Address', addressHint: 'Please enter your street address or choose a popular area below.', popularAreas: 'Popular Biratnagar areas (tap to auto-fill):', landmarkPlaceholder: 'Landmark instructions (e.g. Near green gate, 2nd floor)', promoCode: 'Promo Code', couponCode: 'Enter coupon code', paymentMethod: 'Payment Method', cashOnDelivery: 'Cash on Delivery', payOnArrival: 'Pay when your order arrives', instantVerified: 'Instant & verified digital payment', payWithWallet: 'Pay with {wallet} app or eBanking', pendingApproval: 'Pending Merchant Approval', merchantOnboarding: 'Merchant onboarding in progress', orderSummary: 'Order Summary', totalAmount: 'Total Amount',
   },
+  favorites: { title: 'My Favorites ❤️', savedCount: 'saved for quick ordering', dishSingular: 'dish', dishPlural: 'dishes', emptyTitle: 'No Favorite Dishes Yet', emptySubtitle: 'Tap the heart icon on any dish in the menu to add it to your personal favorites collection.', exploreMenu: 'Explore Menu 🍲', add: 'ADD +', veg: 'VEG', nonVeg: 'NON-VEG' },
   reservations: {
     title: 'Table Reservation',
     subtitle: 'Reserve your dining experience under the stars',
@@ -110,10 +124,17 @@ export const en: Translations = {
     outForDelivery: 'Out for Delivery',
     completed: 'Delivered',
     cancelled: 'Cancelled',
+    track: 'Track Order', reorder: 'Reorder', trackViewOrders: 'Track & View Orders', signInToAccount: 'Sign In to Account', guestLookup: 'OR GUEST LOOKUP', findOrder: 'Find My Order', noOrdersYet: 'No Orders Yet', browseMenu: 'Explore Menu',
+    guestSubtitle: 'Log in to see your entire order history, or track a guest order below.', requiredFields: 'Required Fields', enterOrderAndPhone: 'Please enter both your Order Number and Phone Number.', noMatchingOrder: 'No matching order found.', noItemsToReorder: 'No items found in this order to reorder.', reorderSuccess: 'Items from this order have been placed into your cart!', emptySubtitle: 'When you place an order, it will appear here so you can track kitchen preparation & delivery live!',
   },
   profile: {
     title: 'Profile & Account',
     guestUser: 'Guest Diner',
+    profilePhoto: 'Profile photo',
+    savedAddresses: 'Saved delivery addresses',
+    noSavedAddresses: 'No saved addresses yet. Add one on the website account page to use it here.',
+    addressLoadFailed: 'Could not load your saved addresses.',
+    defaultAddress: 'Default',
     signInPrompt: 'Sign in to sync your orders, addresses, and dining rewards.',
     signIn: 'Sign In',
     register: 'Create Account',
@@ -129,6 +150,7 @@ export const en: Translations = {
     contactUs: 'Contact & Location',
     deleteAccount: 'Delete Account',
     confirmDelete: 'Are you sure? All account data will be permanently deleted.',
+    signOutConfirm: 'Are you sure you want to sign out?', accountDeleted: 'Account Deleted', accountDeletedMessage: 'Your account and personal data have been completely removed.', deleteFailed: 'Could not delete account.', adminHub: 'Open Mobile Admin Hub', adminHubDescription: 'Live orders, kitchen management, table bookings, and dish stock.', adminSection: 'Restaurant Operations Hub', diningOrders: 'Dining & Orders', appearanceTheme: 'Appearance & Theme', displayMode: 'Display Mode', light: 'Light', dark: 'Dark', system: 'System', whatsappInquiries: 'WhatsApp Inquiries', legalPolicies: 'Legal & Policies',
   },
   auth: {
     welcomeBack: 'Welcome Back',
@@ -146,5 +168,6 @@ export const en: Translations = {
     haveAccount: 'Already have an account? Sign In',
     noAccount: "Don't have an account? Register",
     forgotPassword: 'Forgot Password?',
+    loginEyebrow: 'WELCOME BACK', loginTitle: 'Your table is waiting.', loginHeroSubtitle: 'Sign in to order, track deliveries and keep your favourite dishes close.', registerEyebrow: 'JOIN THE TABLE', registerTitle: 'Create your account.', registerHeroSubtitle: 'Faster checkout, saved addresses and a record of every good meal.', optional: '(optional)', hidePassword: 'Hide password', showPassword: 'Show password', continueWith: 'OR CONTINUE WITH', newToBrand: 'New to Purple Haze?', createAccountLink: 'Create an account', alreadyAtTable: 'Already at the table?', signInLink: 'Sign in',
   },
 };

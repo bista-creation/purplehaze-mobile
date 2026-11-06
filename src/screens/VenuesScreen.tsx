@@ -239,7 +239,7 @@ export const VenuesScreen: React.FC<any> = ({ navigation }) => {
           <Card variant="goldAccent" style={styles.modalCard}>
             <View style={styles.modalHeader}>
               <View>
-                <Typography variant="h3" color={colors.gold}>
+                <Typography variant="h3" color={colors.goldText}>
                   Enquire: {selectedVenue?.name}
                 </Typography>
                 <Text style={styles.modalSubtitle}>
@@ -334,7 +334,7 @@ export const VenuesScreen: React.FC<any> = ({ navigation }) => {
             style={{ padding: spacing.sm }}
             activeOpacity={0.7}
           >
-            <Text style={{ color: colors.gold, fontWeight: '700', fontSize: 14 }}>
+            <Text style={{ color: colors.goldText, fontWeight: '700', fontSize: 14 }}>
               ← Return to Home Page
             </Text>
           </TouchableOpacity>
@@ -370,7 +370,7 @@ const createStyles = (colors: ColorTheme) =>
       borderColor: colors.surfaceBorder,
     },
     comparisonHeader: {
-      color: colors.gold,
+      color: colors.goldText,
       fontSize: 11,
       fontWeight: '700',
       textTransform: 'uppercase',

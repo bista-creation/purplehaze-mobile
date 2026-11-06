@@ -73,7 +73,7 @@ export const typography = {
     fontSize: 20,
     lineHeight: 26,
     fontWeight: '800',
-    color: colors.gold,
+    color: colors.goldText,
     letterSpacing: -0.2,
   } as TextStyle,
   button: {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text as RNText, TextProps as RNTextProps, StyleSheet, TextStyle } from 'react-native';
+import { Text as RNText, TextProps as RNTextProps, TextStyle } from 'react-native';
 import { typography } from '../../theme';
 import { useTheme } from '../../stores/theme-store';
 
@@ -44,7 +44,7 @@ export const Typography: React.FC<TypographyProps> = ({
       case 'caption':
         return colors.textMuted;
       case 'goldHeading':
-        return colors.gold;
+        return colors.goldText;
       default:
         return colors.text;
     }

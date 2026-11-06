@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native';
-import { colors, borderRadius, spacing } from '../../theme';
+import { borderRadius, spacing } from '../../theme';
+import { useTheme } from '../../stores/theme-store';
 
 export type BadgeVariant =
   | 'gold'
@@ -28,10 +29,12 @@ export const Badge: React.FC<BadgeProps> = ({
   textStyle,
   icon,
 }) => {
+  const { colors } = useTheme();
+
   const getContainerStyle = (): ViewStyle => {
     switch (variant) {
       case 'purple':
-        return { backgroundColor: colors.purpleMuted, borderColor: colors.purple };
+        return { backgroundColor: colors.purpleMuted, borderColor: colors.purpleText };
       case 'veg':
         return { backgroundColor: 'rgba(34, 197, 94, 0.15)', borderColor: colors.veg };
       case 'nonVeg':
@@ -55,7 +58,7 @@ export const Badge: React.FC<BadgeProps> = ({
   const getTextStyle = (): TextStyle => {
     switch (variant) {
       case 'purple':
-        return { color: colors.purpleLight };
+        return { color: colors.purpleText };
       case 'veg':
         return { color: colors.veg };
       case 'nonVeg':
@@ -72,7 +75,7 @@ export const Badge: React.FC<BadgeProps> = ({
         return { color: colors.goldDark };
       case 'gold':
       default:
-        return { color: colors.gold };
+        return { color: colors.goldText };
     }
   };
 
