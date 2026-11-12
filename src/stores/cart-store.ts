@@ -15,7 +15,7 @@ type CartState = {
 function generateCartItemId(
   dishId: string,
   variantId?: string | null,
-  addOns: Array<{ id: string }> = [],
+  addOns: { id: string }[] = [],
 ): string {
   const sortedAddOnIds = addOns
     .map((a) => a.id)

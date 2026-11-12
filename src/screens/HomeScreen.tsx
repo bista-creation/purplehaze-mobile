@@ -3,7 +3,6 @@ import {
   View,
   Text,
   ScrollView,
-  Image,
   ImageBackground,
   TouchableOpacity,
   StyleSheet,
@@ -25,9 +24,8 @@ import { useTheme } from '../stores/theme-store';
 import { useMayaStore } from '../stores/maya-store';
 import { useI18n } from '../i18n';
 import type { Translations } from '../i18n';
-import { Header, Badge, FloatingCartBar } from '../components/ui';
-import { isPlaceholderDescription } from '../shared';
-import { colors as defaultColors, ColorTheme, spacing, borderRadius, displayFontFamily } from '../theme';
+import { Header, FloatingCartBar, MenuCardHorizontal } from '../components/ui';
+import { ColorTheme, spacing, borderRadius, displayFontFamily } from '../theme';
 
 function localizedCategoryLabel(category: CategoryDto, translations: Translations, isNepali: boolean): string {
   if (/momo|momo/i.test(category.slug)) return 'म:म';
@@ -53,15 +51,14 @@ function isChefRecommendationCategory(category: CategoryDto): boolean {
 }
 
 export function HomeScreen({ navigation }: any) {
-  const { t, formatCurrency, isNepali } = useI18n();
+  const { t, isNepali } = useI18n();
   const { colors, isDark } = useTheme();
   const user = useAuthStore((s) => s.user);
-  const { items, addItem, getItemCount, getSubtotalNpr } = useCartStore();
-  const { favoriteDishIds, toggleFavorite, isFavorite } = useFavoritesStore();
+  const getItemCount = useCartStore((s) => s.getItemCount);
+  const { toggleFavorite, isFavorite } = useFavoritesStore();
   const { width: windowWidth } = useWindowDimensions();
 
   const cardWidth = Math.min(windowWidth - 32, 640);
-  const recommendationCardWidth = Math.min(260, Math.max(210, windowWidth * 0.64));
   const slideGap = 12;
   const snapInterval = cardWidth + slideGap;
 
@@ -79,7 +76,6 @@ export function HomeScreen({ navigation }: any) {
   const appStateRef = useRef<AppStateStatus>((AppState.currentState as AppStateStatus) || 'active');
 
   const cartItemCount = getItemCount();
-  const cartSubtotal = getSubtotalNpr();
 
   const loadData = async () => {
     try {
@@ -125,17 +121,20 @@ export function HomeScreen({ navigation }: any) {
   );
 
   const chefSpecials = useMemo(() => {
-    if (!recommendationCategory) return [];
+    if (!recommendationCategory) {
+      return dishes.filter((dish) => dish.isAvailable).slice(0, 4);
+    }
 
     const categorySlug = normalizeCategoryKey(recommendationCategory.slug);
     const categoryName = normalizeCategoryKey(recommendationCategory.name);
-    return dishes.filter((dish) =>
+    const list = dishes.filter((dish) =>
       dish.isAvailable && (
         dish.categoryId === recommendationCategory.id ||
         normalizeCategoryKey(dish.categorySlug) === categorySlug ||
         normalizeCategoryKey(dish.categoryName) === categoryName
       )
     );
+    return list.length > 0 ? list : dishes.filter((dish) => dish.isAvailable).slice(0, 4);
   }, [dishes, recommendationCategory]);
 
   const bestsellers = useMemo(() => {
@@ -310,21 +309,6 @@ export function HomeScreen({ navigation }: any) {
           </TouchableOpacity>
         </View>
 
-        {/* Quick Search Bar Redirect to Menu */}
-        <TouchableOpacity
-          style={styles.searchBar}
-          onPress={() => navigation.navigate('Menu')}
-          activeOpacity={0.9}
-        >
-          <Ionicons name="search" size={18} color={colors.textMuted} />
-          <Text style={styles.searchPlaceholder}>
-            {t.home.searchPlaceholder}
-          </Text>
-          <View style={styles.searchFilterBadge}>
-            <Ionicons name="options-outline" size={14} color={colors.purple} />
-          </View>
-        </TouchableOpacity>
-
         {/* Hero Promotional Carousel with Atmospheric Imagery */}
         <ScrollView
           ref={heroScrollRef}
@@ -427,47 +411,69 @@ export function HomeScreen({ navigation }: any) {
           </View>
         </TouchableOpacity>
 
-        {/* Primary Action Hub: Ordering & Booking Dominant Paths */}
-        <View style={styles.primaryHubContainer}>
+        {/* Distinct Two-Card Action Split: Private Cabins vs Express Delivery */}
+        <View style={styles.actionSplitGrid}>
+          {/* Card A: Garden Table & Private Cabin Booking */}
           <TouchableOpacity
-            style={[styles.primaryActionCard, styles.orderCard]}
-            onPress={() => navigation.navigate('Menu')}
+            style={[
+              styles.splitCard,
+              styles.splitCardCabin,
+              {
+                backgroundColor: isDark ? 'rgba(30, 22, 38, 0.95)' : colors.surface,
+                borderColor: isDark ? 'rgba(216, 173, 104, 0.35)' : 'rgba(216, 173, 104, 0.45)',
+              },
+            ]}
+            onPress={() => navigation.navigate('Reservations')}
             activeOpacity={0.88}
+            accessibilityRole="button"
+            accessibilityLabel={`${t.home.gardenCabinTitle}, ${t.home.gardenCabinSubtitle}`}
           >
-            <View style={styles.primaryBadgeRow}>
-              <View style={styles.primaryIconCirclePurple}>
-                <Ionicons name="restaurant" size={20} color="#FFFFFF" />
+            <View style={styles.splitCardHeader}>
+              <View style={[styles.splitIconCircle, { backgroundColor: colors.goldDark }]}>
+                <Ionicons name="shield-checkmark" size={17} color="#FFFFFF" />
               </View>
-              <View style={styles.primaryLivePill}>
-                <Text style={styles.primaryLivePillText}>{t.home.deliveryTime}</Text>
+              <View style={[styles.splitBadge, { backgroundColor: isDark ? 'rgba(216, 173, 104, 0.2)' : 'rgba(216, 173, 104, 0.15)' }]}>
+                <Text style={[styles.splitBadgeText, { color: colors.goldText }]}>🌿 Garden & AC Cabins</Text>
               </View>
             </View>
-            <Text style={styles.primaryCardTitle}>{t.home.orderFood}</Text>
-            <Text style={styles.primaryCardSubtitle}>{t.home.deliveryTakeaway}</Text>
-            <View style={styles.primaryCardCta}>
-              <Text style={styles.primaryCardCtaText}>{t.home.viewMenu}</Text>
-              <Ionicons name="arrow-forward" size={13} color={colors.purple} />
+            <Text style={[styles.splitCardTitle, { color: colors.text }]}>{t.home.gardenCabinTitle}</Text>
+            <Text style={[styles.splitCardSubtitle, { color: colors.textSecondary }]}>
+              {t.home.gardenCabinSubtitle}
+            </Text>
+            <View style={styles.splitCardCta}>
+              <Text style={[styles.splitCardCtaText, { color: colors.goldText }]}>{t.home.reserveNow} →</Text>
             </View>
           </TouchableOpacity>
 
+          {/* Card B: Kitchen Takeaway & Express Delivery */}
           <TouchableOpacity
-            style={[styles.primaryActionCard, styles.reserveCard]}
-            onPress={() => navigation.navigate('Reservations')}
+            style={[
+              styles.splitCard,
+              styles.splitCardTakeaway,
+              {
+                backgroundColor: isDark ? 'rgba(30, 22, 38, 0.95)' : colors.surface,
+                borderColor: isDark ? 'rgba(168, 85, 247, 0.35)' : 'rgba(126, 34, 206, 0.3)',
+              },
+            ]}
+            onPress={() => navigation.navigate('Menu')}
             activeOpacity={0.88}
+            accessibilityRole="button"
+            accessibilityLabel={`${t.home.kitchenTakeawayTitle}, ${t.home.readyInMins}`}
           >
-            <View style={styles.primaryBadgeRow}>
-              <View style={styles.primaryIconCircleGold}>
-                <Ionicons name="calendar" size={20} color="#FFFFFF" />
+            <View style={styles.splitCardHeader}>
+              <View style={[styles.splitIconCircle, { backgroundColor: colors.purple }]}>
+                <Ionicons name="restaurant" size={17} color="#FFFFFF" />
               </View>
-              <View style={styles.primaryGardenPill}>
-                <Text style={styles.primaryGardenPillText}>{t.home.garden}</Text>
+              <View style={[styles.splitBadge, { backgroundColor: isDark ? 'rgba(168, 85, 247, 0.22)' : 'rgba(126, 34, 206, 0.12)' }]}>
+                <Text style={[styles.splitBadgeText, { color: colors.purpleText }]}>{t.home.readyInMins}</Text>
               </View>
             </View>
-            <Text style={styles.primaryCardTitle}>{t.home.bookTable}</Text>
-            <Text style={styles.primaryCardSubtitle}>{t.home.dineInRooftop}</Text>
-            <View style={styles.primaryCardCta}>
-              <Text style={[styles.primaryCardCtaText, { color: colors.goldDark }]}>{t.home.reserveNow}</Text>
-              <Ionicons name="arrow-forward" size={13} color={colors.goldDark} />
+            <Text style={[styles.splitCardTitle, { color: colors.text }]}>{t.home.kitchenTakeawayTitle}</Text>
+            <Text style={[styles.splitCardSubtitle, { color: colors.textSecondary }]}>
+              {t.home.kitchenTakeawaySubtitle}
+            </Text>
+            <View style={styles.splitCardCta}>
+              <Text style={[styles.splitCardCtaText, { color: colors.purpleText }]}>{t.home.viewMenu} →</Text>
             </View>
           </TouchableOpacity>
         </View>
@@ -574,94 +580,18 @@ export function HomeScreen({ navigation }: any) {
             <Text style={styles.emptyRecommendationsText}>{t.home.noChefRecommendations}</Text>
           </View>
         ) : (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.dishesScroll}
-          >
-            {chefSpecials.map((dish) => {
-              const favorited = isFavorite(dish.id);
-              return (
-                <TouchableOpacity
-                  key={dish.id}
-                  style={[styles.dishCard, { width: recommendationCardWidth }]}
-                  onPress={() => navigation.navigate('DishDetail', { dish })}
-                  activeOpacity={0.9}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${dish.name}, ${formatCurrency(dish.price)}`}
-                  accessibilityHint={t.home.openDishDetails}
-                >
-                  <View style={styles.dishImageWrap}>
-                    {dish.image ? (
-                      <Image source={{ uri: dish.image }} style={styles.dishImage} />
-                    ) : (
-                      <View style={[styles.dishImage, styles.dishImagePlaceholder]}>
-                        <Ionicons name="restaurant-outline" size={32} color={colors.textMuted} />
-                      </View>
-                    )}
-
-                    <View style={styles.vegIndicatorBadge}>
-                      <View
-                        style={[
-                          styles.vegDot,
-                          { backgroundColor: dish.isVeg ? colors.veg : colors.nonVeg },
-                        ]}
-                      />
-                    </View>
-
-                    <TouchableOpacity
-                      style={styles.favBtn}
-                      onPress={() => toggleFavorite(dish.id)}
-                      activeOpacity={0.8}
-                      accessibilityRole="button"
-                      accessibilityLabel={`${favorited ? t.home.removeFromFavorites : t.home.addToFavorites} ${dish.name}`}
-                    >
-                      <Ionicons
-                        name={favorited ? 'heart' : 'heart-outline'}
-                        size={16}
-                        color={favorited ? '#EF4444' : '#FFFFFF'}
-                      />
-                    </TouchableOpacity>
-                  </View>
-
-                  <View style={styles.dishInfo}>
-                    <Text style={styles.dishName} numberOfLines={1}>
-                      {dish.name}
-                    </Text>
-                    {dish.description && !isPlaceholderDescription(dish.description) ? (
-                      <Text style={styles.dishDesc} numberOfLines={2}>
-                        {dish.description}
-                      </Text>
-                    ) : null}
-
-                    <View style={styles.dishBottomRow}>
-                      <Text style={styles.dishPrice}>{formatCurrency(dish.price)}</Text>
-                      <TouchableOpacity
-                        style={styles.addDishBtn}
-                        onPress={() => {
-                          addItem({
-                            dishId: dish.id,
-                            name: dish.name,
-                            slug: dish.slug || 'dish',
-                            basePrice: dish.price,
-                            quantity: 1,
-                            variantPriceDelta: 0,
-                            addOns: [],
-                            image: dish.image || null,
-                          });
-                        }}
-                        activeOpacity={0.8}
-                        accessibilityRole="button"
-                        accessibilityLabel={`${t.home.add} ${dish.name}`}
-                      >
-                        <Text style={styles.addDishBtnText}>{t.home.add}</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
+          <View style={{ marginTop: spacing.xs }}>
+            {chefSpecials.slice(0, 3).map((dish) => (
+              <MenuCardHorizontal
+                key={dish.id}
+                dish={dish}
+                onPress={() => navigation.navigate('DishDetail', { dish })}
+                onOptionsPress={() => navigation.navigate('DishDetail', { dish })}
+                isFavorited={isFavorite(dish.id)}
+                onToggleFavorite={() => toggleFavorite(dish.id)}
+              />
+            ))}
+          </View>
         )}
 
         {/* Bestseller Dishes Collection */}
@@ -672,94 +602,28 @@ export function HomeScreen({ navigation }: any) {
                 <Text style={styles.sectionTitle}>{t.home.popularBestsellers}</Text>
                 <Text style={styles.sectionSubtitle}>{t.home.mostLovedDishes}</Text>
               </View>
+              <TouchableOpacity onPress={() => navigation.navigate('Menu')}>
+                <Text style={styles.sectionLink}>{t.home.fullMenu}</Text>
+              </TouchableOpacity>
             </View>
 
-            <View style={styles.bestsellerGrid}>
-              {bestsellers.map((dish) => {
-                const favorited = isFavorite(dish.id);
-                return (
-                  <TouchableOpacity
-                    key={dish.id}
-                    style={styles.bestsellerRow}
-                    onPress={() => navigation.navigate('DishDetail', { dish })}
-                    activeOpacity={0.9}
-                  >
-                    <View style={styles.bestsellerLeft}>
-                      <View style={styles.vegIndicatorBadgeInline}>
-                        <View
-                          style={[
-                            styles.vegDot,
-                            { backgroundColor: dish.isVeg ? colors.veg : colors.nonVeg },
-                          ]}
-                        />
-                        <Text style={styles.bestsellerBadgeText}>
-                          {dish.isVeg ? t.home.vegLabel : t.home.nonVegLabel}
-                        </Text>
-                      </View>
-
-                      <Text style={styles.bestsellerTitle} numberOfLines={1}>
-                        {dish.name}
-                      </Text>
-                      <Text style={styles.bestsellerPrice}>{formatCurrency(dish.price)}</Text>
-                      {dish.description && !isPlaceholderDescription(dish.description) ? (
-                        <Text style={styles.bestsellerDesc} numberOfLines={2}>
-                          {dish.description}
-                        </Text>
-                      ) : null}
-                    </View>
-
-                    <View style={styles.bestsellerRight}>
-                      {dish.image ? (
-                        <Image source={{ uri: dish.image }} style={styles.bestsellerImg} />
-                      ) : (
-                        <View style={[styles.bestsellerImg, styles.dishImagePlaceholder]}>
-                          <Ionicons name="restaurant-outline" size={24} color={colors.textMuted} />
-                        </View>
-                      )}
-                      <TouchableOpacity
-                        style={styles.bestsellerAddBtn}
-                        onPress={() => {
-                          addItem({
-                            dishId: dish.id,
-                            name: dish.name,
-                            slug: dish.slug || 'dish',
-                            basePrice: dish.price,
-                            quantity: 1,
-                            variantPriceDelta: 0,
-                            addOns: [],
-                            image: dish.image || null,
-                          });
-                        }}
-                        activeOpacity={0.8}
-                      >
-                        <Text style={styles.bestsellerAddBtnText}>{t.home.add}</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </TouchableOpacity>
-                );
-              })}
+            <View style={{ marginTop: spacing.xs }}>
+              {bestsellers.map((dish) => (
+                <MenuCardHorizontal
+                  key={dish.id}
+                  dish={dish}
+                  onPress={() => navigation.navigate('DishDetail', { dish })}
+                  onOptionsPress={() => navigation.navigate('DishDetail', { dish })}
+                  isFavorited={isFavorite(dish.id)}
+                  onToggleFavorite={() => toggleFavorite(dish.id)}
+                />
+              ))}
             </View>
           </>
         )}
 
-        {/* Restaurant Heritage & Story Card */}
-        <View style={styles.heritageCard}>
-          <Image
-            source={require('../../assets/logo.png')}
-            style={styles.heritageLogo}
-            resizeMode="contain"
-          />
-          <Text style={styles.heritageTitle}>{t.home.heritageTitle}</Text>
-          <Text style={styles.heritageText}>{t.home.heritageDescription}</Text>
-          <View style={styles.heritageBadges}>
-            <Text style={styles.heritagePill}>{t.home.gardenSeating}</Text>
-            <Text style={styles.heritagePill}>{t.home.banquetHall}</Text>
-            <Text style={styles.heritagePill}>{t.home.swiftDelivery}</Text>
-          </View>
-        </View>
-
-        {/* Bottom spacer ensuring fixed navigation bar never covers content */}
-        <View style={{ height: cartItemCount > 0 ? 80 : 24 }} />
+        {/* Bottom spacer ensuring fixed floating cart & navigation bar never covers content */}
+        <View style={{ height: cartItemCount > 0 ? 140 : 32 }} />
       </ScrollView>
 
       {/* Floating Persistent Cart Summary Bar (Safely above Bottom Tabs) */}
@@ -1051,7 +915,84 @@ const createStyles = (colors: ColorTheme, isDark: boolean) =>
     letterSpacing: 0.2,
   },
 
-  /* Primary Hub: Ordering & Booking */
+  /* Distinct Two-Card Action Split */
+  actionSplitGrid: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: spacing.md,
+  },
+  splitCard: {
+    flex: 1,
+    borderRadius: borderRadius.xl,
+    padding: 12,
+    borderWidth: 1.2,
+    justifyContent: 'space-between',
+    ...Platform.select({
+      web: {
+        boxShadow: '0 4px 14px rgba(0, 0, 0, 0.06)',
+      },
+      default: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 6,
+        elevation: 2,
+      },
+    }),
+  },
+  splitCardCabin: {
+    // Styling handled via inline theme
+  },
+  splitCardTakeaway: {
+    // Styling handled via inline theme
+  },
+  splitCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  splitIconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  splitBadge: {
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: borderRadius.full,
+  },
+  splitBadgeText: {
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.2,
+  },
+  splitCardTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    lineHeight: 18,
+    letterSpacing: -0.2,
+  },
+  splitCardSubtitle: {
+    fontSize: 11,
+    lineHeight: 15,
+    marginTop: 4,
+    flex: 1,
+  },
+  splitCardCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  splitCardCtaText: {
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.2,
+  },
+
+  /* Primary Hub: Ordering & Booking (legacy fallbacks) */
   primaryHubContainer: {
     flexDirection: 'row',
     gap: 12,
@@ -1447,6 +1388,17 @@ const createStyles = (colors: ColorTheme, isDark: boolean) =>
   },
   dishImagePlaceholder: {
     backgroundColor: colors.surfaceElevated,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bestsellerFavBtn: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },

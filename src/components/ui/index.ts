@@ -7,3 +7,5 @@ export * from './Header';
 export * from './LanguageSwitcher';
 export * from './GoogleSignInButton';
 export * from './FloatingCartBar';
+export * from './DietaryIcon';
+export * from './MenuCardHorizontal';

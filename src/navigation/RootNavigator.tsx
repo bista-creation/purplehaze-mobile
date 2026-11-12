@@ -3,10 +3,8 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { NavigationContainer, LinkingOptions, DefaultTheme, DarkTheme, getStateFromPath } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { useCartStore } from '../stores/cart-store';
 import { useTheme } from '../stores/theme-store';
 import { useI18n } from '../i18n';
-import { colors } from '../theme';
 
 // Screens
 import { HomeScreen } from '../screens/HomeScreen';

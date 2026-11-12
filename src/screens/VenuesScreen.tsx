@@ -12,7 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Header, Card, Typography, Badge, Button, Input } from '../components/ui';
 import { useTheme } from '../stores/theme-store';
 import { useI18n } from '../i18n';
-import { colors as defaultColors, ColorTheme, spacing, borderRadius } from '../theme';
+import { ColorTheme, spacing, borderRadius } from '../theme';
 import { api, type VenueDto } from '../services/api-client';
 
 export const VenuesScreen: React.FC<any> = ({ navigation }) => {

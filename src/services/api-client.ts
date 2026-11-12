@@ -225,12 +225,12 @@ export interface TrackOrderResultDto {
   subtotal: number;
   deliveryFee: number;
   createdAt: string;
-  items: Array<{
+  items: {
     name: string;
     quantity: number;
     unitPrice: number;
     lineTotal: number;
-  }>;
+  }[];
 }
 
 export interface AdminSummaryDto {
@@ -245,7 +245,7 @@ export interface AdminSummaryDto {
 
 export interface AdminReportDto {
   summary: AdminSummaryDto;
-  recentOrders: Array<{
+  recentOrders: {
     id: string;
     orderNumber: string;
     customerName: string;
@@ -253,13 +253,13 @@ export interface AdminReportDto {
     status: string;
     type: string;
     createdAt: string;
-  }>;
-  topSellingDishes: Array<{
+  }[];
+  topSellingDishes: {
     dishId: string;
     name: string;
     quantitySold: number;
     totalSalesPaisa: number;
-  }>;
+  }[];
 }
 
 export interface AdminOrderDto {
@@ -282,7 +282,7 @@ export interface AdminOrderDto {
   createdAt: string;
   acceptedAt?: string | null;
   acceptedBy?: string | null;
-  items?: Array<{
+  items?: {
     id: string;
     name: string;
     quantity: number;
@@ -290,14 +290,14 @@ export interface AdminOrderDto {
     lineTotal?: number;
     specialInstructions?: string | null;
     variantName?: string | null;
-  }>;
-  statusHistory?: Array<{
+  }[];
+  statusHistory?: {
     id: string;
     status: string;
     note?: string | null;
     changedBy?: string | null;
     createdAt: string;
-  }>;
+  }[];
 }
 
 export interface DispatchDeliveryDto {
@@ -326,7 +326,7 @@ export interface DispatchDeliveryDto {
   arrivedAt: string | null;
   isStuckAssigned: boolean;
   failureReason: string | null;
-  items: Array<{ name: string; quantity: number }>;
+  items: { name: string; quantity: number }[];
 }
 
 export interface UndispatchedOrderDto {
@@ -339,7 +339,7 @@ export interface UndispatchedOrderDto {
   status: string;
   paymentMethod: string;
   createdAt: string;
-  items: Array<{ name: string; quantity: number }>;
+  items: { name: string; quantity: number }[];
 }
 
 export interface OnDutyRiderDto {
@@ -378,7 +378,7 @@ export interface AdminOrderDetailDto {
   updatedAt?: string;
   acceptedAt?: string | null;
   acceptedBy?: string | null;
-  items: Array<{
+  items: {
     id: string;
     name: string;
     quantity: number;
@@ -386,14 +386,14 @@ export interface AdminOrderDetailDto {
     lineTotal?: number;
     specialInstructions?: string | null;
     variantName?: string | null;
-  }>;
-  statusHistory?: Array<{
+  }[];
+  statusHistory?: {
     id: string;
     status: string;
     note?: string | null;
     changedBy?: string | null;
     createdAt: string;
-  }>;
+  }[];
   delivery?: {
     id: string;
     status: string;
@@ -449,7 +449,7 @@ function notifyAuthExpired() {
 }
 
 let isRefreshing = false;
-let refreshSubscribers: Array<(newToken: string | null) => void> = [];
+let refreshSubscribers: ((newToken: string | null) => void)[] = [];
 
 function onTokenRefreshed(newToken: string | null) {
   refreshSubscribers.forEach((callback) => callback(newToken));
@@ -719,7 +719,7 @@ export const api = {
   },
 
   assistant: {
-    chat: (message: string, history?: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>) =>
+    chat: (message: string, history?: { role: 'user' | 'assistant' | 'system'; content: string }[]) =>
       request<{ reply: string; suggestedActions?: string[] }>('/assistant/chat', {
         method: 'POST',
         body: JSON.stringify({ message, history }),
@@ -823,6 +823,7 @@ export const api = {
 // ----------------------------------------------------
 
 export const offlineCategories: CategoryDto[] = [
+  { id: 'cat-chef', name: "Chef's Recommendations", slug: 'chef-recommendations', sortOrder: 0, dishCount: 4 },
   { id: 'cat-nepali', name: 'Nepali Authentic', slug: 'nepali', sortOrder: 1, dishCount: 4 },
   { id: 'cat-indian', name: 'Indian Tandoor & Curries', slug: 'indian', sortOrder: 2, dishCount: 3 },
   { id: 'cat-asian', name: 'Asian & Momo', slug: 'asian', sortOrder: 3, dishCount: 4 },
@@ -834,7 +835,7 @@ export const offlineDishes: DishDto[] = [
     id: 'dish-1',
     name: 'Steamed Chicken Momo (10 pcs)',
     slug: 'steamed-chicken-momo',
-    description: 'Biratnagar favorite! Minced chicken with Himalayan herbs, served with spicy tomato timur chutney.',
+    description: 'Juicy minced chicken infused with wild Himalayan timur pepper, scallions, and roasted coriander; served with stone-ground tomato timur chutney.',
     price: 24000,
     isVeg: false,
     isAvailable: true,
@@ -847,7 +848,7 @@ export const offlineDishes: DishDto[] = [
     id: 'dish-2',
     name: 'Special Chicken Jhol Momo',
     slug: 'special-chicken-jhol-momo',
-    description: 'Juicy steamed momos immersed in a rich, tangy sesame-peanut broth with cilantro.',
+    description: 'Juicy steamed dumplings immersed in a fragrant, tangy sesame-peanut broth spiked with wild Himalayan timur and garden cilantro.',
     price: 28000,
     isVeg: false,
     isAvailable: true,
@@ -860,7 +861,7 @@ export const offlineDishes: DishDto[] = [
     id: 'dish-3',
     name: 'Paneer Butter Masala',
     slug: 'paneer-butter-masala',
-    description: 'Fresh cottage cheese cubes cooked in a velvety tomato-cashew butter gravy infused with kasuri methi.',
+    description: 'Artisanal cottage cheese simmered in a velvety slow-reduced tomato-cashew butter gravy infused with fragrant mountain kasuri methi.',
     price: 38000,
     isVeg: true,
     isAvailable: true,
@@ -873,7 +874,7 @@ export const offlineDishes: DishDto[] = [
     id: 'dish-4',
     name: 'Purple Haze Chicken Sizzler',
     slug: 'purple-haze-chicken-sizzler',
-    description: 'Grilled tender chicken breast served on a smoking iron platter with garlic rice, buttered vegetables, and pepper sauce.',
+    description: 'Flame-grilled tender chicken breast sizzling over cast iron with charcoal embers, buttered garden vegetables, garlic rice, and cracked black pepper jus.',
     price: 55000,
     isVeg: false,
     isAvailable: true,
@@ -886,7 +887,7 @@ export const offlineDishes: DishDto[] = [
     id: 'dish-5',
     name: 'Crispy Buff Sukuti Sadeko',
     slug: 'crispy-buff-sukuti-sadeko',
-    description: 'Traditional dried buffalo meat tossed with mustard oil, roasted cumin, garlic, green chilies, and fresh ginger.',
+    description: 'Highland cured meat crisped over open fire, hand-tossed in pungent stone-ground mustard oil, wild Himalayan timur pepper, charred garlic, and green chilies.',
     price: 32000,
     isVeg: false,
     isAvailable: true,
@@ -899,7 +900,7 @@ export const offlineDishes: DishDto[] = [
     id: 'dish-6',
     name: 'Newari Chicken Choila',
     slug: 'newari-chicken-choila',
-    description: 'Smokey clay-oven roasted chicken marinated with fenugreek seeds, mustard oil, garlic, and fresh green chili.',
+    description: 'Smokey chicken roasted over glowing charcoal embers, seasoned with raw mustard oil, roasted fenugreek, and crushed Newari spices.',
     price: 35000,
     isVeg: false,
     isAvailable: true,
@@ -907,6 +908,42 @@ export const offlineDishes: DishDto[] = [
     categoryName: 'Nepali Authentic',
     categorySlug: 'nepali',
     image: 'https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?w=600&q=80',
+  },
+  {
+    id: 'dish-7',
+    name: 'Mutton Fila (Charcoal Grilled)',
+    slug: 'mutton-fila-charcoal-grilled',
+    description: 'Prime cuts of tender mutton steeped in stone-ground mustard oil and wild Himalayan timur, flame-kissed over charcoal embers with rich Newari spices.',
+    price: 58000,
+    isVeg: false,
+    isAvailable: true,
+    categoryId: 'cat-nepali',
+    categoryName: 'Nepali Authentic',
+    categorySlug: 'nepali',
+    image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=600&q=80',
+    variants: [
+      { id: 'v-fila-med', name: 'Medium Well & Juicy', priceDelta: 0, isDefault: true },
+      { id: 'v-fila-char', name: 'Charred Crispy Edge', priceDelta: 0 },
+      { id: 'v-fila-timur', name: 'Extra Wild Timur Crust', priceDelta: 3000 },
+    ],
+  },
+  {
+    id: 'dish-8',
+    name: 'Special Newari Khaja Set',
+    slug: 'special-newari-khaja-set',
+    description: 'Authentic royal Newari feast: beaten baji rice, charcoal choila, aloo tama curry, bhatmas sadeko, and house-pickled radish in stone-ground mustard oil.',
+    price: 45000,
+    isVeg: false,
+    isAvailable: true,
+    categoryId: 'cat-nepali',
+    categoryName: 'Nepali Authentic',
+    categorySlug: 'nepali',
+    image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=600&q=80',
+    variants: [
+      { id: 'v-khaja-chicken', name: 'Chicken Choila Style', priceDelta: 0, isDefault: true },
+      { id: 'v-khaja-buff', name: 'Buff Sukuti Style', priceDelta: 4000 },
+      { id: 'v-khaja-veg', name: 'Mushroom & Paneer (Veg)', priceDelta: -3000 },
+    ],
   },
 ];
 

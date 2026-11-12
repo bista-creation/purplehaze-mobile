@@ -11,7 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useCartStore } from '../stores/cart-store';
 import { useTheme } from '../stores/theme-store';
 import { useI18n } from '../i18n';
-import { colors as defaultColors, ColorTheme, spacing, borderRadius } from '../theme';
+import { ColorTheme, spacing, borderRadius } from '../theme';
 
 export function CartScreen({ navigation }: any) {
   const { t, formatCurrency } = useI18n();

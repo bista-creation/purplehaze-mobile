@@ -3,7 +3,6 @@ import {
   View,
   Text,
   FlatList,
-  Image,
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
@@ -15,15 +14,14 @@ import { useCartStore } from '../stores/cart-store';
 import { useFavoritesStore } from '../stores/favorites-store';
 import { useTheme } from '../stores/theme-store';
 import { useI18n } from '../i18n';
-import { Header } from '../components/ui';
-import { isPlaceholderDescription } from '../shared';
-import { colors as defaultColors, ColorTheme, spacing, borderRadius } from '../theme';
+import { Header, FloatingCartBar, MenuCardHorizontal } from '../components/ui';
+import { ColorTheme, spacing, borderRadius } from '../theme';
 
 export function FavoritesScreen({ navigation }: any) {
-  const { t, formatCurrency } = useI18n();
+  const { t } = useI18n();
   const { colors } = useTheme();
-  const { favoriteDishIds, toggleFavorite, isFavorite } = useFavoritesStore();
-  const addItem = useCartStore((s) => s.addItem);
+  const { favoriteDishIds, toggleFavorite } = useFavoritesStore();
+  const cartItemCount = useCartStore((s) => s.getItemCount());
 
   const styles = useMemo(() => createStyles(colors), [colors]);
 
@@ -99,7 +97,10 @@ export function FavoritesScreen({ navigation }: any) {
         <FlatList
           data={favoriteDishes}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[
+            styles.listContent,
+            { paddingBottom: cartItemCount > 0 ? 140 : 24 },
+          ]}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
@@ -112,72 +113,19 @@ export function FavoritesScreen({ navigation }: any) {
             />
           }
           renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.dishCard}
+            <MenuCardHorizontal
+              dish={item}
               onPress={() => navigation.navigate('DishDetail', { dish: item })}
-              activeOpacity={0.9}
-            >
-              <View style={styles.dishLeft}>
-                <View style={styles.vegIndicatorRow}>
-                  <View
-                    style={[
-                      styles.vegDot,
-                      { backgroundColor: item.isVeg ? colors.veg : colors.nonVeg },
-                    ]}
-                  />
-                  <Text style={styles.vegText}>{item.isVeg ? t.favorites.veg : t.favorites.nonVeg}</Text>
-                </View>
-
-                <Text style={styles.dishName}>{item.name}</Text>
-                <Text style={styles.dishPrice}>{formatCurrency(item.price)}</Text>
-                {item.description && !isPlaceholderDescription(item.description) ? (
-                  <Text style={styles.dishDescription} numberOfLines={2}>
-                    {item.description}
-                  </Text>
-                ) : null}
-              </View>
-
-              <View style={styles.dishRight}>
-                <View style={styles.imageContainer}>
-                  {item.image ? (
-                    <Image source={{ uri: item.image }} style={styles.dishImage} />
-                  ) : (
-                    <View style={[styles.dishImage, styles.placeholderImage]}>
-                      <Ionicons name="restaurant-outline" size={24} color={colors.textMuted} />
-                    </View>
-                  )}
-                  <TouchableOpacity
-                    style={styles.removeFavBtn}
-                    onPress={() => toggleFavorite(item.id)}
-                    activeOpacity={0.8}
-                  >
-                    <Ionicons name="heart" size={16} color="#EF4444" />
-                  </TouchableOpacity>
-                </View>
-
-                <TouchableOpacity
-                  style={styles.addButton}
-                  onPress={() => {
-                    addItem({
-                      dishId: item.id,
-                      name: item.name,
-                      slug: item.slug || 'dish',
-                      basePrice: item.price,
-                      quantity: 1,
-                      variantPriceDelta: 0,
-                      addOns: [],
-                      image: item.image || null,
-                    });
-                  }}
-                  activeOpacity={0.85}
-                >
-                  <Text style={styles.addButtonText}>{t.favorites.add}</Text>
-                </TouchableOpacity>
-              </View>
-            </TouchableOpacity>
+              onOptionsPress={() => navigation.navigate('DishDetail', { dish: item })}
+              isFavorited
+              onToggleFavorite={() => toggleFavorite(item.id)}
+            />
           )}
         />
       )}
+
+      {/* Floating Persistent Cart Summary Bar */}
+      <FloatingCartBar onPress={() => navigation.navigate('Cart')} />
     </View>
   );
 }

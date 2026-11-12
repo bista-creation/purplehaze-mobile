@@ -20,10 +20,10 @@ interface FloatingCartBarProps {
 
 export const FloatingCartBar: React.FC<FloatingCartBarProps> = ({ onPress }) => {
   const { colors } = useTheme();
-  const { formatCurrency } = useI18n();
+  const { t, formatCurrency } = useI18n();
 
   const cartItemCount = useCartStore((s) => s.getItemCount());
-  const cartSubtotal = useCartStore((s) => s.getSubtotalNpr());
+  const cartSubtotal = useCartStore((s) => s.getSubtotalPaisa());
   const hasCartItems = cartItemCount > 0;
 
   const [reduceMotion, setReduceMotion] = useState(false);
@@ -108,10 +108,8 @@ export const FloatingCartBar: React.FC<FloatingCartBarProps> = ({ onPress }) => 
   }
 
   // Render geometry:
-  // The parent screen container in @react-navigation/bottom-tabs terminates exactly at
-  // the top edge of the 62px bottom tab bar. Setting bottom: 8 positions the 50px pill
-  // with an exact 8px clearance directly above the real bottom tab bar without floating high.
-  const bottomPosition = 8;
+  // Positioned safely at bottom: 74px to clear bottom navigation dock and avoid overlapping
+  const bottomPosition = 74;
 
   const styles = createStyles(colors);
 
@@ -133,7 +131,7 @@ export const FloatingCartBar: React.FC<FloatingCartBarProps> = ({ onPress }) => 
         onPress={onPress}
         activeOpacity={0.9}
       >
-        {/* Left: Basket Icon & Count Badge */}
+        {/* Left: Basket Icon & Running Subtotal */}
         <View style={styles.leftSection}>
           <Animated.View
             style={[
@@ -142,23 +140,18 @@ export const FloatingCartBar: React.FC<FloatingCartBarProps> = ({ onPress }) => 
             ]}
           >
             <Ionicons name="bag-handle" size={15} color="#FFFFFF" />
-            <View style={styles.countBubble}>
-              <Text style={styles.countBubbleText}>{cartItemCount}</Text>
-            </View>
           </Animated.View>
 
           <View style={styles.infoCol}>
-            <Text style={styles.itemCountText}>
-              {cartItemCount} {cartItemCount === 1 ? 'item' : 'items'}
+            <Text style={styles.subtotalText}>
+              [ {cartItemCount} {cartItemCount === 1 ? 'Item' : 'Items'} · {formatCurrency(cartSubtotal)} ]
             </Text>
-            <Text style={styles.subtotalText}>{formatCurrency(cartSubtotal)}</Text>
           </View>
         </View>
 
-        {/* Right: Obvious View Cart Pill Action */}
+        {/* Right: Clear Checkout Trigger */}
         <View style={styles.actionPill}>
-          <Text style={styles.actionPillText}>View Cart</Text>
-          <Ionicons name="arrow-forward" size={13} color={colors.purpleDark} />
+          <Text style={styles.actionPillText}>{t.menu.viewTrayCheckout}</Text>
         </View>
       </TouchableOpacity>
     </Animated.View>

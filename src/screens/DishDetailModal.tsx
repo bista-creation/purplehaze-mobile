@@ -12,8 +12,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useCartStore } from '../stores/cart-store';
 import { useTheme } from '../stores/theme-store';
 import { useI18n } from '../i18n';
-import { colors as defaultColors, ColorTheme, spacing, borderRadius } from '../theme';
+import { ColorTheme, spacing, borderRadius } from '../theme';
 import { isPlaceholderDescription } from '../shared';
+import { DietaryIcon } from '../components/ui';
 import type { DishDto } from '../services/api-client';
 
 export function DishDetailModal({ route, navigation }: any) {
@@ -137,9 +138,9 @@ export function DishDetailModal({ route, navigation }: any) {
           {/* Dietary & Spice Tags */}
           <View style={styles.tagRow}>
             <View style={[styles.dietBadge, dish.isVeg ? styles.vegBadge : styles.nonVegBadge]}>
-              <View style={[styles.dietDot, dish.isVeg ? styles.vegDot : styles.nonVegDot]} />
+              <DietaryIcon isVeg={dish.isVeg} size={15} style={{ marginRight: 6 }} />
               <Text style={[styles.dietText, dish.isVeg ? styles.vegText : styles.nonVegText]}>
-                {dish.isVeg ? 'Vegetarian' : 'Non-Vegetarian'}
+                {dish.isVeg ? t.menu.veg : t.menu.nonVeg}
               </Text>
             </View>
             {dish.isSpicy && (
@@ -332,6 +333,7 @@ const createStyles = (colors: ColorTheme) =>
     borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 10,
   },
   content: {
     padding: spacing.lg,

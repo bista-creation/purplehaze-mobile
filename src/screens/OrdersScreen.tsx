@@ -16,7 +16,8 @@ import { useAuthStore } from '../stores/auth-store';
 import { useCartStore } from '../stores/cart-store';
 import { useTheme } from '../stores/theme-store';
 import { useI18n } from '../i18n';
-import { ColorTheme, colors as defaultColors, spacing, borderRadius } from '../theme';
+import { Header } from '../components/ui';
+import { ColorTheme, spacing, borderRadius } from '../theme';
 import { STATUS_META } from '../shared/constants';
 import type { OrderDto } from '../shared/types';
 
@@ -123,8 +124,6 @@ export default function OrdersScreen({ navigation }: OrdersScreenProps) {
   };
 
   const renderOrderItem = ({ item }: { item: OrderDto }) => {
-    const isCancelled = item.status === 'CANCELLED';
-    const isCompleted = item.status === 'COMPLETED';
     const meta = STATUS_META[item.status] || { label: item.status, color: '#a855f7' };
 
     return (
@@ -180,6 +179,7 @@ export default function OrdersScreen({ navigation }: OrdersScreenProps) {
   if (!isAuthenticated) {
     return (
       <View style={styles.container}>
+        <Header />
         <View style={styles.guestContainer}>
           <Ionicons name="receipt-outline" size={64} color="#7c3aed" />
           <Text style={styles.guestTitle}>{t.orders.trackViewOrders}</Text>
@@ -241,6 +241,7 @@ export default function OrdersScreen({ navigation }: OrdersScreenProps) {
 
   return (
     <View style={styles.container}>
+      <Header />
       {loading && !refreshing ? (
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color="#a855f7" />

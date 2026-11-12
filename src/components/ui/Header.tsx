@@ -1,16 +1,20 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Platform, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { useI18n } from '../../i18n';
 import { useTheme } from '../../stores/theme-store';
+import { useCartStore } from '../../stores/cart-store';
 import { colors, spacing } from '../../theme';
 
 export interface HeaderProps {
   showTagline?: boolean;
   showLocation?: boolean;
   showBack?: boolean;
+  showDynamicGreeting?: boolean;
   onBack?: () => void;
+  onCartPress?: () => void;
   rightAction?: React.ReactNode;
 }
 
@@ -18,13 +22,29 @@ export const Header: React.FC<HeaderProps> = ({
   showTagline = false,
   showLocation = true,
   showBack = false,
+  showDynamicGreeting,
   onBack,
+  onCartPress,
   rightAction,
 }) => {
   const { t } = useI18n();
   const { colors, isDark, toggleTheme } = useTheme();
+  const navigation = useNavigation<any>();
+  const cartItemCount = useCartStore((s) => s.getItemCount());
   const { width } = useWindowDimensions();
   const isCompactHeader = width < 400;
+  const isGreetingVisible = showDynamicGreeting ?? !showBack;
+
+  const currentHour = new Date().getHours();
+  const dynamicGreeting = useMemo(() => {
+    if (currentHour >= 17 && currentHour < 23) {
+      return t.home.eveningGreeting;
+    }
+    if (currentHour >= 11 && currentHour < 16) {
+      return t.home.afternoonGreeting;
+    }
+    return t.home.defaultGreeting;
+  }, [currentHour, t.home]);
 
   return (
     <View
@@ -97,6 +117,31 @@ export const Header: React.FC<HeaderProps> = ({
         <View style={[styles.actionsRow, isCompactHeader && styles.actionsRowCompact]}>
           {rightAction}
           <TouchableOpacity
+            onPress={() => {
+              if (onCartPress) {
+                onCartPress();
+              } else {
+                try {
+                  navigation?.navigate?.('Cart');
+                } catch {
+                  // Fallback
+                }
+              }
+            }}
+            style={[styles.cartToggle, isCompactHeader && styles.cartToggleCompact, { backgroundColor: colors.background, borderColor: colors.surfaceBorder }]}
+            accessibilityRole="button"
+            accessibilityLabel={`Shopping cart with ${cartItemCount} items`}
+            activeOpacity={0.75}
+            hitSlop={8}
+          >
+            <Ionicons name="bag-handle-outline" size={17} color={colors.purple} />
+            {cartItemCount > 0 ? (
+              <View style={[styles.cartBadge, { backgroundColor: colors.gold }]}>
+                <Text style={styles.cartBadgeText}>{cartItemCount > 99 ? '99+' : cartItemCount}</Text>
+              </View>
+            ) : null}
+          </TouchableOpacity>
+          <TouchableOpacity
             onPress={() => { void toggleTheme(); }}
             style={[styles.themeToggle, isCompactHeader && styles.themeToggleCompact, { backgroundColor: colors.background, borderColor: colors.surfaceBorder }]}
             accessibilityRole="switch"
@@ -111,6 +156,22 @@ export const Header: React.FC<HeaderProps> = ({
           <LanguageSwitcher compact={isCompactHeader} />
         </View>
       </View>
+
+      {isGreetingVisible ? (
+        <View
+          style={[
+            styles.greetingBanner,
+            {
+              backgroundColor: isDark ? 'rgba(168, 85, 247, 0.08)' : 'rgba(126, 34, 206, 0.05)',
+              borderColor: isDark ? 'rgba(216, 173, 104, 0.22)' : 'rgba(216, 173, 104, 0.32)',
+            },
+          ]}
+        >
+          <Text style={[styles.greetingBannerText, { color: colors.goldText }]} numberOfLines={1}>
+            {dynamicGreeting}
+          </Text>
+        </View>
+      ) : null}
 
       {showTagline ? (
         <Text style={[styles.tagline, { color: colors.textMuted }]}>
@@ -262,6 +323,50 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 15,
+  },
+  cartToggle: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  cartToggleCompact: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+  },
+  cartBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 3,
+  },
+  cartBadgeText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#130B1D',
+  },
+  greetingBanner: {
+    marginTop: spacing.xs,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  greetingBannerText: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.1,
   },
   tagline: {
     fontSize: 11,

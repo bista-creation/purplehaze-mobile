@@ -18,8 +18,9 @@ function AppRouter() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const user = useAuthStore((state) => state.user);
   const canAccessAdmin = user?.role === 'ADMIN' || user?.role === 'STAFF';
-  const topPadding = Math.max(insets.top, Platform.OS === 'android' ? NativeStatusBar.currentHeight || 0 : 0);
-  const bottomPadding = Math.max(insets.bottom, 0);
+  const topPadding =
+    Math.max(insets.top, Platform.OS === 'android' ? NativeStatusBar.currentHeight || 0 : 0) + 5;
+  const bottomPadding = Math.max(insets.bottom, 0) + 3;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.surface, paddingTop: topPadding, paddingBottom: bottomPadding }]}>
@@ -35,7 +36,7 @@ function AppRouter() {
         </Stack.Protected>
         <Stack.Screen name="index" />
       </Stack>
-      {isAuthenticated ? <MayaFloatingWidget /> : null}
+      <MayaFloatingWidget />
     </View>
   );
 }
@@ -49,6 +50,18 @@ export default function RootLayout() {
     useLanguageStore.getState().initLanguage();
     useFavoritesStore.getState().initFavorites();
     void Font.loadAsync({ 'DancingScript-Bold': require('../../assets/fonts/DancingScript-Bold.ttf') });
+
+    if (Platform.OS === 'web' && typeof document !== 'undefined') {
+      const fontId = 'dancing-script-google-font';
+      if (!document.getElementById(fontId)) {
+        const link = document.createElement('link');
+        link.id = fontId;
+        link.rel = 'stylesheet';
+        link.href = 'https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&display=swap';
+        document.head.appendChild(link);
+      }
+    }
+
     void checkAuth();
     void pushNotifications.registerForPushNotifications().catch(() => {});
     const notificationSubscription = pushNotifications.addNotificationResponseListener((data) => {

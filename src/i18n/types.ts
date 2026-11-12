@@ -30,6 +30,9 @@ export interface Translations {
     greeting: string;
     guest: string;
     subtitle: string;
+    eveningGreeting: string;
+    afternoonGreeting: string;
+    defaultGreeting: string;
     askMaya: string;
     searchPlaceholder: string;
     bannerGardenTitle: string;
@@ -55,6 +58,11 @@ export interface Translations {
     deliveryTakeaway: string;
     bookTable: string;
     dineInRooftop: string;
+    gardenCabinTitle: string;
+    gardenCabinSubtitle: string;
+    kitchenTakeawayTitle: string;
+    kitchenTakeawaySubtitle: string;
+    readyInMins: string;
     reserveNow: string;
     banquetsParties: string;
     weddingsEventsHalls: string;
@@ -113,6 +121,8 @@ export interface Translations {
     chooseVariant: string;
     optionalAddOns: string;
     cookingInstructions: string;
+    optionsAvailable: string;
+    viewTrayCheckout: string;
   };
   cart: {
     title: string;
@@ -172,6 +182,7 @@ export interface Translations {
     seatingPreference: string;
     indoor: string;
     rooftop: string;
+    privateCabins: string;
     garden: string;
     occasion: string;
     birthday: string;

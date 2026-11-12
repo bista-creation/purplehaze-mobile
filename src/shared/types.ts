@@ -82,7 +82,7 @@ export type MenuDishDto = {
   prepTime: number;
   calories?: number | null;
   variants: DishVariantDto[];
-  addOns: Array<{ addOn: DishAddOnDto }>;
+  addOns: { addOn: DishAddOnDto }[];
 };
 
 export type CartItem = {
@@ -95,7 +95,7 @@ export type CartItem = {
   variantId?: string | null;
   variantName?: string | null;
   variantPriceDelta: number;
-  addOns: Array<{ id: string; name: string; price: number }>;
+  addOns: { id: string; name: string; price: number }[];
   instructions?: string;
   quantity: number;
   lineTotal: number;
@@ -129,7 +129,7 @@ export type OrderDto = {
   deliveryAddress?: string | null;
   notes?: string | null;
   createdAt: string;
-  items: Array<{
+  items: {
     id: string;
     name: string;
     quantity: number;
@@ -138,7 +138,7 @@ export type OrderDto = {
     variantName?: string | null;
     addOns?: string | null;
     instructions?: string | null;
-  }>;
+  }[];
 };
 
 export type AddressDto = {

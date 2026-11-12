@@ -48,10 +48,10 @@ export const useLanguageStore = create<LanguageState>((set) => ({
 export const useI18n = () => {
   const { language, translations, setLanguage } = useLanguageStore();
 
-  const formatCurrency = (amount: number): string => {
+  const formatCurrency = (amountInPaisa: number): string => {
     const symbol = translations.common.currency;
     // Canonical backend monetary amounts are in Paisa (1 NPR = 100 Paisa)
-    const rupees = amount >= 1000 ? Math.round(amount / 100) : Math.round(amount);
+    const rupees = Math.round((amountInPaisa || 0) / 100);
     const formattedNum = rupees.toLocaleString('en-IN');
     
     if (language === 'ne') {

@@ -8,10 +8,10 @@ import {
   Text,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Header, Card, Typography, Input, Button, Badge } from '../components/ui';
+import { Header, Card, Typography, Input, Button } from '../components/ui';
 import { useTheme } from '../stores/theme-store';
 import { useI18n } from '../i18n';
-import { colors as defaultColors, ColorTheme, spacing, borderRadius } from '../theme';
+import { ColorTheme, spacing, borderRadius } from '../theme';
 import { api } from '../services/api-client';
 
 export const ReservationsScreen: React.FC<any> = ({ navigation }) => {
@@ -37,7 +37,7 @@ export const ReservationsScreen: React.FC<any> = ({ navigation }) => {
     return d.toISOString().split('T')[0];
   });
   const [time, setTime] = useState('19:00');
-  const [seatingPreference, setSeatingPreference] = useState<'rooftop' | 'garden' | 'indoor'>('rooftop');
+  const [seatingPreference, setSeatingPreference] = useState<'cabin' | 'garden' | 'indoor'>('garden');
   const [occasion, setOccasion] = useState<'casual' | 'birthday' | 'anniversary' | 'business'>('casual');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -130,7 +130,7 @@ export const ReservationsScreen: React.FC<any> = ({ navigation }) => {
             </Typography>
             <View style={styles.pillRow}>
               {[
-                { id: 'rooftop', label: t.reservations.rooftop, icon: 'cloudy-night-outline' },
+                { id: 'cabin', label: t.reservations.privateCabins, icon: 'shield-checkmark-outline' },
                 { id: 'garden', label: t.reservations.garden, icon: 'leaf-outline' },
                 { id: 'indoor', label: t.reservations.indoor, icon: 'restaurant-outline' },
               ].map((opt) => (

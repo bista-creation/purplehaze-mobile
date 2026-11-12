@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, StyleSheet, Platform, ActivityIndicator, Text } from 'react-native';
+import { View, StyleSheet, Platform, ActivityIndicator, Text, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useThemeStore } from '../stores/theme-store';
 
 const ASSISTANT_URL = 'https://mani-ai-psi.vercel.app/embed/purple-haze';
@@ -8,7 +9,7 @@ const NATIVE_CLOSE_BRIDGE = `(function() {
   window.__purpleHazeMayaCloseBridge = true;
   var sendClose = function() {
     if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
-      window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'mani-ai:close' }));
+      window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'mani-ai:close', action: 'close' }));
     }
   };
   window.addEventListener('message', function(event) {
@@ -22,7 +23,7 @@ const NATIVE_CLOSE_BRIDGE = `(function() {
   });
   document.addEventListener('click', function(event) {
     var target = event.target;
-    var closeButton = target && target.closest && target.closest('button[aria-label="Close Assistant"], button[title="Close Assistant"]');
+    var closeButton = target && target.closest && target.closest('button[aria-label="Close Assistant"], button[title="Close Assistant"], button[aria-label="Close"], button.close-btn');
     if (closeButton) {
       event.preventDefault();
       event.stopPropagation();
@@ -36,12 +37,28 @@ const NATIVE_CLOSE_BRIDGE = `(function() {
 function isMayaCloseMessage(value: unknown): boolean {
   let data = value;
   if (typeof data === 'string') {
-    try { data = JSON.parse(data); } catch {
-      return data === 'mani-ai:close';
+    try {
+      data = JSON.parse(data);
+    } catch {
+      return (
+        data === 'mani-ai:close' ||
+        data === 'close' ||
+        data === 'close-modal' ||
+        data === 'hide'
+      );
     }
   }
-  return !!data && typeof data === 'object' &&
-    ('type' in data && data.type === 'mani-ai:close' || 'action' in data && data.action === 'close');
+  if (!data || typeof data !== 'object') return false;
+  const d = data as Record<string, unknown>;
+  return Boolean(
+    d.type === 'mani-ai:close' ||
+    d.action === 'close' ||
+    d.type === 'close' ||
+    d.event === 'close' ||
+    d.message === 'close' ||
+    d.action === 'dismiss' ||
+    d.type === 'dismiss'
+  );
 }
 
 interface MayaAssistantEmbedProps {
@@ -79,6 +96,16 @@ export const MayaAssistantEmbed: React.FC<MayaAssistantEmbedProps> = ({ onClose,
               { backgroundColor: mode === 'dark' ? 'rgba(19, 11, 29, 0.94)' : 'rgba(250, 248, 255, 0.94)' },
             ]}
           >
+            {onClose && (
+              <TouchableOpacity
+                style={styles.loaderCloseBtn}
+                onPress={onClose}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                accessibilityLabel="Close"
+              >
+                <Ionicons name="close" size={20} color={colors.text} />
+              </TouchableOpacity>
+            )}
             <ActivityIndicator size="large" color={colors.purple} />
             <Text style={[styles.loaderText, { color: colors.textSecondary }]}>
               Connecting to Maya AI...
@@ -107,6 +134,7 @@ export const MayaAssistantEmbed: React.FC<MayaAssistantEmbedProps> = ({ onClose,
   // Native (Android / iOS)
   let WebViewComponent: any = null;
   try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     WebViewComponent = require('react-native-webview').WebView;
   } catch {
     // fallback if webview not available
@@ -115,6 +143,16 @@ export const MayaAssistantEmbed: React.FC<MayaAssistantEmbedProps> = ({ onClose,
   if (!WebViewComponent) {
     return (
       <View style={[styles.container, styles.fallbackContainer, { backgroundColor: colors.surface }]}>
+        {onClose && (
+          <TouchableOpacity
+            style={styles.loaderCloseBtn}
+            onPress={onClose}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityLabel="Close"
+          >
+            <Ionicons name="close" size={20} color={colors.text} />
+          </TouchableOpacity>
+        )}
         <Text style={[styles.fallbackTitle, { color: colors.text }]}>Maya AI Assistant</Text>
         <Text style={[styles.fallbackSub, { color: colors.textSecondary }]}>
           Please launch in browser or web mode to chat with Maya.
@@ -132,6 +170,16 @@ export const MayaAssistantEmbed: React.FC<MayaAssistantEmbedProps> = ({ onClose,
             { backgroundColor: mode === 'dark' ? 'rgba(19, 11, 29, 0.94)' : 'rgba(250, 248, 255, 0.94)' },
           ]}
         >
+          {onClose && (
+            <TouchableOpacity
+              style={styles.loaderCloseBtn}
+              onPress={onClose}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityLabel="Close"
+            >
+              <Ionicons name="close" size={20} color={colors.text} />
+            </TouchableOpacity>
+          )}
           <ActivityIndicator size="large" color={colors.purple} />
           <Text style={[styles.loaderText, { color: colors.textSecondary }]}>
             Connecting to Maya AI...
@@ -173,6 +221,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 1,
     backgroundColor: 'rgba(0,0,0,0.1)',
+  },
+  loaderCloseBtn: {
+    position: 'absolute',
+    top: 14,
+    right: 14,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    zIndex: 2,
   },
   loaderText: {
     marginTop: 10,

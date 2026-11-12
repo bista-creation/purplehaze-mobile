@@ -26,7 +26,7 @@ class MobileRealtimeService {
   private channels = new Map<string, RealtimeChannel>();
 
   async getClient(orderId?: string): Promise<SupabaseClient | null> {
-    if (this.client) return this.client;
+    if (this.client && !orderId) return this.client;
 
     try {
       const authData = await api.post<RealtimeAuthResponse>(
@@ -34,19 +34,21 @@ class MobileRealtimeService {
         orderId ? { orderId } : {}
       );
       if (!authData?.url || !authData?.anonKey || !authData?.token) {
-        return null;
+        return this.client;
       }
 
-      this.client = createClient(authData.url, authData.anonKey, {
-        auth: { persistSession: false, autoRefreshToken: false },
-        realtime: { params: { eventsPerSecond: 5 } },
-      });
+      if (!this.client) {
+        this.client = createClient(authData.url, authData.anonKey, {
+          auth: { persistSession: false, autoRefreshToken: false },
+          realtime: { params: { eventsPerSecond: 5 } },
+        });
+      }
 
       await this.client.realtime.setAuth(authData.token);
       return this.client;
     } catch (e) {
       console.warn("[Realtime] Could not initialize Supabase Realtime client", e);
-      return null;
+      return this.client;
     }
   }
 

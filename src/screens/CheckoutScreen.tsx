@@ -17,7 +17,7 @@ import { useCartStore } from "../stores/cart-store";
 import { useAuthStore } from "../stores/auth-store";
 import { useTheme } from "../stores/theme-store";
 import { useI18n } from "../i18n";
-import { colors as defaultColors, ColorTheme, spacing, borderRadius } from "../theme";
+import { ColorTheme, spacing, borderRadius } from "../theme";
 import type { OrderSummaryDto, PaymentMethod } from "../shared";
 
 export interface DeliveryZone {
@@ -169,7 +169,7 @@ export function CheckoutScreen({ navigation }: any) {
           code: couponCode.trim().toUpperCase(),
           discountPaisa: discount || 0,
         });
-        Alert.alert("Coupon Applied!", `Saved Rs. ${((discount || 0) / 100).toFixed(0)}`);
+        Alert.alert("Coupon Applied!", `Saved ${formatCurrency(discount || 0)}`);
       } else {
         Alert.alert("Invalid Coupon", res?.reason || "This coupon cannot be applied.");
       }
@@ -329,9 +329,14 @@ export function CheckoutScreen({ navigation }: any) {
     }
   };
 
-  const totalNpr = calculation ? calculation.total / 100 : items.reduce((s, i) => s + i.lineTotal, 0) / 100;
-  const deliveryFeeNpr = calculation ? calculation.deliveryFee / 100 : deliveryType === "DELIVERY" ? 100 : 0;
-  const discountNpr = calculation ? calculation.discountAmount / 100 : 0;
+  const subtotalPaisa = calculation?.subtotal ?? items.reduce((s, i) => s + i.lineTotal, 0);
+  const deliveryFeePaisa = calculation
+    ? calculation.deliveryFee
+    : deliveryType === "DELIVERY"
+    ? (zones.find((z) => z.id === selectedZoneId)?.fee ?? 10000)
+    : 0;
+  const discountPaisa = calculation ? calculation.discountAmount : (appliedCoupon?.discountPaisa || 0);
+  const totalPaisa = calculation ? calculation.total : Math.max(0, subtotalPaisa + deliveryFeePaisa - discountPaisa);
 
   if (items.length === 0) {
     return (
@@ -565,8 +570,7 @@ export function CheckoutScreen({ navigation }: any) {
             <View style={styles.appliedBadge}>
               <Ionicons name="checkmark-circle" size={16} color="#22c55e" />
               <Text style={styles.appliedText}>
-                Coupon {appliedCoupon.code} applied (-Rs.{" "}
-                {(appliedCoupon.discountPaisa / 100).toFixed(0)})
+                Coupon {appliedCoupon.code} applied (-{formatCurrency(appliedCoupon.discountPaisa)})
               </Text>
             </View>
           )}
@@ -634,26 +638,26 @@ export function CheckoutScreen({ navigation }: any) {
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>{t.cart.subtotal}</Text>
             <Text style={styles.summaryVal}>
-              {formatCurrency(calculation?.subtotal ?? 0)}
+              {formatCurrency(subtotalPaisa)}
             </Text>
           </View>
           {deliveryType === "DELIVERY" && (
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>{t.cart.deliveryFee}</Text>
-              <Text style={styles.summaryVal}>{formatCurrency(deliveryFeeNpr)}</Text>
+              <Text style={styles.summaryVal}>{formatCurrency(deliveryFeePaisa)}</Text>
             </View>
           )}
-          {discountNpr > 0 && (
+          {discountPaisa > 0 && (
             <View style={styles.summaryRow}>
               <Text style={[styles.summaryLabel, { color: "#22c55e" }]}>{t.cart.discount}</Text>
               <Text style={[styles.summaryVal, { color: "#22c55e" }]}>
-                -{formatCurrency(discountNpr)}
+                -{formatCurrency(discountPaisa)}
               </Text>
             </View>
           )}
           <View style={[styles.summaryRow, styles.totalRow]}>
             <Text style={styles.totalLabel}>{t.cart.totalAmount}</Text>
-            <Text style={styles.totalVal}>{formatCurrency(totalNpr)}</Text>
+            <Text style={styles.totalVal}>{formatCurrency(totalPaisa)}</Text>
           </View>
         </View>
       </ScrollView>
@@ -675,16 +679,16 @@ export function CheckoutScreen({ navigation }: any) {
       {/* Place Order Bar */}
       <View style={styles.footerBar}>
         <TouchableOpacity
-          style={[styles.placeOrderBtn, isSubmitting && styles.btnDisabled]}
+          style={[styles.placeOrderBtn, (isSubmitting || isCalculating) && styles.btnDisabled]}
           onPress={handlePlaceOrder}
-          disabled={isSubmitting}
+          disabled={isSubmitting || isCalculating}
         >
-          {isSubmitting ? (
+          {isSubmitting || isCalculating ? (
             <ActivityIndicator color="#fff" />
           ) : (
             <>
               <Text style={styles.placeOrderText}>
-                Place Order · Rs. {totalNpr.toFixed(0)}
+                Place Order · {formatCurrency(totalPaisa)}
               </Text>
               <Ionicons name="checkmark-circle" size={20} color="#fff" />
             </>

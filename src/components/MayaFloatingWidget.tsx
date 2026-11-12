@@ -6,7 +6,6 @@ import {
   StyleSheet,
   Platform,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useMayaStore } from '../stores/maya-store';
 import { useThemeStore } from '../stores/theme-store';
 import { useCartStore } from '../stores/cart-store';
@@ -71,42 +70,11 @@ export const MayaFloatingWidget: React.FC = () => {
         style={[
           styles.card,
           {
-            backgroundColor: mode === 'dark' ? '#1F132B' : '#FFFFFF',
+            backgroundColor: mode === 'dark' ? '#130B1D' : '#FAF8FF',
             borderColor: colors.gold,
           },
         ]}
       >
-        {/* Top Mini Header with Close Button */}
-        <View
-          style={[
-            styles.headerBar,
-            {
-              borderBottomColor: colors.surfaceBorder,
-              backgroundColor: mode === 'dark' ? '#281A36' : '#FAF7F2',
-            },
-          ]}
-        >
-          <View style={styles.headerTitleRow}>
-            <Text style={styles.headerSparkle}>✨</Text>
-            <Text style={[styles.headerTitle, { color: colors.text }]}>Maya AI Assistant</Text>
-          </View>
-          <TouchableOpacity
-            style={[
-              styles.closeBtn,
-              {
-                backgroundColor: colors.surfaceElevated,
-                borderWidth: 1,
-                borderColor: colors.surfaceBorder,
-              },
-            ]}
-            onPress={closeMaya}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            aria-label="Close Maya Assistant"
-          >
-            <Ionicons name="close" size={18} color={colors.text} />
-          </TouchableOpacity>
-        </View>
-
         {/* Embedded Assistant */}
         <View style={[styles.embedWrapper, { backgroundColor: mode === 'dark' ? '#130B1D' : '#FAF8FF' }]}>
           <MayaAssistantEmbed onClose={closeMaya} />
@@ -169,34 +137,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.35,
     shadowRadius: 24,
     elevation: 16,
-  },
-  headerBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-  },
-  headerTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  headerSparkle: {
-    fontSize: 14,
-  },
-  headerTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    letterSpacing: 0.2,
-  },
-  closeBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   embedWrapper: {
     flex: 1,

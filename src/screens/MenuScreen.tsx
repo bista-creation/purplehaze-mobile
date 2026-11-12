@@ -3,7 +3,6 @@ import {
   View,
   Text,
   FlatList,
-  Image,
   TouchableOpacity,
   StyleSheet,
   TextInput,
@@ -18,14 +17,12 @@ import { mobileRealtime } from '../services/realtime';
 import { useCartStore } from '../stores/cart-store';
 import { useFavoritesStore } from '../stores/favorites-store';
 import { useTheme } from '../stores/theme-store';
-import { useMayaStore } from '../stores/maya-store';
 import { useI18n } from '../i18n';
-import { Header, Badge, FloatingCartBar } from '../components/ui';
-import { isPlaceholderDescription } from '../shared';
-import { colors as defaultColors, ColorTheme, spacing, borderRadius, displayFontFamily } from '../theme';
+import { Header, FloatingCartBar, MenuCardHorizontal } from '../components/ui';
+import { ColorTheme, spacing, borderRadius, displayFontFamily } from '../theme';
 
 export function MenuScreen({ navigation, route }: any) {
-  const { t, formatCurrency, isNepali } = useI18n();
+  const { t, isNepali } = useI18n();
   const { colors } = useTheme();
   const [categories, setCategories] = useState<CategoryDto[]>([]);
   const [dishes, setDishes] = useState<DishDto[]>([]);
@@ -43,9 +40,7 @@ export function MenuScreen({ navigation, route }: any) {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const addItem = useCartStore((s) => s.addItem);
   const cartItemCount = useCartStore((s) => s.getItemCount());
-  const cartSubtotal = useCartStore((s) => s.getSubtotalNpr());
   const { favoriteDishIds, toggleFavorite, isFavorite } = useFavoritesStore();
 
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -135,25 +130,6 @@ export function MenuScreen({ navigation, route }: any) {
 
     return list;
   }, [dishes, selectedCategory, showOnlyFavorites, favoriteDishIds, vegOnly, sortBy, searchQuery]);
-
-  const handleQuickAdd = (dish: DishDto) => {
-    if (dish.isAvailable === false) return;
-    if ((dish.variants && dish.variants.length > 0) || (dish.addOns && dish.addOns.length > 0)) {
-      navigation.navigate('DishDetail', { dish });
-      return;
-    }
-
-    addItem({
-      dishId: dish.id,
-      name: dish.name,
-      slug: dish.slug,
-      image: dish.image,
-      basePrice: dish.price,
-      variantPriceDelta: 0,
-      addOns: [],
-      quantity: 1,
-    });
-  };
 
   if (isLoading) {
     return (
@@ -272,7 +248,7 @@ export function MenuScreen({ navigation, route }: any) {
                   selectedCategory === cat.id && !showOnlyFavorites && styles.categoryPillTextActive,
                 ]}
               >
-                {/nepali/i.test(cat.slug) ? t.menu.nepali : /indian|tandoor|curry/i.test(cat.slug) ? t.menu.indian : /asian/i.test(cat.slug) ? t.menu.asian : /continental|sizzler/i.test(cat.slug) ? t.menu.continental : /beverage|drink|bar/i.test(cat.slug) && isNepali ? 'पेय पदार्थ' : cat.name}
+                {/chef|recommend/i.test(cat.slug) ? (isNepali ? 'शेफका सिफारिस' : "Chef's Specials") : /nepali/i.test(cat.slug) ? t.menu.nepali : /indian|tandoor|curry/i.test(cat.slug) ? t.menu.indian : /asian/i.test(cat.slug) ? t.menu.asian : /continental|sizzler/i.test(cat.slug) ? t.menu.continental : /beverage|drink|bar/i.test(cat.slug) && isNepali ? 'पेय पदार्थ' : cat.name}
               </Text>
             </TouchableOpacity>
           ))}
@@ -317,7 +293,7 @@ export function MenuScreen({ navigation, route }: any) {
         keyExtractor={(item) => item.id}
         contentContainerStyle={[
           styles.listContent,
-          { paddingBottom: cartItemCount > 0 ? 80 : 24 },
+          { paddingBottom: cartItemCount > 0 ? 140 : 24 },
         ]}
         refreshControl={
           <RefreshControl
@@ -329,85 +305,15 @@ export function MenuScreen({ navigation, route }: any) {
             tintColor={colors.gold}
           />
         }
-        renderItem={({ item }) => {
-          const favorited = isFavorite(item.id);
-          const isAvailable = item.isAvailable !== false;
-          return (
-            <TouchableOpacity
-              style={[styles.dishCard, !isAvailable && styles.dishDisabled]}
-              onPress={() => navigation.navigate('DishDetail', { dish: item })}
-              activeOpacity={0.8}
-            >
-              <View style={styles.dishInfo}>
-                <View style={styles.dishBadgeRow}>
-                  <Badge
-                    label={item.isVeg ? t.menu.veg : t.menu.nonVeg}
-                    variant={item.isVeg ? 'veg' : 'nonVeg'}
-                  />
-                  {item.isSpicy ? (
-                    <View style={styles.spicyTag}>
-                      <Ionicons name="flame" size={13} color={colors.nonVeg} />
-                      <Text style={styles.spicyText}>{t.menu.spicy}</Text>
-                    </View>
-                  ) : null}
-                </View>
-
-                <Text style={styles.dishName}>{item.name}</Text>
-                {item.description && !isPlaceholderDescription(item.description) ? (
-                  <Text style={styles.dishDesc} numberOfLines={2}>
-                    {item.description}
-                  </Text>
-                ) : null}
-                <Text style={styles.dishPrice}>{formatCurrency(item.price)}</Text>
-              </View>
-
-              <View style={styles.dishImageWrapper}>
-                {item.image ? (
-                  <Image
-                    source={{ uri: item.image }}
-                    style={styles.dishImage}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <View style={[styles.dishImage, styles.placeholderImage]}>
-                    <Ionicons name="restaurant-outline" size={28} color={colors.gold} />
-                  </View>
-                )}
-
-                {/* Favorite Heart Button */}
-                <TouchableOpacity
-                  style={styles.favoriteButton}
-                  onPress={() => toggleFavorite(item.id)}
-                  activeOpacity={0.7}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                >
-                  <Ionicons
-                    name={favorited ? 'heart' : 'heart-outline'}
-                    size={18}
-                    color={favorited ? '#EF4444' : '#fff'}
-                  />
-                </TouchableOpacity>
-
-                {isAvailable ? (
-                  <TouchableOpacity
-                    style={styles.addButton}
-                    onPress={() => handleQuickAdd(item)}
-                    activeOpacity={0.8}
-                  >
-                    <Ionicons name="add" size={16} color="#fff" />
-                    <Text style={styles.addButtonText}>
-                      {(item.variants && item.variants.length > 0) ? t.menu.customizable : t.menu.addToCart}
-                    </Text>
-                  </TouchableOpacity>
-                ) : (
-                  <View style={styles.soldOutBadge}>
-                    <Text style={styles.soldOutText}>{t.menu.soldOut}</Text>
-                  </View>
-                )}
-              </View>
-            </TouchableOpacity>
-          );
-        }}
+        renderItem={({ item }) => (
+          <MenuCardHorizontal
+            dish={item}
+            onPress={() => navigation.navigate('DishDetail', { dish: item })}
+            onOptionsPress={() => navigation.navigate('DishDetail', { dish: item })}
+            isFavorited={isFavorite(item.id)}
+            onToggleFavorite={() => toggleFavorite(item.id)}
+          />
+        )}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Ionicons name="restaurant-outline" size={48} color={colors.textDisabled} />
