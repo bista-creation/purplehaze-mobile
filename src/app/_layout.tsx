@@ -3,6 +3,8 @@ import { Platform, StatusBar as NativeStatusBar, StyleSheet, View, useColorSchem
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from '../services/query-client';
 import * as Font from 'expo-font';
 import { MayaFloatingWidget } from '../components/MayaFloatingWidget';
 import { pushNotifications } from '../services/push-notifications';
@@ -80,7 +82,13 @@ export default function RootLayout() {
     }
   }, [systemColorScheme]);
 
-  return <SafeAreaProvider><AppRouter /></SafeAreaProvider>;
+  return (
+    <SafeAreaProvider>
+      <QueryClientProvider client={queryClient}>
+        <AppRouter />
+      </QueryClientProvider>
+    </SafeAreaProvider>
+  );
 }
 
 const styles = StyleSheet.create({ container: { flex: 1 } });

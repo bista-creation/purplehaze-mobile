@@ -699,9 +699,37 @@ export const api = {
         method: 'POST',
         body: JSON.stringify(data),
       }),
+
+    getEventBookings: () => request<any[]>('/event-bookings'),
+  },
+
+  deliveryZones: {
+    getAll: () => request<any[]>('/delivery-zones'),
+  },
+
+  checkout: {
+    validateCart: (items: any[]) =>
+      request<{ valid: boolean; issues?: string[] }>('/cart/validate', {
+        method: 'POST',
+        body: JSON.stringify({ items }),
+      }),
+
+    validateCoupon: (code: string, subtotal: number) =>
+      request<{ valid: boolean; discount: number; reason?: string }>('/coupons/validate', {
+        method: 'POST',
+        body: JSON.stringify({ code, subtotal }),
+      }),
+
+    calculate: (payload: any) =>
+      request<any>('/checkout/calculate', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }),
   },
 
   reservations: {
+    getAll: () => request<any[]>('/reservations'),
+
     create: (data: CreateReservationDto) =>
       request<{ id: string; status: string; date: string }>('/reservations', {
         method: 'POST',
@@ -784,6 +812,30 @@ export const api = {
         method: 'POST',
         body: JSON.stringify({ orderId, provider, appScheme: 'purplehaze' }),
       }),
+
+    verifyEsewa: (data: { orderId: string; refId: string; amt: number }) =>
+      request<{ success: boolean; message: string }>('/payments/esewa/verify', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+
+    verifyKhalti: (data: { pidx: string; orderId: string }) =>
+      request<{ success: boolean; message: string }>('/payments/khalti/verify', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+  },
+
+  notifications: {
+    registerPushToken: (token: string, platform?: string) =>
+      request<{ success: boolean }>('/notifications/push-token', {
+        method: 'POST',
+        body: JSON.stringify({ token, platform: platform || 'expo' }),
+      }),
+  },
+
+  realtime: {
+    getToken: () => request<{ token: string; url?: string }>('/realtime/token'),
   },
 
   admin: {
@@ -855,6 +907,20 @@ export const api = {
       request<{ message: string }>(`/admin/reservations`, {
         method: 'PUT',
         body: JSON.stringify({ id, status, tableNumber }),
+      }),
+
+    getEventBookings: (params?: { status?: string; page?: number; limit?: number }) => {
+      const q = new URLSearchParams();
+      if (params?.status) q.set('status', params.status);
+      if (params?.page) q.set('page', String(params.page));
+      if (params?.limit) q.set('limit', String(params.limit || 30));
+      return request<any[]>(`/admin/event-bookings?${q.toString()}`);
+    },
+
+    updateEventBookingStatus: (id: string, status: string, notes?: string) =>
+      request<{ message: string }>(`/admin/event-bookings`, {
+        method: 'PUT',
+        body: JSON.stringify({ id, status, notes }),
       }),
 
     toggleDishAvailability: (id: string, isAvailable: boolean) =>
