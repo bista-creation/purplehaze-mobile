@@ -26,6 +26,8 @@ export const VenuesScreen: React.FC<any> = ({ navigation }) => {
   const [showInquiryModal, setShowInquiryModal] = useState(false);
   const scrollViewRef = useRef<any>(null);
   const venueLayouts = useRef<{ [key: string]: number }>({});
+  const inquiryFormY = useRef<number | null>(null);
+  const shouldScrollToInquiry = useRef(false);
 
   const styles = useMemo(() => createStyles(colors), [colors]);
 
@@ -70,7 +72,20 @@ export const VenuesScreen: React.FC<any> = ({ navigation }) => {
       setGuests('80');
       setEventType('Reception');
     }
+    shouldScrollToInquiry.current = true;
     setShowInquiryModal(true);
+
+    // If the form is already mounted, take the user back to it immediately.
+    // When it is first opened, its onLayout handler performs the scroll.
+    if (inquiryFormY.current !== null) {
+      requestAnimationFrame(() => {
+        scrollViewRef.current?.scrollTo({
+          y: Math.max(0, inquiryFormY.current! - spacing.sm),
+          animated: true,
+        });
+        shouldScrollToInquiry.current = false;
+      });
+    }
   };
 
   const handleScrollToVenue = (venueId: string) => {
@@ -273,7 +288,20 @@ export const VenuesScreen: React.FC<any> = ({ navigation }) => {
 
         {/* Modal / Inline Booking Form */}
         {showInquiryModal ? (
-          <Card variant="goldAccent" style={styles.modalCard}>
+          <Card
+            variant="goldAccent"
+            style={styles.modalCard}
+            onLayout={(event) => {
+              inquiryFormY.current = event.nativeEvent.layout.y;
+              if (shouldScrollToInquiry.current) {
+                const y = Math.max(0, inquiryFormY.current - spacing.sm);
+                requestAnimationFrame(() => {
+                  scrollViewRef.current?.scrollTo({ y, animated: true });
+                  shouldScrollToInquiry.current = false;
+                });
+              }
+            }}
+          >
             <View style={styles.modalHeader}>
               <View>
                 <Typography variant="h3" color={colors.goldText}>
