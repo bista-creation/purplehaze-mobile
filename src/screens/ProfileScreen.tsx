@@ -97,7 +97,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
   };
 
   const callRestaurant = () => {
-    Linking.openURL('tel:+9779852022202').catch(() => {});
+    Linking.openURL('tel:+97721464193').catch(() => {});
   };
 
   return (
@@ -290,7 +290,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
           <TouchableOpacity style={styles.menuItem} onPress={callRestaurant}>
             <View style={styles.menuLeft}>
               <Ionicons name="call-outline" size={20} color={colors.gold} style={styles.menuIcon} />
-              <Typography variant="body">{isNepali ? 'रिसेप्सनमा फोन गर्नुहोस्' : 'Call Front Desk'} (+977 9852022202)</Typography>
+              <Typography variant="body">{isNepali ? 'रिसेप्सनमा फोन गर्नुहोस्' : 'Call Front Desk'} (021-464193)</Typography>
             </View>
             <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
           </TouchableOpacity>

@@ -171,17 +171,23 @@ export const MenuCardHorizontal: React.FC<MenuCardHorizontalProps> = ({
             </Text>
             {hasOptions ? (
               <TouchableOpacity
+                style={[
+                  styles.customizeBtn,
+                  {
+                    backgroundColor: isDark ? 'rgba(168, 85, 247, 0.18)' : 'rgba(126, 34, 206, 0.1)',
+                    borderColor: isDark ? 'rgba(192, 132, 252, 0.4)' : 'rgba(126, 34, 206, 0.2)',
+                  },
+                ]}
                 onPress={(e) => {
                   e?.stopPropagation?.();
                   if (onOptionsPress) onOptionsPress();
                   else onPress();
                 }}
-                activeOpacity={0.7}
-                hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+                activeOpacity={0.75}
+                accessibilityRole="button"
+                accessibilityLabel={`${t.menu.optionsAvailable}: ${dish.name}`}
               >
-                <Text style={[styles.optionsLink, { color: colors.purple }]}>
-                  {t.menu.optionsAvailable}
-                </Text>
+                <Ionicons name="options-outline" size={16} color={colors.purple} />
               </TouchableOpacity>
             ) : null}
           </View>
@@ -341,11 +347,14 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 0.2,
   },
-  optionsLink: {
-    fontSize: 10,
-    fontWeight: '600',
-    marginTop: 1,
-    textDecorationLine: 'underline',
+  customizeBtn: {
+    width: 25,
+    height: 23,
+    marginTop: 2,
+    borderWidth: 1,
+    borderRadius: 7,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   addBtn: {
     paddingHorizontal: 14,

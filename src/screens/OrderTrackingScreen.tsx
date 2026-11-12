@@ -362,7 +362,7 @@ export default function OrderTrackingScreen({ route, navigation }: OrderTracking
   }, [riderLocation, now]);
 
   const handleCallRestaurant = () => {
-    Linking.openURL('tel:+9779852022202').catch(() => {
+    Linking.openURL('tel:+97721464193').catch(() => {
       Alert.alert('Notice', 'Unable to initiate call.');
     });
   };
