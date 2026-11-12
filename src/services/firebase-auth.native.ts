@@ -43,6 +43,10 @@ export async function firebaseGoogleLogin(googleIdToken: string) {
   return signInWithCredential(auth, GoogleAuthProvider.credential(googleIdToken));
 }
 
+export async function firebaseGooglePopupLogin(): Promise<Awaited<ReturnType<typeof firebaseGoogleLogin>>> {
+  throw new Error('Google popup sign-in is available in the web app.');
+}
+
 export async function firebaseSendPhoneCode(phoneNumber: string) {
   phoneConfirmation = await signInWithPhoneNumber(auth, phoneNumber.trim());
 }

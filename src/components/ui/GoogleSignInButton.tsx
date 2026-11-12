@@ -11,7 +11,6 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../stores/auth-store';
 import { promptGoogleSignIn } from '../../services/google-auth';
-import { getWebsiteBaseUrl } from '../../services/api-client';
 import { borderRadius, spacing } from '../../theme';
 
 interface GoogleSignInButtonProps {
@@ -26,13 +25,14 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
   style,
 }) => {
   const [loading, setLoading] = useState(false);
-  const { loginWithGoogle } = useAuthStore();
+  const { loginWithGoogle, loginWithGooglePopup } = useAuthStore();
 
   const handlePress = async () => {
     setLoading(true);
     try {
       if (Platform.OS === 'web') {
-        window.location.href = `${getWebsiteBaseUrl()}/login`;
+        await loginWithGooglePopup();
+        if (onSuccess) onSuccess();
         return;
       }
 

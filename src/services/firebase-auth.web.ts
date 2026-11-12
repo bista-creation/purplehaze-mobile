@@ -7,6 +7,7 @@ import {
   sendEmailVerification,
   signInWithCredential,
   signInWithEmailAndPassword,
+  signInWithPopup,
   signOut,
   updateProfile,
 } from 'firebase/auth';
@@ -52,6 +53,12 @@ export async function firebaseEmailRegister(name: string, email: string, passwor
 
 export async function firebaseGoogleLogin(googleIdToken: string) {
   return signInWithCredential(getFirebaseAuth(), GoogleAuthProvider.credential(googleIdToken));
+}
+
+export async function firebaseGooglePopupLogin() {
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: 'select_account' });
+  return signInWithPopup(getFirebaseAuth(), provider);
 }
 
 export async function firebaseLogout() {

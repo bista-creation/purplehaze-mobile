@@ -9,6 +9,7 @@ import {
   firebaseEmailLogin,
   firebaseEmailRegister,
   firebaseGoogleLogin,
+  firebaseGooglePopupLogin,
   firebaseSendPhoneCode,
   firebaseConfirmPhoneCode,
   firebaseLogout,
@@ -22,6 +23,7 @@ type AuthState = {
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string, phone?: string) => Promise<void>;
   loginWithGoogle: (idToken: string) => Promise<void>;
+  loginWithGooglePopup: () => Promise<void>;
   sendPhoneCode: (phoneNumber: string) => Promise<void>;
   verifyPhoneCode: (code: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -129,6 +131,17 @@ export const useAuthStore = create<AuthState>((set) => ({
       await exchangeFirebaseSession(await credential.user.getIdToken(true), credential.user);
     }
     catch (error) { set({ isLoading: false }); throw error; }
+  },
+
+  loginWithGooglePopup: async () => {
+    set({ isLoading: true });
+    try {
+      const credential = await firebaseGooglePopupLogin();
+      await exchangeFirebaseSession(await credential.user.getIdToken(true), credential.user);
+    } catch (error) {
+      set({ isLoading: false });
+      throw error;
+    }
   },
 
   sendPhoneCode: async (phoneNumber) => {
