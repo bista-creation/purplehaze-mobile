@@ -9,11 +9,13 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.bistacreation.purplehaze"
+      "bundleIdentifier": "com.bistacreation.purplehaze",
+      "googleServicesFile": "./GoogleService-Info.plist"
     },
     "android": {
       "package": "com.bistacreation.purplehaze",
       "versionCode": 9,
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#FAF7F2",
         "foregroundImage": "./assets/android-icon-foreground.png"
@@ -30,11 +32,14 @@
       ],
       "expo-font",
       "@react-native-google-signin/google-signin",
-      "expo-router"
+      "expo-router",
+      "@react-native-firebase/app",
+      "@react-native-firebase/auth"
     ],
     "extra": {
       "apiUrl": "https://purplehaze-nine.vercel.app/api/v1",
       "websiteUrl": "https://purplehaze-nine.vercel.app",
+      "firebaseProjectId": "purple-haze-cfeb7",
       "eas": {
         "projectId": "96309d2f-a6d1-4e19-a11f-65aa8c7b979d"
       }

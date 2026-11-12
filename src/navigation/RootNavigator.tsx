@@ -21,8 +21,6 @@ import OrdersScreen from '../screens/OrdersScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import LoginModal from '../screens/LoginModal';
 import RegisterModal from '../screens/RegisterModal';
-import MayaModal from '../screens/MayaModal';
-import AdminDashboardScreen from '../screens/AdminDashboardScreen';
 import type { MenuDishDto } from '../shared/types';
 import type { DishDto } from '../services/api-client';
 
@@ -39,8 +37,6 @@ export type RootStackParamList = {
   Bookings: undefined;
   LoginModal: { returnTo?: 'Profile' } | undefined;
   RegisterModal: { returnTo?: 'Profile' } | undefined;
-  MayaModal: undefined;
-  AdminDashboard: undefined;
 };
 
 export type MainTabParamList = {
@@ -177,8 +173,6 @@ const linking: LinkingOptions<RootStackParamList> = {
       Checkout: 'checkout',
       LoginModal: 'login',
       RegisterModal: 'register',
-      MayaModal: 'maya',
-      AdminDashboard: 'admin',
     },
   },
   getStateFromPath: (path, options) => {
@@ -301,21 +295,6 @@ export function RootNavigator() {
           component={RegisterModal}
           options={{
             presentation: 'modal',
-            headerShown: false,
-          }}
-        />
-        <Stack.Screen
-          name="MayaModal"
-          component={MayaModal}
-          options={{
-            presentation: 'modal',
-            headerShown: false,
-          }}
-        />
-        <Stack.Screen
-          name="AdminDashboard"
-          component={AdminDashboardScreen}
-          options={{
             headerShown: false,
           }}
         />

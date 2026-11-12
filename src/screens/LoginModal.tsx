@@ -25,11 +25,15 @@ interface LoginModalProps {
 }
 
 export default function LoginModal({ navigation, route }: LoginModalProps) {
-  const { login } = useAuthStore();
+  const { login, sendPhoneCode, verifyPhoneCode } = useAuthStore();
   const { colors } = useTheme();
   const { t } = useI18n();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [phone, setPhone] = useState('');
+  const [code, setCode] = useState('');
+  const [phoneMode, setPhoneMode] = useState(false);
+  const [phoneCodeSent, setPhoneCodeSent] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -79,6 +83,42 @@ export default function LoginModal({ navigation, route }: LoginModalProps) {
       handleAuthSuccess();
     } catch (err: any) {
       setError(err?.message || 'Login failed. Please check your credentials.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSendPhoneCode = async () => {
+    const digits = phone.replace(/\D/g, '');
+    const normalizedPhone = phone.startsWith('+') ? `+${digits}` : `+977${digits.replace(/^0/, '')}`;
+    if (digits.length < 10) {
+      setError('Enter a valid phone number, for example +977 98XXXXXXXX.');
+      return;
+    }
+    try {
+      setLoading(true);
+      setError(null);
+      await sendPhoneCode(normalizedPhone);
+      setPhoneCodeSent(true);
+    } catch (err: any) {
+      setError(err?.message || 'Could not send a verification code. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyPhoneCode = async () => {
+    if (code.trim().length < 4) {
+      setError('Enter the verification code sent to your phone.');
+      return;
+    }
+    try {
+      setLoading(true);
+      setError(null);
+      await verifyPhoneCode(code);
+      handleAuthSuccess();
+    } catch (err: any) {
+      setError(err?.message || 'Phone verification failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -177,6 +217,51 @@ export default function LoginModal({ navigation, route }: LoginModalProps) {
             onSuccess={handleAuthSuccess}
             onError={(msg) => setError(msg)}
           />
+          {!phoneMode ? (
+            <TouchableOpacity onPress={() => { setPhoneMode(true); setError(null); }}>
+              <Text style={[styles.footerLink, { textAlign: 'center', marginTop: 18 }]}>Continue with phone</Text>
+            </TouchableOpacity>
+          ) : (
+            <View style={{ marginTop: 20 }}>
+              <Text style={[styles.dividerText, { fontSize: 12, lineHeight: 18, letterSpacing: 0, marginBottom: 12 }]}>
+                Firebase will process your phone number to verify your sign-in and help prevent abuse.
+              </Text>
+              <Text style={styles.label}>Phone number</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="+977 98XXXXXXXX"
+                placeholderTextColor="#64748b"
+                value={phone}
+                onChangeText={(value) => { setPhone(value); setError(null); }}
+                keyboardType="phone-pad"
+                autoComplete="tel"
+              />
+              {phoneCodeSent && <>
+                <Text style={styles.label}>Verification code</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter SMS code"
+                  placeholderTextColor="#64748b"
+                  value={code}
+                  onChangeText={(value) => { setCode(value); setError(null); }}
+                  keyboardType="number-pad"
+                  autoComplete="one-time-code"
+                />
+              </>}
+              <TouchableOpacity
+                style={[styles.submitBtn, loading && styles.submitBtnDisabled]}
+                onPress={phoneCodeSent ? handleVerifyPhoneCode : handleSendPhoneCode}
+                disabled={loading}
+              >
+                {loading ? <ActivityIndicator color="#fff" /> : (
+                  <Text style={styles.submitBtnText}>{phoneCodeSent ? 'Verify and continue' : 'Send verification code'}</Text>
+                )}
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => { setPhoneMode(false); setPhoneCodeSent(false); setError(null); }}>
+                <Text style={[styles.footerLink, { textAlign: 'center', marginTop: 16 }]}>Use email instead</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
 
         {/* Switch to Register */}

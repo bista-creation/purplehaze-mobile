@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
+import { getFirebaseUser } from '../services/firebase-auth';
+import { readFavoriteIds, writeFavorite } from '../services/customer-data';
 
 const FAVORITES_STORAGE_KEY = 'purple_haze_user_favorites';
 
@@ -15,6 +17,22 @@ export const useFavoritesStore = create<FavoritesState>((set, get) => ({
 
   initFavorites: async () => {
     try {
+      const firebaseUser = await getFirebaseUser();
+      if (firebaseUser) {
+        const stored = await SecureStore.getItemAsync(FAVORITES_STORAGE_KEY);
+        const localIds = stored ? JSON.parse(stored) as unknown : [];
+        const localFavorites = Array.isArray(localIds)
+          ? localIds.filter((id): id is string => typeof id === 'string')
+          : [];
+        const remoteIds = await readFavoriteIds(firebaseUser.uid);
+        const merged = Array.from(new Set([...remoteIds, ...localFavorites]));
+        await Promise.all(localFavorites
+          .filter((id) => !remoteIds.includes(id))
+          .map((id) => writeFavorite(firebaseUser.uid, id, true)));
+        await SecureStore.deleteItemAsync(FAVORITES_STORAGE_KEY).catch(() => undefined);
+        set({ favoriteDishIds: merged });
+        return;
+      }
       const data = await SecureStore.getItemAsync(FAVORITES_STORAGE_KEY);
       if (data) {
         const parsed = JSON.parse(data);
@@ -23,7 +41,11 @@ export const useFavoritesStore = create<FavoritesState>((set, get) => ({
         }
       }
     } catch {
-      // In-memory fallback
+      try {
+        const data = await SecureStore.getItemAsync(FAVORITES_STORAGE_KEY);
+        const parsed = data ? JSON.parse(data) : [];
+        if (Array.isArray(parsed)) set({ favoriteDishIds: parsed });
+      } catch { /* In-memory fallback. */ }
     }
   },
 
@@ -34,9 +56,11 @@ export const useFavoritesStore = create<FavoritesState>((set, get) => ({
 
     set({ favoriteDishIds: updated });
     try {
-      await SecureStore.setItemAsync(FAVORITES_STORAGE_KEY, JSON.stringify(updated));
+      const firebaseUser = await getFirebaseUser();
+      if (firebaseUser) await writeFavorite(firebaseUser.uid, dishId, !exists);
+      else await SecureStore.setItemAsync(FAVORITES_STORAGE_KEY, JSON.stringify(updated));
     } catch {
-      // In-memory fallback
+      await SecureStore.setItemAsync(FAVORITES_STORAGE_KEY, JSON.stringify(updated)).catch(() => undefined);
     }
   },
 

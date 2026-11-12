@@ -2,6 +2,17 @@ import { create } from 'zustand';
 import type { UserSessionDto, AuthResponseDto } from '../services/api-client';
 import { api, onAuthExpired } from '../services/api-client';
 import { tokenStorage } from '../services/token-storage';
+import { saveCustomerProfile } from '../services/customer-data';
+import { useFavoritesStore } from './favorites-store';
+import {
+  getFirebaseUser,
+  firebaseEmailLogin,
+  firebaseEmailRegister,
+  firebaseGoogleLogin,
+  firebaseSendPhoneCode,
+  firebaseConfirmPhoneCode,
+  firebaseLogout,
+} from '../services/firebase-auth';
 
 type AuthState = {
   user: UserSessionDto | null;
@@ -11,6 +22,8 @@ type AuthState = {
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string, phone?: string) => Promise<void>;
   loginWithGoogle: (idToken: string) => Promise<void>;
+  sendPhoneCode: (phoneNumber: string) => Promise<void>;
+  verifyPhoneCode: (code: string) => Promise<void>;
   logout: () => Promise<void>;
   setUser: (user: UserSessionDto | null) => void;
 };
@@ -22,6 +35,25 @@ async function saveAuth(data: AuthResponseDto) {
     tokenStorage.setUserSession(JSON.stringify(data.user)),
   ]);
   useAuthStore.setState({ user: data.user, isAuthenticated: true, isLoading: false });
+  void useFavoritesStore.getState().initFavorites();
+}
+
+type FirebaseCustomer = {
+  uid: string;
+  displayName?: string | null;
+  phoneNumber?: string | null;
+  getIdToken: (forceRefresh?: boolean) => Promise<string>;
+};
+
+async function exchangeFirebaseSession(idToken: string | undefined, firebaseUser?: FirebaseCustomer) {
+  if (!idToken) throw new Error('Firebase did not return a sign-in token. Please try again.');
+  if (firebaseUser) {
+    await saveCustomerProfile(firebaseUser.uid, {
+      name: firebaseUser.displayName ?? undefined,
+      phone: firebaseUser.phoneNumber ?? undefined,
+    }).catch((error) => console.warn('[Firebase] Customer profile sync deferred:', error));
+  }
+  await saveAuth(await api.auth.firebaseSignIn(idToken));
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -34,6 +66,11 @@ export const useAuthStore = create<AuthState>((set) => ({
   checkAuth: async () => {
     set({ isLoading: true });
     try {
+      const firebaseUser = await getFirebaseUser();
+      if (firebaseUser) {
+        await exchangeFirebaseSession(await firebaseUser.getIdToken(), firebaseUser);
+        return;
+      }
       const [accessToken, refreshToken] = await Promise.all([
         tokenStorage.getAccessToken(), tokenStorage.getRefreshToken(),
       ]);
@@ -61,20 +98,57 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   login: async (email, password) => {
     set({ isLoading: true });
-    try { await saveAuth(await api.auth.login({ email, password })); }
+    try {
+      const credential = await firebaseEmailLogin(email, password);
+      if (credential.user.email && !credential.user.emailVerified) {
+        throw new Error('Please verify your email from the link we sent before signing in.');
+      }
+      await exchangeFirebaseSession(await credential.user.getIdToken(true), credential.user);
+    }
     catch (error) { set({ isLoading: false }); throw error; }
   },
 
   register: async (name, email, password, phone) => {
     set({ isLoading: true });
-    try { await saveAuth(await api.auth.register({ name, email, password, phone })); }
+    try {
+      await tokenStorage.clearTokens();
+      const credential = await firebaseEmailRegister(name, email, password);
+      await saveCustomerProfile(credential.user.uid, { name, phone });
+      set({ isLoading: false, isAuthenticated: false, user: null });
+      throw new Error('Account created. Verify your email from the link we sent, then sign in.');
+    }
     catch (error) { set({ isLoading: false }); throw error; }
   },
 
   loginWithGoogle: async (idToken) => {
     set({ isLoading: true });
-    try { await saveAuth(await api.auth.googleSignIn(idToken)); }
+    try {
+      const credential = await firebaseGoogleLogin(idToken);
+      await exchangeFirebaseSession(await credential.user.getIdToken(true), credential.user);
+    }
     catch (error) { set({ isLoading: false }); throw error; }
+  },
+
+  sendPhoneCode: async (phoneNumber) => {
+    set({ isLoading: true });
+    try {
+      await firebaseSendPhoneCode(phoneNumber);
+      set({ isLoading: false });
+    } catch (error) {
+      set({ isLoading: false });
+      throw error;
+    }
+  },
+
+  verifyPhoneCode: async (code) => {
+    set({ isLoading: true });
+    try {
+      const credential = await firebaseConfirmPhoneCode(code);
+      await exchangeFirebaseSession(await credential.user.getIdToken(true), credential.user);
+    } catch (error) {
+      set({ isLoading: false });
+      throw error;
+    }
   },
 
   logout: async () => {
@@ -82,6 +156,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     const refreshToken = await tokenStorage.getRefreshToken();
     try { if (refreshToken) await api.auth.logout(undefined, false, refreshToken); }
     finally {
+      await firebaseLogout().catch(() => undefined);
       await tokenStorage.clearTokens();
       set({ user: null, isAuthenticated: false, isLoading: false });
     }

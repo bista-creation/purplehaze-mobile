@@ -286,7 +286,7 @@ export function HomeScreen({ navigation }: any) {
           />
         }
       >
-        {/* Customer Greeting & AI Pill */}
+        {/* Customer Greeting */}
         <View style={styles.greetingSection}>
           <View style={{ flex: 1, paddingRight: spacing.sm }}>
             <Text style={styles.greetingGreeting}>
@@ -295,16 +295,6 @@ export function HomeScreen({ navigation }: any) {
             <Text style={styles.greetingSubtitle}>{t.home.subtitle}</Text>
           </View>
 
-          <TouchableOpacity
-            style={styles.mayaButton}
-            onPress={() => {
-              navigation.navigate('MayaModal');
-            }}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.mayaIcon}>✨</Text>
-            <Text style={styles.mayaText}>{t.home.askMaya}</Text>
-          </TouchableOpacity>
         </View>
 
         {/* Hero Promotional Carousel with Atmospheric Imagery */}
@@ -661,25 +651,6 @@ const createStyles = (colors: ColorTheme, isDark: boolean) =>
     fontSize: 12,
     color: colors.textSecondary,
     marginTop: 2,
-  },
-  mayaButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: colors.purpleMuted,
-    borderWidth: 1,
-    borderColor: colors.purple,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: borderRadius.full,
-  },
-  mayaIcon: {
-    fontSize: 12,
-  },
-  mayaText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: colors.purple,
   },
   searchBar: {
     flexDirection: 'row',

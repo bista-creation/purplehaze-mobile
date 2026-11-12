@@ -32,7 +32,7 @@ export const ne: Translations = {
     eveningGreeting: 'बगैंचामा साँझ 🌿 — कोइलाको ग्रिल तयार छ।',
     afternoonGreeting: 'घमाइलो आँगन लञ्च ☀️ — ताजा परिकार र नेवारी खाजा।',
     defaultGreeting: 'बगैंचा र निजी क्याबिन 🌿 — एयरपोर्ट रोडमा मौलिक स्वाद।',
-    askMaya: 'मायालाई सोध्नुहोस्', searchPlaceholder: 'परिकार, सेकुवा, म:म, सिज्लर, बिरयानी खोज्नुहोस्...',
+    searchPlaceholder: 'परिकार, सेकुवा, म:म, सिज्लर, बिरयानी खोज्नुहोस्...',
     bannerGardenTitle: 'हरियाली बगैंचामा भोजन', bannerGardenSubtitle: 'खुला आकाशमुनि मैनबत्तीको उज्यालो र शान्त हरियालीको आनन्द लिनुहोस्', bannerGardenTag: 'बगैंचा र निजी क्याबिन', reserveTable: 'टेबल आरक्षण',
     bannerFoodTitle: 'नेपाली स्वाद र सेकुवा', bannerFoodSubtitle: 'कोइलामा सेकिएका परिकार, म:म र स्वादिला प्लेटहरूको मज्जा लिनुहोस्', chefSpecials: 'शेफका विशेष परिकार', orderFood: 'खाना अर्डर',
     bannerVenueTitle: 'ब्याङ्क्वेट र उत्सव', bannerVenueSubtitle: 'विवाह र निजी जमघटका लागि वातानुकूलित ब्याङ्क्वेट हल', venuesEvents: 'हल र कार्यक्रम', exploreVenues: 'हलहरू हेर्नुहोस्',
@@ -162,7 +162,7 @@ export const ne: Translations = {
     contactUs: 'सम्पर्क र स्थान',
     deleteAccount: 'खाता मेटाउनुहोस्',
     confirmDelete: 'के तपाईं निश्चित हुनुहुन्छ? सबै व्यक्तिगत विवरण स्थायी रूपमा मेटिनेछ।',
-    signOutConfirm: 'के तपाईं लग आउट गर्न चाहनुहुन्छ?', accountDeleted: 'खाता मेटाइयो', accountDeletedMessage: 'तपाईंको खाता र व्यक्तिगत विवरण पूर्ण रूपमा हटाइयो।', deleteFailed: 'खाता मेटाउन सकिएन।', adminHub: 'मोबाइल एडमिन खोल्नुहोस्', adminHubDescription: 'लाइभ अर्डर, भान्सा व्यवस्थापन, टेबल बुकिङ र परिकारको स्टक।', adminSection: 'रेस्टुरेन्ट सञ्चालन केन्द्र', diningOrders: 'खाना र अर्डर', appearanceTheme: 'रूप र थिम', displayMode: 'प्रदर्शन शैली', light: 'उज्यालो', dark: 'गाढा', system: 'स्वचालित', whatsappInquiries: 'व्हाट्सएपमा सोधपुछ', legalPolicies: 'कानुनी जानकारी र नीतिहरू',
+    signOutConfirm: 'के तपाईं लग आउट गर्न चाहनुहुन्छ?', accountDeleted: 'खाता मेटाइयो', accountDeletedMessage: 'तपाईंको खाता र व्यक्तिगत विवरण पूर्ण रूपमा हटाइयो।', deleteFailed: 'खाता मेटाउन सकिएन।', diningOrders: 'खाना र अर्डर', appearanceTheme: 'रूप र थिम', displayMode: 'प्रदर्शन शैली', light: 'उज्यालो', dark: 'गाढा', system: 'स्वचालित', whatsappInquiries: 'व्हाट्सएपमा सोधपुछ', legalPolicies: 'कानुनी जानकारी र नीतिहरू',
   },
   auth: {
     welcomeBack: 'स्वागत छ!',

@@ -6,7 +6,6 @@ import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-cont
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '../services/query-client';
 import * as Font from 'expo-font';
-import { MayaFloatingWidget } from '../components/MayaFloatingWidget';
 import { pushNotifications } from '../services/push-notifications';
 import { useAuthStore } from '../stores/auth-store';
 import { useFavoritesStore } from '../stores/favorites-store';
@@ -18,8 +17,6 @@ function AppRouter() {
   const { colors, isDark } = useTheme();
   const isLoading = useAuthStore((state) => state.isLoading);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const user = useAuthStore((state) => state.user);
-  const canAccessAdmin = user?.role === 'ADMIN' || user?.role === 'STAFF';
   const topPadding =
     Math.max(insets.top, Platform.OS === 'android' ? NativeStatusBar.currentHeight || 0 : 0) + 5;
   const bottomPadding = Math.max(insets.bottom, 0) + 3;
@@ -33,12 +30,8 @@ function AppRouter() {
           <Stack.Screen name="login" />
           <Stack.Screen name="register" />
         </Stack.Protected>
-        <Stack.Protected guard={!isLoading && isAuthenticated && canAccessAdmin}>
-          <Stack.Screen name="admin" />
-        </Stack.Protected>
         <Stack.Screen name="index" />
       </Stack>
-      <MayaFloatingWidget />
     </View>
   );
 }

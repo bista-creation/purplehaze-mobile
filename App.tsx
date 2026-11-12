@@ -3,7 +3,6 @@ import { View, Platform, StatusBar as RNStatusBar, StyleSheet } from 'react-nati
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RootNavigator } from './src/navigation/RootNavigator';
-import { MayaFloatingWidget } from './src/components/MayaFloatingWidget';
 import { useAuthStore } from './src/stores/auth-store';
 import { useLanguageStore } from './src/i18n';
 import { useFavoritesStore } from './src/stores/favorites-store';
@@ -37,7 +36,6 @@ function MainAppContent() {
       ]}
     >
       <RootNavigator />
-      <MayaFloatingWidget />
     </View>
   );
 }

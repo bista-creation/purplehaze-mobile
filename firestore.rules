@@ -1,0 +1,50 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isCustomer(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    function validOptionalProfileFields(data) {
+      return (!('name' in data) || (data.name is string && data.name.size() <= 120))
+        && (!('phone' in data) || (data.phone is string && data.phone.size() <= 32));
+    }
+
+    match /customers/{uid} {
+      allow get: if isCustomer(uid);
+      allow list: if false;
+      allow create: if isCustomer(uid)
+        && request.resource.data.keys().hasOnly(['name', 'phone', 'updatedAt'])
+        && request.resource.data.keys().hasAll(['updatedAt'])
+        && validOptionalProfileFields(request.resource.data)
+        && request.resource.data.updatedAt == request.time;
+      allow update: if isCustomer(uid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'phone', 'updatedAt'])
+        && request.resource.data.keys().hasOnly(['name', 'phone', 'updatedAt'])
+        && validOptionalProfileFields(request.resource.data)
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if false;
+
+      match /favorites/{dishId} {
+        function hasCustomerProfile() {
+          return exists(/databases/$(database)/documents/customers/$(uid));
+        }
+        allow get, list: if isCustomer(uid) && hasCustomerProfile();
+        allow create: if isCustomer(uid) && hasCustomerProfile()
+          && request.resource.data.keys().hasOnly(['dishId', 'createdAt'])
+          && request.resource.data.keys().hasAll(['dishId', 'createdAt'])
+          && request.resource.data.dishId == dishId
+          && request.resource.data.dishId is string
+          && request.resource.data.dishId.size() > 0
+          && request.resource.data.dishId.size() <= 128
+          && request.resource.data.createdAt == request.time;
+        allow update: if false;
+        allow delete: if isCustomer(uid) && hasCustomerProfile();
+      }
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

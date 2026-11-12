@@ -39,6 +39,8 @@ yarn-error.*
 
 # editor
 .claude/
+.agents/
+skills-lock.json
 .idea/
 .vscode/
 

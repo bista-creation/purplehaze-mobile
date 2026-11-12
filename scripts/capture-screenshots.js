@@ -110,12 +110,6 @@ server.listen(PORT, async () => {
       height: 852,
       url: `http://localhost:${PORT}/login`,
     },
-    {
-      file: 'ios-maya-modal.png',
-      width: 393,
-      height: 852,
-      url: `http://localhost:${PORT}/maya`,
-    },
   ];
 
   for (const item of screenshots) {

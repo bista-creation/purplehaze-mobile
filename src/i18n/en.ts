@@ -32,7 +32,7 @@ export const en: Translations = {
     eveningGreeting: 'Evenings in the Garden 🌿 — Charcoal grills are live.',
     afternoonGreeting: 'Sunny Courtyard Lunch ☀️ — Fresh platters & Newari Khaja.',
     defaultGreeting: 'Garden Oasis & Private Cabins 🌿 — Authentic dining on Airport Road.',
-    askMaya: 'Ask Maya', searchPlaceholder: 'Search dishes, Sekuwa, Mo:Mo, Sizzler, Biryani...',
+    searchPlaceholder: 'Search dishes, Sekuwa, Mo:Mo, Sizzler, Biryani...',
     bannerGardenTitle: 'Lush Garden Dining', bannerGardenSubtitle: 'Experience open-air candlelit evenings & tranquil greenery', bannerGardenTag: 'GARDEN & PRIVATE CABINS', reserveTable: 'Reserve Table',
     bannerFoodTitle: 'Flavors of Nepal & Sekuwa', bannerFoodSubtitle: 'Authentic charcoal smoked delights, Mo:Mo & sizzling platters', chefSpecials: 'CHEF SPECIALS', orderFood: 'Order Food',
     bannerVenueTitle: 'Banquets & Celebrations', bannerVenueSubtitle: 'Air-conditioned banquet halls for weddings & private gatherings', venuesEvents: 'VENUES & EVENTS', exploreVenues: 'Explore Venues',
@@ -162,7 +162,7 @@ export const en: Translations = {
     contactUs: 'Contact & Location',
     deleteAccount: 'Delete Account',
     confirmDelete: 'Are you sure? All account data will be permanently deleted.',
-    signOutConfirm: 'Are you sure you want to sign out?', accountDeleted: 'Account Deleted', accountDeletedMessage: 'Your account and personal data have been completely removed.', deleteFailed: 'Could not delete account.', adminHub: 'Open Mobile Admin Hub', adminHubDescription: 'Live orders, kitchen management, table bookings, and dish stock.', adminSection: 'Restaurant Operations Hub', diningOrders: 'Dining & Orders', appearanceTheme: 'Appearance & Theme', displayMode: 'Display Mode', light: 'Light', dark: 'Dark', system: 'System', whatsappInquiries: 'WhatsApp Inquiries', legalPolicies: 'Legal & Policies',
+    signOutConfirm: 'Are you sure you want to sign out?', accountDeleted: 'Account Deleted', accountDeletedMessage: 'Your account and personal data have been completely removed.', deleteFailed: 'Could not delete account.', diningOrders: 'Dining & Orders', appearanceTheme: 'Appearance & Theme', displayMode: 'Display Mode', light: 'Light', dark: 'Dark', system: 'System', whatsappInquiries: 'WhatsApp Inquiries', legalPolicies: 'Legal & Policies',
   },
   auth: {
     welcomeBack: 'Welcome Back',

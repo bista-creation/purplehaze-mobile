@@ -607,6 +607,12 @@ export const api = {
         method: 'POST',
         body: JSON.stringify({ idToken }),
       }),
+
+    firebaseSignIn: (idToken: string) =>
+      request<AuthResponseDto>('/auth/firebase', {
+        method: 'POST',
+        body: JSON.stringify({ idToken }),
+      }),
   },
 
   menu: {

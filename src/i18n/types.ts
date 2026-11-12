@@ -34,7 +34,6 @@ export interface Translations {
     eveningGreeting: string;
     afternoonGreeting: string;
     defaultGreeting: string;
-    askMaya: string;
     searchPlaceholder: string;
     bannerGardenTitle: string;
     bannerGardenSubtitle: string;
@@ -271,9 +270,6 @@ export interface Translations {
     accountDeleted: string;
     accountDeletedMessage: string;
     deleteFailed: string;
-    adminHub: string;
-    adminHubDescription: string;
-    adminSection: string;
     diningOrders: string;
     appearanceTheme: string;
     displayMode: string;
