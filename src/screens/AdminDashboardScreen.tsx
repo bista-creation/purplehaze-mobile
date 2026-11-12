@@ -1016,6 +1016,17 @@ export default function AdminDashboardScreen({ navigation }: AdminDashboardScree
                         </TouchableOpacity>
                       )}
 
+                      {order.status === 'OUT_FOR_DELIVERY' && (
+                        <TouchableOpacity
+                          style={[styles.actionBtn, { backgroundColor: '#22c55e' }]}
+                          onPress={() => handleUpdateOrderStatus(order.id, 'COMPLETED')}
+                          disabled={isUpdating}
+                        >
+                          <Ionicons name="checkmark-done" size={16} color="#fff" />
+                          <Text style={styles.actionBtnText}>Mark Delivered</Text>
+                        </TouchableOpacity>
+                      )}
+
                       {/* Detail preview pill */}
                       <TouchableOpacity
                         style={styles.detailsIconBtn}
@@ -1585,7 +1596,11 @@ export default function AdminDashboardScreen({ navigation }: AdminDashboardScree
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={{ maxHeight: 380, flexShrink: 1 }} showsVerticalScrollIndicator={false}>
+            <ScrollView
+              style={{ maxHeight: 460, flexShrink: 1 }}
+              contentContainerStyle={{ paddingBottom: 24 }}
+              showsVerticalScrollIndicator={false}
+            >
               {loadingDetail ? (
                 <ActivityIndicator size="small" color={colors.gold} style={{ padding: spacing.xl }} />
               ) : (
@@ -1746,6 +1761,28 @@ export default function AdminDashboardScreen({ navigation }: AdminDashboardScree
                   <Ionicons name="bicycle-outline" size={16} color="#000" />
                   <Text style={[styles.actionBtnText, { color: '#000' }]}>Assign Rider</Text>
                 </TouchableOpacity>
+              )}
+
+              {selectedOrder?.status === 'OUT_FOR_DELIVERY' && (
+                <>
+                  <TouchableOpacity
+                    style={[styles.actionBtn, { backgroundColor: '#22c55e', flex: 1 }]}
+                    onPress={() => handleUpdateOrderStatus(selectedOrder.id, 'COMPLETED')}
+                  >
+                    <Ionicons name="checkmark-done" size={16} color="#fff" />
+                    <Text style={styles.actionBtnText}>Mark Delivered</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.actionBtn, { backgroundColor: colors.gold, flex: 1 }]}
+                    onPress={() => {
+                      setDetailModalOpen(false);
+                      handleOpenDispatchModal(selectedOrder);
+                    }}
+                  >
+                    <Ionicons name="bicycle-outline" size={16} color="#000" />
+                    <Text style={[styles.actionBtnText, { color: '#000' }]}>Reassign Rider</Text>
+                  </TouchableOpacity>
+                </>
               )}
 
               {['PENDING', 'CONFIRMED'].includes(selectedOrder?.status || '') && (
@@ -2721,8 +2758,8 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
     padding: spacing.lg,
-    paddingBottom: Platform.OS === 'ios' ? 40 : 28,
-    maxHeight: '92%',
+    paddingBottom: Platform.OS === 'ios' ? 44 : 34,
+    maxHeight: '94%',
   },
   newOrderBanner: {
     flexDirection: 'row',
@@ -2859,7 +2896,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: spacing.md,
-    gap: spacing.xs,
+    gap: spacing.sm,
+    minHeight: 48,
   },
   modalSectionLabel: {
     fontSize: 12,

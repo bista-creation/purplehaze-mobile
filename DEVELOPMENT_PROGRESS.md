@@ -45,6 +45,13 @@ Production rebuild of the Purple Haze Restro & Garden mobile application for And
   - Added instant "Reorder These Items" action button which hydrates `useCartStore` with previous lines and transitions to `Cart`.
   - Subscribed to Supabase Realtime channel for instant push updates of kitchen cooking progress and delivery rider GPS marker updates.
   - Verified 100% clean TypeScript (`npx tsc --noEmit`) and Expo Lint (`npx expo lint`).
+- [x] **Phase 7: Restaurant Order Acceptance & Live Kitchen Operations Portal**:
+  - Eliminated the 100x admin calculation bug by establishing strict `formatAdminRupees` (integer Paisa / 100).
+  - Fixed mobile margin, padding, and screen bottom cut-offs (`modalContent` padding adjusted for iOS/Android home bars, dynamic flex scroll limits).
+  - Implemented actionable status transitions across all lifecycle states: `Confirm Order` -> `Start Cooking` -> `Mark Ready` -> `Assign Rider` -> `Mark Delivered` / `Reassign Rider`.
+  - Integrated dual alerts for logged-in admin staff on incoming orders: persistent in-app banner with quick "Review" shortcut, sensory multi-pulse vibration (`Vibration.vibrate([0, 500, 200, 500])`), and native local notifications.
+  - Subscribed to Supabase Realtime WebSocket broadcast for instantaneous zero-latency order ingestion and live dispatch tracking.
+  - Verified 100% clean TypeScript (`npx tsc --noEmit`) and Expo Lint (`npx expo lint`).
 
 ---
 
@@ -55,7 +62,7 @@ Production rebuild of the Purple Haze Restro & Garden mobile application for And
 | **Table Reservations & Private Cabins** | Completed | `/reservations`, Venue schema | Phase 5 |
 | **Event & Banquet Bookings** | Completed | `/event-bookings`, Package data | Phase 5 |
 | **Live Order Tracking & Reorder** | Completed | `/orders/track`, Supabase Realtime | Phase 6 |
-| **Restaurant Order Acceptance (Staff Portal)**| Pending | `/admin/orders`, Atomic lock | Phase 7 |
+| **Restaurant Order Acceptance (Staff Portal)**| Completed | `/admin/orders`, Atomic lock | Phase 7 |
 | **Push Notifications (FCM / Expo)** | Pending | Firebase Cloud Messaging, Tokens | Phase 8 |
 | **EAS Android & iOS Production Builds** | Pending | Expo EAS configuration | Phase 9 |
 
