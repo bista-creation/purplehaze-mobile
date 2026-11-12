@@ -16,11 +16,20 @@ import { MayaAssistantEmbed } from './MayaAssistantEmbed';
 export const MayaFloatingWidget: React.FC = () => {
   const pathname = usePathname();
   const isOpen = useMayaStore((s) => s.isOpen);
+  const isModalOpen = useMayaStore((s) => s.isModalOpen);
   const closeMaya = useMayaStore((s) => s.closeMaya);
   const openMaya = useMayaStore((s) => s.openMaya);
   const colors = useThemeStore((s) => s.colors);
   const mode = useThemeStore((s) => s.mode);
   const cartItemCount = useCartStore((s) => s.getItemCount());
+
+  // Check web location for direct /maya URL or admin routes
+  const isWebExcludedRoute = Platform.OS === 'web' && typeof window !== 'undefined' && (
+    window.location.pathname.toLowerCase().includes('admin') ||
+    window.location.pathname.toLowerCase().includes('maya') ||
+    window.location.hash.toLowerCase().includes('admin') ||
+    window.location.hash.toLowerCase().includes('maya')
+  );
 
   // When cart has items, floating cart bar is at bottom: 10 (top of cart at ~120px from root bottom).
   // Position Maya safely above the floating cart at bottom: 132 so they never overlap.
@@ -37,8 +46,14 @@ export const MayaFloatingWidget: React.FC = () => {
     }).start();
   }, [targetBottom, bottomAnim]);
 
-  // Never display Maya on Admin operations / dashboard screens to prevent blocking staff controls
-  if (pathname?.toLowerCase().includes('admin')) {
+  // Never display Maya floating widget on Admin operations / dashboard screens,
+  // or when the dedicated MayaModal screen is active, to prevent duplicate Maya windows.
+  if (
+    isModalOpen ||
+    isWebExcludedRoute ||
+    pathname?.toLowerCase().includes('admin') ||
+    pathname?.toLowerCase().includes('maya')
+  ) {
     return null;
   }
 
