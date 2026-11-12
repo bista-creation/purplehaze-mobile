@@ -52,6 +52,15 @@ Production rebuild of the Purple Haze Restro & Garden mobile application for And
   - Integrated dual alerts for logged-in admin staff on incoming orders: persistent in-app banner with quick "Review" shortcut, sensory multi-pulse vibration (`Vibration.vibrate([0, 500, 200, 500])`), and native local notifications.
   - Subscribed to Supabase Realtime WebSocket broadcast for instantaneous zero-latency order ingestion and live dispatch tracking.
   - Verified 100% clean TypeScript (`npx tsc --noEmit`) and Expo Lint (`npx expo lint`).
+- [x] **Phase 8: Push Notifications (FCM / Expo Notifications) & Local Sound Dispatch**:
+  - Android MAX importance notification channel (`Purple Haze Orders`) with high-priority vibration pattern and alert sound.
+  - Automatic token capture and backend registration via `/notifications/push-token`.
+  - Foreground banner handler with custom badge counters and sound triggers.
+  - Immediate local notification dispatcher for kitchen alerts and delivery progress.
+- [x] **Phase 9: Production Release Readiness & EAS Build Configuration**:
+  - Configured standalone APK release profile in `eas.json` (`preview` & `production`).
+  - Bumped release version to `1.0.1` (Android `versionCode: 9`) under bundle ID `com.bistacreation.purplehaze`.
+  - Verified 100% clean TypeScript (`npx tsc --noEmit`) and Expo Lint (`npx expo lint`).
 
 ---
 
@@ -63,8 +72,8 @@ Production rebuild of the Purple Haze Restro & Garden mobile application for And
 | **Event & Banquet Bookings** | Completed | `/event-bookings`, Package data | Phase 5 |
 | **Live Order Tracking & Reorder** | Completed | `/orders/track`, Supabase Realtime | Phase 6 |
 | **Restaurant Order Acceptance (Staff Portal)**| Completed | `/admin/orders`, Atomic lock | Phase 7 |
-| **Push Notifications (FCM / Expo)** | Pending | Firebase Cloud Messaging, Tokens | Phase 8 |
-| **EAS Android & iOS Production Builds** | Pending | Expo EAS configuration | Phase 9 |
+| **Push Notifications (FCM / Expo)** | Completed | Firebase Cloud Messaging, Tokens | Phase 8 |
+| **EAS Android & iOS Production Builds** | Completed | Expo EAS configuration | Phase 9 |
 
 ---
 
