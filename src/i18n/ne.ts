@@ -24,6 +24,7 @@ export const ne: Translations = {
     cart: 'कार्ट',
     orders: 'अर्डरहरू',
     bookings: 'बुकिङ',
+    loyalty: 'पुरस्कार',
     favorites: 'मनपर्ने',
     profile: 'प्रोफाइल',
   },
@@ -80,6 +81,9 @@ export const ne: Translations = {
     couponPlaceholder: 'कुपन कोड राख्नुहोस्',
     clearCart: 'कार्ट खाली गर्नुहोस्',
     checkoutTitle: 'अर्डर पूरा गर्नुहोस्', exploreMenu: 'मेनु हेर्नुहोस्', deliveryArea: 'डेलिभरी क्षेत्र (विराटनगर)', contactDetails: 'सम्पर्क विवरण', nameHint: 'भान्साले खाना कसलाई दिने भनेर थाहा पाउन कृपया आफ्नो नाम लेख्नुहोस्।', emailReceipt: 'इमेल ठेगाना (रसिदका लागि)', phoneRequired: 'फोन नम्बर * (उदा. ९८XXXXXXXX)', deliveryAddress: 'डेलिभरी ठेगाना', addressHint: 'कृपया सडकको ठेगाना लेख्नुहोस् वा तलको लोकप्रिय क्षेत्र छान्नुहोस्।', popularAreas: 'विराटनगरका लोकप्रिय क्षेत्र (स्वतः भर्न थिच्नुहोस्):', landmarkPlaceholder: 'ठेगाना चिनाउने विवरण (उदा. हरियो गेट नजिक, दोस्रो तला)', promoCode: 'प्रोमो कोड', couponCode: 'कुपन कोड लेख्नुहोस्', paymentMethod: 'भुक्तानी विधि', cashOnDelivery: 'सामान पाएपछि नगद', payOnArrival: 'अर्डर आइपुगेपछि भुक्तानी गर्नुहोस्', instantVerified: 'तुरुन्त र प्रमाणित डिजिटल भुक्तानी', payWithWallet: '{wallet} एप वा ई-बैंकिङबाट भुक्तानी', pendingApproval: 'व्यापारीको स्वीकृति पर्खँदै', merchantOnboarding: 'व्यापारी दर्ता प्रक्रिया जारी छ', orderSummary: 'अर्डर विवरण', totalAmount: 'कुल रकम',
+  },
+  loyalty: {
+    title: 'लोयल्टी पुरस्कार', member: 'पुरस्कार सदस्य', points: 'अङ्क', progress: '{balance} / {required} अङ्क', rewardUnlocked: 'तपाईंको १०% छुट तयार छ।', pointsToReward: '१०% छुट पाउन अझै {points} अङ्क चाहिन्छ।', earnRate: 'प्रत्येक NPR १०० खर्चमा १ अङ्क पाउनुहोस्।', redeem: '१०% छुटका लागि २०० अङ्क प्रयोग गर्नुहोस्', removeReward: 'पुरस्कार हटाउनुहोस्', rewardApplied: '१०% लोयल्टी छुट लागू भयो', signInToRedeem: 'पुरस्कार अङ्क प्रयोग गर्न साइन इन गर्नुहोस्।', couponConflict: 'पुरस्कार अङ्क प्रयोग गर्न प्रोमो कोड हटाउनुहोस्।', keepOrdering: 'अङ्क कमाउन अर्डर जारी राख्नुहोस्।', lifetimeEarned: 'जम्मा कमाएका अङ्क', activity: 'अङ्क गतिविधि', earned: 'अङ्क कमाइयो', redeemed: 'अङ्क प्रयोग गरियो', returned: 'अङ्क फिर्ता भयो', noActivity: 'पूरा भएका अर्डरका अङ्क यहाँ देखिनेछन्।', pointsPending: 'अर्डर पूरा भएपछि अङ्क थपिनेछन्।',
   },
   favorites: { title: 'मेरा मनपर्ने ❤️', savedCount: 'छिटो अर्डर गर्न सुरक्षित', dishSingular: 'परिकार', dishPlural: 'परिकार', emptyTitle: 'अहिलेसम्म मनपर्ने परिकार छैन', emptySubtitle: 'आफ्नो मनपर्ने सूचीमा परिकार थप्न मेनुमा त्यसको मुटु चिह्न थिच्नुहोस्।', exploreMenu: 'मेनु हेर्नुहोस् 🍲', add: 'थप्नुहोस् +', veg: 'शाकाहारी', nonVeg: 'मांसाहारी' },
   reservations: {

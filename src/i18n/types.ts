@@ -24,6 +24,7 @@ export interface Translations {
     cart: string;
     orders: string;
     bookings: string;
+    loyalty: string;
     favorites: string;
     profile: string;
   };
@@ -161,6 +162,28 @@ export interface Translations {
     merchantOnboarding: string;
     orderSummary: string;
     totalAmount: string;
+  };
+  loyalty: {
+    title: string;
+    member: string;
+    points: string;
+    progress: string;
+    rewardUnlocked: string;
+    pointsToReward: string;
+    earnRate: string;
+    redeem: string;
+    removeReward: string;
+    rewardApplied: string;
+    signInToRedeem: string;
+    couponConflict: string;
+    keepOrdering: string;
+    lifetimeEarned: string;
+    activity: string;
+    earned: string;
+    redeemed: string;
+    returned: string;
+    noActivity: string;
+    pointsPending: string;
   };
   favorites: {
     title: string;

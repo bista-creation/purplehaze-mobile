@@ -24,6 +24,7 @@ export const en: Translations = {
     cart: 'Cart',
     orders: 'Orders',
     bookings: 'Bookings',
+    loyalty: 'Rewards',
     favorites: 'Favorites',
     profile: 'Profile',
   },
@@ -80,6 +81,9 @@ export const en: Translations = {
     couponPlaceholder: 'Enter Promo Code',
     clearCart: 'Clear Cart',
     checkoutTitle: 'Checkout', exploreMenu: 'Explore Menu', deliveryArea: 'Delivery Area (Biratnagar)', contactDetails: 'Contact Details', nameHint: 'Please enter your name so our kitchen knows who to hand this meal to.', emailReceipt: 'Email Address (for order receipt)', phoneRequired: 'Phone Number * (e.g. 98XXXXXXXX)', deliveryAddress: 'Delivery Address', addressHint: 'Please enter your street address or choose a popular area below.', popularAreas: 'Popular Biratnagar areas (tap to auto-fill):', landmarkPlaceholder: 'Landmark instructions (e.g. Near green gate, 2nd floor)', promoCode: 'Promo Code', couponCode: 'Enter coupon code', paymentMethod: 'Payment Method', cashOnDelivery: 'Cash on Delivery', payOnArrival: 'Pay when your order arrives', instantVerified: 'Instant & verified digital payment', payWithWallet: 'Pay with {wallet} app or eBanking', pendingApproval: 'Pending Merchant Approval', merchantOnboarding: 'Merchant onboarding in progress', orderSummary: 'Order Summary', totalAmount: 'Total Amount',
+  },
+  loyalty: {
+    title: 'Loyalty Rewards', member: 'Rewards member', points: 'points', progress: '{balance} / {required} points', rewardUnlocked: 'Your 10% reward is ready to use.', pointsToReward: '{points} more points unlock 10% off.', earnRate: 'Earn 1 point for every NPR 100 spent.', redeem: 'Redeem 200 points for 10% off', removeReward: 'Remove reward', rewardApplied: '10% loyalty reward applied', signInToRedeem: 'Sign in to use your reward points.', couponConflict: 'Remove your promo code to use reward points.', keepOrdering: 'Keep ordering to earn your first points.', lifetimeEarned: 'Lifetime points earned', activity: 'Points activity', earned: 'Points earned', redeemed: 'Points redeemed', returned: 'Points returned', noActivity: 'Points from completed orders will appear here.', pointsPending: 'Points are added after your order is completed.',
   },
   favorites: { title: 'My Favorites ❤️', savedCount: 'saved for quick ordering', dishSingular: 'dish', dishPlural: 'dishes', emptyTitle: 'No Favorite Dishes Yet', emptySubtitle: 'Tap the heart icon on any dish in the menu to add it to your personal favorites collection.', exploreMenu: 'Explore Menu 🍲', add: 'ADD +', veg: 'VEG', nonVeg: 'NON-VEG' },
   reservations: {

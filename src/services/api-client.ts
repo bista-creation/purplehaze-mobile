@@ -201,6 +201,7 @@ export interface CreateOrderDto {
     notes?: string;
     paymentMethod: 'COD' | 'ESEWA' | 'KHALTI';
     couponCode?: string;
+    loyaltyPointsToRedeem?: number;
     scheduledFor?: string;
     saveAddress?: boolean;
   };
@@ -519,13 +520,29 @@ export async function request<T>(
   }
 
   let response: Response;
+  const isFirebaseSignIn = cleanEndpoint === '/auth/firebase';
+  const controller = isFirebaseSignIn ? new AbortController() : undefined;
+  const timeout = controller
+    ? setTimeout(() => controller.abort(), 20000)
+    : undefined;
   try {
     response = await fetch(url, {
       ...options,
       headers,
+      ...(controller ? { signal: controller.signal } : {}),
     });
   } catch (netErr) {
+    if (controller?.signal.aborted) {
+      throw new ApiError(
+        'REQUEST_TIMEOUT',
+        'Sign-in is taking longer than expected. Please try again.',
+        408,
+        netErr,
+      );
+    }
     throw new ApiError('NETWORK_ERROR', 'Network connection unavailable. Please check your internet.', 0, netErr);
+  } finally {
+    if (timeout) clearTimeout(timeout);
   }
 
   // Handle 401 Unauthorized with token refresh & queueing

@@ -19,6 +19,7 @@ import { BookingsScreen } from '../screens/BookingsScreen';
 import OrderTrackingScreen from '../screens/OrderTrackingScreen';
 import OrdersScreen from '../screens/OrdersScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import LoyaltyScreen from '../screens/LoyaltyScreen';
 import LoginModal from '../screens/LoginModal';
 import RegisterModal from '../screens/RegisterModal';
 import type { MenuDishDto } from '../shared/types';
@@ -44,6 +45,7 @@ export type MainTabParamList = {
   Menu: { categoryId?: string } | undefined;
   Orders: undefined;
   Bookings: undefined;
+  Loyalty: undefined;
   Profile: undefined;
 };
 
@@ -126,6 +128,18 @@ function MainTabs() {
         }}
       />
       <Tab.Screen
+        name="Loyalty"
+        component={LoyaltyScreen}
+        options={{
+          title: t.navigation.loyalty,
+          tabBarLabel: t.navigation.loyalty,
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'gift' : 'gift-outline'} size={size} color={color} />
+          ),
+          headerShown: false,
+        }}
+      />
+      <Tab.Screen
         name="Profile"
         component={ProfileScreen}
         options={{
@@ -160,6 +174,7 @@ const linking: LinkingOptions<RootStackParamList> = {
           Menu: 'menu',
           Orders: 'orders',
           Bookings: 'bookings',
+          Loyalty: 'rewards',
           Profile: 'profile',
         },
       },

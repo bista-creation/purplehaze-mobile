@@ -35,6 +35,7 @@ export default function RegisterModal({ navigation, route }: RegisterModalProps)
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const returnToProfile = route?.params?.returnTo === 'Profile';
 
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -95,8 +96,9 @@ export default function RegisterModal({ navigation, route }: RegisterModalProps)
     try {
       setLoading(true);
       setError(null);
+      setSuccess(null);
       await register(name.trim(), email.trim(), password, cleanPhone || undefined);
-      handleAuthSuccess();
+      setSuccess('Account created. Verify your email, then sign in with the email and password you just created.');
     } catch (err: any) {
       setError(err?.message || 'Registration failed. Please try again.');
     } finally {
@@ -125,6 +127,12 @@ export default function RegisterModal({ navigation, route }: RegisterModalProps)
             <Text style={styles.errorText}>{error}</Text>
           </View>
         )}
+        {success && (
+          <View style={styles.successBanner} accessibilityRole="summary">
+            <Ionicons name="checkmark-circle" size={18} color="#15803d" />
+            <Text style={styles.successText}>{success}</Text>
+          </View>
+        )}
 
         {/* Form Inputs */}
         <View style={styles.form}>
@@ -137,6 +145,7 @@ export default function RegisterModal({ navigation, route }: RegisterModalProps)
             onChangeText={(txt) => {
               setName(txt);
               setError(null);
+              setSuccess(null);
             }}
           />
 
@@ -149,6 +158,7 @@ export default function RegisterModal({ navigation, route }: RegisterModalProps)
             onChangeText={(txt) => {
               setEmail(txt);
               setError(null);
+              setSuccess(null);
             }}
             keyboardType="email-address"
             autoCapitalize="none"
@@ -164,6 +174,7 @@ export default function RegisterModal({ navigation, route }: RegisterModalProps)
             onChangeText={(txt) => {
               setPhone(txt);
               setError(null);
+              setSuccess(null);
             }}
             keyboardType="phone-pad"
           />
@@ -178,6 +189,7 @@ export default function RegisterModal({ navigation, route }: RegisterModalProps)
               onChangeText={(txt) => {
                 setPassword(txt);
                 setError(null);
+                setSuccess(null);
               }}
               secureTextEntry={!showPassword}
               autoCapitalize="none"
@@ -258,6 +270,18 @@ const createStyles = (colors: ColorTheme) =>
       gap: 8,
     },
     errorText: { color: colors.error, fontSize: 13, flex: 1 },
+    successBanner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: '#dcfce7',
+      borderWidth: 1,
+      borderColor: '#86efac',
+      padding: 12,
+      borderRadius: borderRadius.md,
+      marginBottom: 16,
+      gap: 8,
+    },
+    successText: { color: '#166534', fontSize: 13, flex: 1 },
     form: { marginTop: 0 },
     label: { color: colors.textSecondary, fontSize: 12, fontWeight: '700', letterSpacing: 0.25, marginBottom: 7 },
     optional: { color: colors.textMuted, fontSize: 11, fontWeight: '400' },

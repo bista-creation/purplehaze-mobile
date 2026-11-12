@@ -9,3 +9,4 @@ export * from './GoogleSignInButton';
 export * from './FloatingCartBar';
 export * from './DietaryIcon';
 export * from './MenuCardHorizontal';
+export * from './LoyaltyRewardsCard';

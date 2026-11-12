@@ -48,7 +48,7 @@ type FirebaseCustomer = {
 async function exchangeFirebaseSession(idToken: string | undefined, firebaseUser?: FirebaseCustomer) {
   if (!idToken) throw new Error('Firebase did not return a sign-in token. Please try again.');
   if (firebaseUser) {
-    await saveCustomerProfile(firebaseUser.uid, {
+    void saveCustomerProfile(firebaseUser.uid, {
       name: firebaseUser.displayName ?? undefined,
       phone: firebaseUser.phoneNumber ?? undefined,
     }).catch((error) => console.warn('[Firebase] Customer profile sync deferred:', error));
@@ -113,9 +113,11 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       await tokenStorage.clearTokens();
       const credential = await firebaseEmailRegister(name, email, password);
-      await saveCustomerProfile(credential.user.uid, { name, phone });
+      // Account creation and email verification should not wait for an optional
+      // Firestore profile write to finish (or for a slow/offline Firestore call).
+      void saveCustomerProfile(credential.user.uid, { name, phone })
+        .catch((error) => console.warn('[Firebase] Customer profile sync deferred:', error));
       set({ isLoading: false, isAuthenticated: false, user: null });
-      throw new Error('Account created. Verify your email from the link we sent, then sign in.');
     }
     catch (error) { set({ isLoading: false }); throw error; }
   },

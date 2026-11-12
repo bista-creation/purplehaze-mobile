@@ -34,7 +34,9 @@
       "@react-native-google-signin/google-signin",
       "expo-router",
       "@react-native-firebase/app",
-      "@react-native-firebase/auth"
+      "@react-native-firebase/auth",
+      "expo-status-bar",
+      "expo-web-browser"
     ],
     "extra": {
       "apiUrl": "https://purplehaze-nine.vercel.app/api/v1",

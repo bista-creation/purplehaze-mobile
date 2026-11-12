@@ -106,8 +106,29 @@ export type OrderSummaryDto = {
   deliveryFee: number;
   taxAmount: number;
   discountAmount: number;
+  loyaltyDiscountAmount?: number;
+  loyaltyPointsToRedeem?: number;
+  loyaltyPointsBalance?: number | null;
   total: number;
   itemCount: number;
+};
+
+export type LoyaltySummaryDto = {
+  pointsBalance: number;
+  lifetimePoints: number;
+  pointsToNextReward: number;
+  redemptionPoints: number;
+  redemptionPercent: number;
+  earningRate: number;
+  rupeesPerPoint: number;
+  transactions: {
+    id: string;
+    kind: 'EARN' | 'REDEEM' | 'REFUND' | string;
+    pointsDelta: number;
+    description: string;
+    createdAt: string;
+    order?: { orderNumber: string } | null;
+  }[];
 };
 
 export type OrderDto = {

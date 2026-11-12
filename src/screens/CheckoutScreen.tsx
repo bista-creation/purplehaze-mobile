@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   View,
   Text,
@@ -19,6 +20,8 @@ import { useTheme } from "../stores/theme-store";
 import { useI18n } from "../i18n";
 import { ColorTheme, spacing, borderRadius } from "../theme";
 import type { OrderSummaryDto, PaymentMethod } from "../shared";
+import { LoyaltyRewardsCard } from "../components/ui";
+import type { LoyaltySummaryDto } from "../shared/types";
 
 export interface DeliveryZone {
   id: string;
@@ -69,6 +72,14 @@ export function CheckoutScreen({ navigation }: any) {
   const [instructions, setInstructions] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("COD");
   const [couponCode, setCouponCode] = useState("");
+  const [loyaltyRedemption, setLoyaltyRedemption] = useState<{ userId: string; enabled: boolean } | null>(null);
+  const { data: loyaltySummary, isLoading: isLoadingLoyalty } = useQuery({
+    queryKey: ['loyalty', user?.id],
+    queryFn: () => api.get<LoyaltySummaryDto>('/loyalty'),
+    enabled: Boolean(user?.id),
+    staleTime: 30_000,
+  });
+  const redeemLoyaltyPoints = Boolean(user?.id && loyaltyRedemption?.userId === user.id && loyaltyRedemption.enabled);
   const [appliedCoupon, setAppliedCoupon] = useState<{
     code: string;
     discountPaisa: number;
@@ -125,6 +136,9 @@ export function CheckoutScreen({ navigation }: any) {
           type: deliveryType,
           zoneId: deliveryType === 'DELIVERY' ? selectedZoneId : undefined,
           couponCode: appliedCoupon?.code,
+          loyaltyPointsToRedeem: redeemLoyaltyPoints
+            ? loyaltySummary?.redemptionPoints ?? 200
+            : 0,
           items: items.map((i) => ({
             dishId: i.dishId,
             variantId: i.variantId || undefined,
@@ -152,10 +166,14 @@ export function CheckoutScreen({ navigation }: any) {
     return () => {
       active = false;
     };
-  }, [items, deliveryType, appliedCoupon, selectedZoneId]);
+  }, [items, deliveryType, appliedCoupon, selectedZoneId, redeemLoyaltyPoints, loyaltySummary?.redemptionPoints]);
 
   const applyCoupon = async () => {
     if (!couponCode.trim()) return;
+    if (redeemLoyaltyPoints) {
+      Alert.alert(t.loyalty.title, t.loyalty.couponConflict);
+      return;
+    }
     try {
       const subtotalPaisa = items.reduce((sum, i) => sum + i.lineTotal, 0);
       const res = await api.post<{ valid: boolean; discount: number; reason?: string }>(
@@ -259,6 +277,9 @@ export function CheckoutScreen({ navigation }: any) {
           zoneId: deliveryType === "DELIVERY" ? selectedZoneId : undefined,
           notes: instructions.trim() || undefined,
           couponCode: appliedCoupon?.code,
+          loyaltyPointsToRedeem: redeemLoyaltyPoints
+            ? loyaltySummary?.redemptionPoints ?? 200
+            : 0,
         },
         items: items.map((i) => ({
           dishId: i.dishId,
@@ -634,6 +655,48 @@ export function CheckoutScreen({ navigation }: any) {
           </View>
         )}
 
+        <LoyaltyRewardsCard
+          summary={loyaltySummary ?? {
+            pointsBalance: 0,
+            lifetimePoints: 0,
+            pointsToNextReward: 200,
+            redemptionPoints: 200,
+            redemptionPercent: 10,
+            earningRate: 1,
+            rupeesPerPoint: 100,
+            transactions: [],
+          }}
+          onAction={() => {
+            if (!user) {
+              navigation.navigate('LoginModal');
+              return;
+            }
+            if (redeemLoyaltyPoints) {
+              setLoyaltyRedemption(user?.id ? { userId: user.id, enabled: false } : null);
+              return;
+            }
+            if (appliedCoupon) {
+              Alert.alert(t.loyalty.title, t.loyalty.couponConflict);
+              return;
+            }
+            setLoyaltyRedemption(user?.id ? { userId: user.id, enabled: true } : null);
+          }}
+          actionLabel={!user
+            ? t.loyalty.signInToRedeem
+            : redeemLoyaltyPoints
+              ? t.loyalty.removeReward
+              : t.loyalty.redeem}
+          actionDisabled={Boolean(user && !redeemLoyaltyPoints && (
+            isLoadingLoyalty ||
+            (loyaltySummary?.pointsBalance ?? 0) < (loyaltySummary?.redemptionPoints ?? 200)
+          ))}
+          helperText={redeemLoyaltyPoints
+            ? t.loyalty.rewardApplied
+            : appliedCoupon
+              ? t.loyalty.couponConflict
+              : t.loyalty.pointsPending}
+        />
+
         {/* Coupon Code */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>{t.cart.promoCode}</Text>
@@ -656,6 +719,17 @@ export function CheckoutScreen({ navigation }: any) {
               <Text style={styles.appliedText}>
                 Coupon {appliedCoupon.code} applied (-{formatCurrency(appliedCoupon.discountPaisa)})
               </Text>
+              <TouchableOpacity
+                onPress={() => {
+                  setAppliedCoupon(null);
+                  setCouponCode('');
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Remove coupon"
+                hitSlop={8}
+              >
+                <Ionicons name="close-circle-outline" size={18} color="#94a3b8" />
+              </TouchableOpacity>
             </View>
           )}
         </View>
@@ -733,7 +807,11 @@ export function CheckoutScreen({ navigation }: any) {
           )}
           {discountPaisa > 0 && (
             <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: "#22c55e" }]}>{t.cart.discount}</Text>
+              <Text style={[styles.summaryLabel, { color: "#22c55e" }]}>
+                {redeemLoyaltyPoints
+                  ? `${t.loyalty.rewardApplied} (${loyaltySummary?.redemptionPoints ?? 200} ${t.loyalty.points})`
+                  : t.cart.discount}
+              </Text>
               <Text style={[styles.summaryVal, { color: "#22c55e" }]}>
                 -{formatCurrency(discountPaisa)}
               </Text>
