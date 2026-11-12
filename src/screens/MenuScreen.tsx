@@ -24,8 +24,8 @@ import { ColorTheme, spacing, borderRadius, displayFontFamily } from '../theme';
 export function MenuScreen({ navigation, route }: any) {
   const { t, isNepali } = useI18n();
   const { colors } = useTheme();
-  const [categories, setCategories] = useState<CategoryDto[]>([]);
-  const [dishes, setDishes] = useState<DishDto[]>([]);
+  const [categories, setCategories] = useState<CategoryDto[]>(() => typedApi.menu.getCachedCategories());
+  const [dishes, setDishes] = useState<DishDto[]>(() => typedApi.menu.getCachedDishes());
   const requestedCategoryId = route?.params?.categoryId ?? null;
   const [selectedCategory, setSelectedCategory] = useState<string | null>(requestedCategoryId);
   const [previousRouteCategoryId, setPreviousRouteCategoryId] = useState<string | null>(requestedCategoryId);
@@ -37,7 +37,7 @@ export function MenuScreen({ navigation, route }: any) {
   const [searchQuery, setSearchQuery] = useState('');
   const [vegOnly, setVegOnly] = useState(false);
   const [sortBy, setSortBy] = useState<'default' | 'price-asc' | 'price-desc' | 'under-500'>('default');
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => typedApi.menu.getCachedDishes()?.length === 0);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const cartItemCount = useCartStore((s) => s.getItemCount());
@@ -45,14 +45,14 @@ export function MenuScreen({ navigation, route }: any) {
 
   const styles = useMemo(() => createStyles(colors), [colors]);
 
-  const loadMenu = async () => {
+  const loadMenu = async (forceRefresh = false) => {
     try {
       const [catData, dishData] = await Promise.all([
-        typedApi.menu.getCategories(),
-        typedApi.menu.getDishes(),
+        typedApi.menu.getCategories({ forceRefresh }),
+        typedApi.menu.getDishes(undefined, { forceRefresh }),
       ]);
-      setCategories(catData || []);
-      setDishes(dishData || []);
+      if (catData?.length) setCategories(catData);
+      if (dishData?.length) setDishes(dishData);
     } catch (e) {
       console.warn('[MenuScreen] Error loading menu:', e);
     } finally {
@@ -66,8 +66,8 @@ export function MenuScreen({ navigation, route }: any) {
     Promise.all([typedApi.menu.getCategories(), typedApi.menu.getDishes()])
       .then(([catData, dishData]) => {
         if (!active) return;
-        setCategories(catData || []);
-        setDishes(dishData || []);
+        if (catData?.length) setCategories(catData);
+        if (dishData?.length) setDishes(dishData);
       })
       .catch((e) => console.warn('[MenuScreen] Error loading menu:', e))
       .finally(() => {
@@ -300,7 +300,7 @@ export function MenuScreen({ navigation, route }: any) {
             refreshing={isRefreshing}
             onRefresh={() => {
               setIsRefreshing(true);
-              loadMenu();
+              loadMenu(true);
             }}
             tintColor={colors.gold}
           />

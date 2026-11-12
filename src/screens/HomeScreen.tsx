@@ -64,9 +64,9 @@ export function HomeScreen({ navigation }: any) {
 
   const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
 
-  const [categories, setCategories] = useState<CategoryDto[]>([]);
-  const [dishes, setDishes] = useState<DishDto[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [categories, setCategories] = useState<CategoryDto[]>(() => typedApi.menu.getCachedCategories());
+  const [dishes, setDishes] = useState<DishDto[]>(() => typedApi.menu.getCachedDishes());
+  const [isLoading, setIsLoading] = useState(() => typedApi.menu.getCachedDishes()?.length === 0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [activeBannerIndex, setActiveBannerIndex] = useState(0);
 
@@ -77,14 +77,14 @@ export function HomeScreen({ navigation }: any) {
 
   const cartItemCount = getItemCount();
 
-  const loadData = async () => {
+  const loadData = async (forceRefresh = false) => {
     try {
       const [catData, dishData] = await Promise.all([
-        typedApi.menu.getCategories().catch(() => []),
-        typedApi.menu.getDishes().catch(() => []),
+        typedApi.menu.getCategories({ forceRefresh }).catch(() => []),
+        typedApi.menu.getDishes(undefined, { forceRefresh }).catch(() => []),
       ]);
-      setCategories(catData || []);
-      setDishes(dishData || []);
+      if (catData?.length) setCategories(catData);
+      if (dishData?.length) setDishes(dishData);
     } catch (e) {
       console.warn('[HomeScreen] Data loading error:', e);
     } finally {
@@ -101,8 +101,8 @@ export function HomeScreen({ navigation }: any) {
     ])
       .then(([catData, dishData]) => {
         if (!active) return;
-        setCategories(catData || []);
-        setDishes(dishData || []);
+        if (catData?.length) setCategories(catData);
+        if (dishData?.length) setDishes(dishData);
       })
       .catch((e) => console.warn('[HomeScreen] Data loading error:', e))
       .finally(() => {
@@ -280,7 +280,7 @@ export function HomeScreen({ navigation }: any) {
             refreshing={isRefreshing}
             onRefresh={() => {
               setIsRefreshing(true);
-              loadData();
+              loadData(true);
             }}
             tintColor={colors.purple}
             colors={[colors.purple, colors.gold]}

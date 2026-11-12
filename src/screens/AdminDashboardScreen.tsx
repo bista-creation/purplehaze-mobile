@@ -140,21 +140,34 @@ export default function AdminDashboardScreen({ navigation }: AdminDashboardScree
   const loadData = useCallback(async (isSilent = false) => {
     if (!isSilent) setActionError(null);
     try {
-      const [reportData, ordersResult, dispatchResult, ridersData, reservationsData, dishesData] =
-        await Promise.all([
-          api.admin.getReports().catch(() => null),
-          api.admin.getOrders({ limit: 50 }).then(
-            (data) => ({ data }),
-            (error: unknown) => ({ error })
-          ),
-          api.admin.getDeliveries().then(
-            (data) => ({ data }),
-            (error: unknown) => ({ error })
-          ),
-          api.admin.getRiders().catch(() => []),
-          api.admin.getReservations({ limit: 30 }).catch(() => []),
-          api.menu.getDishes().catch(() => []),
-        ]);
+      const ordersPromise = api.admin.getOrders({ limit: 50 }).then(
+        (data) => ({ data }),
+        (error: unknown) => ({ error })
+      );
+      const dispatchPromise = api.admin.getDeliveries().then(
+        (data) => ({ data }),
+        (error: unknown) => ({ error })
+      );
+
+      // On silent 15s background poll, only fetch orders and dispatch to prevent backend throttling
+      const [ordersResult, dispatchResult, reportData, ridersData, reservationsData, dishesData] =
+        isSilent
+          ? await Promise.all([
+              ordersPromise,
+              dispatchPromise,
+              Promise.resolve(null),
+              Promise.resolve(null),
+              Promise.resolve(null),
+              Promise.resolve(null),
+            ])
+          : await Promise.all([
+              ordersPromise,
+              dispatchPromise,
+              api.admin.getReports().catch(() => null),
+              api.admin.getRiders().catch(() => []),
+              api.admin.getReservations({ limit: 30 }).catch(() => []),
+              api.menu.getDishes().catch(() => []),
+            ]);
 
       if (reportData) setReport(reportData);
 

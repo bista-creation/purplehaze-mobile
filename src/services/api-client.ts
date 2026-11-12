@@ -571,6 +571,13 @@ export async function request<T>(
 // Typed API Services
 // ----------------------------------------------------
 
+// ----------------------------------------------------
+// Memory Cache for Client-Side SWR
+// ----------------------------------------------------
+let clientCategoriesCache: { data: CategoryDto[]; expiresAt: number } | null = null;
+const clientDishesCache = new Map<string, { data: DishDto[]; expiresAt: number }>();
+const CLIENT_CACHE_TTL_MS = 2 * 60 * 1000; // 2 minutes
+
 export const api = {
   auth: {
     login: (credentials: { email: string; password: string }) =>
@@ -601,29 +608,69 @@ export const api = {
   },
 
   menu: {
-    getCategories: async (): Promise<CategoryDto[]> => {
+    getCachedCategories: (): CategoryDto[] => {
+      return clientCategoriesCache?.data || offlineCategories;
+    },
+
+    getCachedDishes: (params?: { categorySlug?: string; isVeg?: boolean }): DishDto[] => {
+      const key = `${params?.categorySlug || 'all'}_${params?.isVeg}`;
+      const entry = clientDishesCache.get(key);
+      if (entry) return entry.data;
+      return offlineDishes.filter((dish) =>
+        (!params?.categorySlug || dish.categorySlug === params.categorySlug) &&
+        (params?.isVeg === undefined || dish.isVeg === params.isVeg)
+      );
+    },
+
+    getCategories: async (options?: { forceRefresh?: boolean }): Promise<CategoryDto[]> => {
+      const now = Date.now();
+      if (!options?.forceRefresh && clientCategoriesCache && now < clientCategoriesCache.expiresAt) {
+        return clientCategoriesCache.data;
+      }
+
       try {
         const res = await request<CategoryDto[]>('/menu/categories');
-        if (Array.isArray(res)) {
+        if (Array.isArray(res) && res.length > 0) {
+          clientCategoriesCache = { data: res, expiresAt: now + CLIENT_CACHE_TTL_MS };
           return res;
         }
       } catch (e) {
         console.warn('[API Client] Failed to fetch live categories, using offline fallbacks:', e);
       }
+
+      if (clientCategoriesCache?.data) {
+        return clientCategoriesCache.data;
+      }
       return offlineCategories;
     },
 
-    getDishes: async (params?: { categorySlug?: string; isVeg?: boolean }): Promise<DishDto[]> => {
+    getDishes: async (
+      params?: { categorySlug?: string; isVeg?: boolean },
+      options?: { forceRefresh?: boolean }
+    ): Promise<DishDto[]> => {
+      const key = `${params?.categorySlug || 'all'}_${params?.isVeg}`;
+      const now = Date.now();
+      const cached = clientDishesCache.get(key);
+
+      if (!options?.forceRefresh && cached && now < cached.expiresAt) {
+        return cached.data;
+      }
+
       try {
         const query = new URLSearchParams();
         if (params?.categorySlug) query.set('category', params.categorySlug);
         if (params?.isVeg !== undefined) query.set('isVeg', String(params.isVeg));
         const res = await request<DishDto[]>(`/menu/dishes?${query.toString()}`);
-        if (Array.isArray(res)) {
+        if (Array.isArray(res) && res.length > 0) {
+          clientDishesCache.set(key, { data: res, expiresAt: now + CLIENT_CACHE_TTL_MS });
           return res;
         }
       } catch (e) {
         console.warn('[API Client] Failed to fetch live dishes, using offline fallbacks:', e);
+      }
+
+      if (cached?.data) {
+        return cached.data;
       }
       return offlineDishes.filter((dish) =>
         (!params?.categorySlug || dish.categorySlug === params.categorySlug) &&

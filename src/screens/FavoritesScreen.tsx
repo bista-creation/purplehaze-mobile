@@ -25,14 +25,14 @@ export function FavoritesScreen({ navigation }: any) {
 
   const styles = useMemo(() => createStyles(colors), [colors]);
 
-  const [dishes, setDishes] = useState<DishDto[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [dishes, setDishes] = useState<DishDto[]>(() => typedApi.menu.getCachedDishes());
+  const [isLoading, setIsLoading] = useState(() => typedApi.menu.getCachedDishes()?.length === 0);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const loadDishes = async () => {
+  const loadDishes = async (forceRefresh = false) => {
     try {
-      const data = await typedApi.menu.getDishes();
-      setDishes(data || []);
+      const data = await typedApi.menu.getDishes(undefined, { forceRefresh });
+      if (data?.length) setDishes(data);
     } catch (e) {
       console.warn('[FavoritesScreen] Failed to load dishes:', e);
     } finally {
@@ -45,7 +45,7 @@ export function FavoritesScreen({ navigation }: any) {
     let active = true;
     typedApi.menu.getDishes()
       .then((data) => {
-        if (active) setDishes(data || []);
+        if (active && data?.length) setDishes(data);
       })
       .catch((e) => console.warn('[FavoritesScreen] Failed to load dishes:', e))
       .finally(() => {
@@ -107,7 +107,7 @@ export function FavoritesScreen({ navigation }: any) {
               refreshing={isRefreshing}
               onRefresh={() => {
                 setIsRefreshing(true);
-                loadDishes();
+                loadDishes(true);
               }}
               tintColor={colors.purple}
             />
