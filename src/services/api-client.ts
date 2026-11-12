@@ -751,7 +751,32 @@ export const api = {
         `/orders/track?orderNumber=${encodeURIComponent(orderNumber)}&phone=${encodeURIComponent(phone)}`
       ),
 
-    get: (id: string) => request<TrackOrderResultDto>(`/orders/${id}`),
+    get: (id: string, token?: string) => {
+      const headers: Record<string, string> = {};
+      if (token) headers['x-order-token'] = token;
+      const q = token ? `?token=${encodeURIComponent(token)}` : '';
+      return request<any>(`/orders/${id}${q}`, { headers });
+    },
+
+    reorder: (id: string) =>
+      request<{
+        success: boolean;
+        lines: {
+          dishId: string;
+          name: string;
+          slug: string;
+          image: string | null;
+          categoryName: string;
+          basePrice: number;
+          variantId: string | null;
+          variantName: string | null;
+          variantPrice: number;
+          addOns: { id: string; name: string; price: number }[];
+          quantity: number;
+          instructions?: string;
+        }[];
+        skipped?: number;
+      }>(`/orders/${id}/reorder`, { method: 'POST' }),
 
     getLocation: (orderId: string, token?: string) => {
       const headers: Record<string, string> = {};

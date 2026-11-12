@@ -162,7 +162,14 @@ export default function OrdersScreen({ navigation }: OrdersScreenProps) {
         <View style={styles.cardActions}>
           <TouchableOpacity
             style={styles.trackBtn}
-            onPress={() => navigation.navigate('OrderTracking', { orderId: item.id })}
+            onPress={() =>
+              navigation.navigate('OrderTracking', {
+                orderId: item.id,
+                orderNumber: item.orderNumber,
+                phone: item.customerPhone,
+                token: item.publicToken,
+              })
+            }
           >
             <Ionicons name="navigate-outline" size={16} color="#c084fc" />
             <Text style={styles.trackBtnText}>{t.orders.track}</Text>

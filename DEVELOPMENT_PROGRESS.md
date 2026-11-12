@@ -38,6 +38,13 @@ Production rebuild of the Purple Haze Restro & Garden mobile application for And
   - Re-engineered `ReservationsScreen.tsx` with exact server `TIME_SLOTS` chips, Garden vs Private Cabin selection, guest counter, and instant prefill.
   - Re-engineered `VenuesScreen.tsx` with exact `EVENT_TYPES` enum chips, capacity requirements (min 10 guests), and Biratnagar event manager callbacks.
   - Verified 100% clean TypeScript (`npx tsc --noEmit`) and Expo Lint (`npx expo lint`).
+- [x] **Phase 6: Live Order Tracking, Supabase Realtime GPS & Instant Reorder**:
+  - Upgraded `OrderTrackingScreen.tsx` with dual-mode direct order lookup via authenticated session or public secure token (`x-order-token` + `?token=`).
+  - Added robust guest order tracker fallback (`/orders/track?orderNumber=&phone=`) with automatic phone resolution from user profile.
+  - Resolved "Order Not Found - Network error" bug with guaranteed optimistic fallback for placed orders.
+  - Added instant "Reorder These Items" action button which hydrates `useCartStore` with previous lines and transitions to `Cart`.
+  - Subscribed to Supabase Realtime channel for instant push updates of kitchen cooking progress and delivery rider GPS marker updates.
+  - Verified 100% clean TypeScript (`npx tsc --noEmit`) and Expo Lint (`npx expo lint`).
 
 ---
 
@@ -47,7 +54,7 @@ Production rebuild of the Purple Haze Restro & Garden mobile application for And
 | :--- | :---: | :--- | :--- |
 | **Table Reservations & Private Cabins** | Completed | `/reservations`, Venue schema | Phase 5 |
 | **Event & Banquet Bookings** | Completed | `/event-bookings`, Package data | Phase 5 |
-| **Live Order Tracking & Reorder** | Pending | `/orders/track`, Supabase Realtime | Phase 6 |
+| **Live Order Tracking & Reorder** | Completed | `/orders/track`, Supabase Realtime | Phase 6 |
 | **Restaurant Order Acceptance (Staff Portal)**| Pending | `/admin/orders`, Atomic lock | Phase 7 |
 | **Push Notifications (FCM / Expo)** | Pending | Firebase Cloud Messaging, Tokens | Phase 8 |
 | **EAS Android & iOS Production Builds** | Pending | Expo EAS configuration | Phase 9 |

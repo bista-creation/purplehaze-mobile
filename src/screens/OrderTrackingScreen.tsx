@@ -10,13 +10,14 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { api } from '../services/api';
 import { api as apiClient } from '../services/api-client';
 import { mobileRealtime } from '../services/realtime';
 import { STATUS_META, type OrderStatus } from '../shared/constants';
 import type { OrderDto } from '../shared/types';
 import { useTheme } from '../stores/theme-store';
 import { useAuthStore } from '../stores/auth-store';
+import { useCartStore } from '../stores/cart-store';
+import { useI18n } from '../i18n';
 import { ColorTheme, spacing, borderRadius } from '../theme';
 
 interface OrderTrackingScreenProps {
@@ -67,8 +68,9 @@ function hasValidCoordinates(loc?: { latitude: number; longitude: number } | nul
 
 export default function OrderTrackingScreen({ route, navigation }: OrderTrackingScreenProps) {
   const { orderId, orderNumber, phone, token } = route.params || {};
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const { isAuthenticated, user } = useAuthStore();
   const { colors } = useTheme();
+  const { isNepali } = useI18n();
   const [order, setOrder] = useState<OrderDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -95,25 +97,52 @@ export default function OrderTrackingScreen({ route, navigation }: OrderTracking
     try {
       let data: OrderDto | null = null;
       const targetId = orderId || orderNumber;
+      const effectiveOrderNumber = orderNumber || (targetId && targetId.includes('-') ? targetId : undefined);
+      const effectivePhone = phone || user?.phone || '';
 
-      // 1. Try direct order lookup (via token query param or authenticated user)
+      // 1. Direct order lookup using public token or auth session
       if (targetId) {
         try {
-          const endpoint = token
-            ? `/orders/${targetId}?token=${encodeURIComponent(token)}`
-            : `/orders/${targetId}`;
-          data = await api.get<OrderDto>(endpoint);
+          const res = await apiClient.orders.get(targetId, token);
+          if (res?.orderNumber || res?.id) {
+            data = res as OrderDto;
+          }
         } catch {
-          // Direct lookup failed, will attempt public tracker below
+          // Direct lookup fallback
         }
       }
 
       // 2. Fallback to public order tracking with orderNumber + phone
-      if (!data && orderNumber && phone) {
+      if (!data && effectiveOrderNumber && effectivePhone) {
         try {
-          data = await api.get<OrderDto>(
-            `/orders/track?orderNumber=${encodeURIComponent(orderNumber)}&phone=${encodeURIComponent(phone)}`
-          );
+          const trackRes = await apiClient.orders.track(effectiveOrderNumber, effectivePhone);
+          if (trackRes?.orderNumber) {
+            data = {
+              id: (trackRes as any).id || effectiveOrderNumber,
+              orderNumber: trackRes.orderNumber,
+              customerName: user?.name || 'Customer',
+              customerPhone: effectivePhone,
+              type: (trackRes as any).type || 'DELIVERY',
+              status: (trackRes.status as any) || 'PENDING',
+              paymentStatus: (trackRes.paymentStatus as any) || 'UNPAID',
+              paymentMethod: (trackRes.paymentMethod as any) || 'COD',
+              subtotal: trackRes.subtotal || 0,
+              deliveryFee: trackRes.deliveryFee || 0,
+              taxAmount: 0,
+              discountAmount: 0,
+              total: trackRes.total || 0,
+              createdAt: trackRes.createdAt || new Date().toISOString(),
+              items: (trackRes.items || []).map((it, idx) => ({
+                id: (it as any).id || String(idx),
+                name: it.name,
+                quantity: it.quantity,
+                basePrice: it.unitPrice,
+                lineTotal: it.lineTotal,
+                variantName: (it as any).variantName,
+              })),
+              statusHistory: (trackRes as any).statusHistory || [],
+            } as OrderDto;
+          }
         } catch {
           // Both failed
         }
@@ -123,13 +152,13 @@ export default function OrderTrackingScreen({ route, navigation }: OrderTracking
         setOrder(data);
         setError(null);
         setLastUpdated(new Date());
-      } else if (orderNumber && !order) {
+      } else if (targetId && !order) {
         // Safe optimistic fallback so customer is NEVER stuck on an error screen after placing order
         setOrder({
-          id: orderId || orderNumber,
-          orderNumber: orderNumber,
-          customerName: 'Customer',
-          customerPhone: phone || '',
+          id: targetId,
+          orderNumber: effectiveOrderNumber || targetId,
+          customerName: user?.name || 'Customer',
+          customerPhone: effectivePhone,
           type: 'DELIVERY',
           status: 'PENDING',
           paymentStatus: 'UNPAID',
@@ -139,7 +168,7 @@ export default function OrderTrackingScreen({ route, navigation }: OrderTracking
           taxAmount: 0,
           discountAmount: 0,
           publicToken: token || '',
-          customerEmail: 'guest@purplehazebiratnagar.com',
+          customerEmail: user?.email || 'guest@purplehazebiratnagar.com',
           total: 0,
           createdAt: new Date().toISOString(),
           items: [],
@@ -156,12 +185,13 @@ export default function OrderTrackingScreen({ route, navigation }: OrderTracking
         throw new Error('Order details could not be loaded at this time.');
       }
     } catch (err: any) {
-      if (orderNumber && !order) {
+      if ((orderId || orderNumber) && !order) {
+        const fallbackTarget = orderNumber || orderId || 'Order';
         setOrder({
-          id: orderId || orderNumber,
-          orderNumber: orderNumber,
-          customerName: 'Customer',
-          customerPhone: phone || '',
+          id: orderId || fallbackTarget,
+          orderNumber: fallbackTarget,
+          customerName: user?.name || 'Customer',
+          customerPhone: phone || user?.phone || '',
           type: 'DELIVERY',
           status: 'PENDING',
           paymentStatus: 'UNPAID',
@@ -171,7 +201,7 @@ export default function OrderTrackingScreen({ route, navigation }: OrderTracking
           taxAmount: 0,
           discountAmount: 0,
           publicToken: token || '',
-          customerEmail: 'guest@purplehazebiratnagar.com',
+          customerEmail: user?.email || 'guest@purplehazebiratnagar.com',
           total: 0,
           createdAt: new Date().toISOString(),
           items: [],
@@ -190,27 +220,16 @@ export default function OrderTrackingScreen({ route, navigation }: OrderTracking
     } finally {
       setLoading(false);
     }
-  }, [orderId, orderNumber, phone, token, order]);
+  }, [orderId, orderNumber, phone, token, order, user]);
 
   const fetchRiderLocation = useCallback(async () => {
-    if (!orderId || (!token && !isAuthenticated)) {
+    const targetId = order?.id || orderId;
+    if (!targetId || (!token && !isAuthenticated)) {
       setRiderLocation(null);
       return;
     }
     try {
-      const endpoint = token
-        ? `/orders/${orderId}/location?token=${encodeURIComponent(token)}`
-        : `/orders/${orderId}/location`;
-      const res = await api.get<{
-        active: boolean;
-        location?: {
-          latitude: number;
-          longitude: number;
-          speed?: number | null;
-          updatedAt?: string;
-        } | null;
-      }>(endpoint);
-
+      const res = await apiClient.orders.getLocation(targetId, token);
       if (res?.active && res.location && hasValidCoordinates(res.location)) {
         setRiderLocation(res.location);
       } else if (!res?.active || res?.location === null) {
@@ -219,7 +238,7 @@ export default function OrderTrackingScreen({ route, navigation }: OrderTracking
     } catch {
       // silent fallback
     }
-  }, [orderId, token, isAuthenticated]);
+  }, [orderId, order?.id, token, isAuthenticated]);
 
   useEffect(() => {
     void (async () => {
@@ -374,6 +393,42 @@ export default function OrderTrackingScreen({ route, navigation }: OrderTracking
             }
           },
         },
+      ]
+    );
+  };
+
+  const handleReorder = () => {
+    if (!order?.items || order.items.length === 0) {
+      Alert.alert('Notice', 'No items in this order to add to tray.');
+      return;
+    }
+    const addItem = useCartStore.getState().addItem;
+    for (const item of order.items) {
+      addItem({
+        dishId: (item as any).dishId || item.id,
+        name: item.name,
+        slug: (item as any).slug || 'dish',
+        image: (item as any).image || null,
+        basePrice: item.basePrice || Math.round((item.lineTotal || 0) / (item.quantity || 1)),
+        variantPriceDelta: 0,
+        addOns: [],
+        quantity: item.quantity || 1,
+      });
+    }
+
+    if (isAuthenticated && order?.id) {
+      apiClient.orders.reorder(order.id).catch(() => {});
+    }
+
+    Alert.alert(
+      isNepali ? 'पुनः अर्डर थपियो' : 'Items Added to Tray',
+      isNepali ? 'तपाईंको ट्रेमा सामानहरू थपिएका छन्।' : 'Previous order items have been added to your cart.',
+      [
+        {
+          text: isNepali ? 'ट्रे हेर्नुहोस्' : 'View Cart',
+          onPress: () => navigation.navigate('Cart'),
+        },
+        { text: isNepali ? 'बन्द गर्नुहोस्' : 'Close' },
       ]
     );
   };
@@ -673,6 +728,20 @@ export default function OrderTrackingScreen({ route, navigation }: OrderTracking
             <Text style={styles.totalLabel}>Grand Total</Text>
             <Text style={styles.totalValue}>{formatRs(order?.total || 0)}</Text>
           </View>
+
+          {/* Reorder Button */}
+          {Boolean(order?.items && order.items.length > 0) && (
+            <TouchableOpacity
+              style={styles.reorderBtn}
+              onPress={handleReorder}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="repeat" size={18} color="#130B1D" />
+              <Text style={styles.reorderBtnText}>
+                {isNepali ? 'यही खाना फेरि अर्डर गर्नुहोस्' : 'Reorder These Items'}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Contact Restaurant Buttons */}
@@ -1085,6 +1154,21 @@ function createStyles(colors: ColorTheme) {
       color: '#ef4444',
       fontSize: 13,
       fontWeight: '600',
+    },
+    reorderBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.gold,
+      paddingVertical: 12,
+      borderRadius: borderRadius.md,
+      gap: 8,
+      marginTop: spacing.md,
+    },
+    reorderBtnText: {
+      color: '#130B1D',
+      fontWeight: '700',
+      fontSize: 14,
     },
   });
 }
