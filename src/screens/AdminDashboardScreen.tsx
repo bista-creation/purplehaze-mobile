@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,8 @@ import {
   RefreshControl,
   Modal,
   Linking,
+  Platform,
+  Vibration,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
@@ -30,6 +32,14 @@ import {
 } from '../services/api-client';
 import { mobileRealtime } from '../services/realtime';
 import { useAuthStore } from '../stores/auth-store';
+import { pushNotifications } from '../services/push-notifications';
+
+/** Formats database paisa integer amounts into readable Nepalese Rupees */
+const formatAdminRupees = (amountInPaisa: number | undefined | null): string => {
+  if (amountInPaisa === undefined || amountInPaisa === null) return '0';
+  const rupees = Math.round(amountInPaisa / 100);
+  return rupees.toLocaleString('en-IN');
+};
 
 interface AdminDashboardScreenProps {
   navigation: any;
@@ -97,6 +107,11 @@ export default function AdminDashboardScreen({ navigation }: AdminDashboardScree
   // Inline action loading tracking
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
+  // New incoming order notification banner & sound alerts
+  const [newOrderAlert, setNewOrderAlert] = useState<AdminOrderDto | null>(null);
+  const knownOrderIdsRef = useRef<Set<string>>(new Set());
+  const isFirstLoadRef = useRef(true);
+
   // Modal: Order Details
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<AdminOrderDto | null>(null);
@@ -154,7 +169,36 @@ export default function AdminDashboardScreen({ navigation }: AdminDashboardScree
             : `Could not load orders${status}: ${error?.message || 'Please check your connection.'}`
         );
       } else if (Array.isArray(ordersResult.data)) {
-        setOrders(ordersResult.data);
+        const freshOrders = ordersResult.data;
+
+        // Detect new order arrival and trigger sound/vibration/notification alert
+        if (!isFirstLoadRef.current && freshOrders.length > 0) {
+          const brandNewOrders = freshOrders.filter(
+            (o) => !knownOrderIdsRef.current.has(o.id) && (o.status === 'PENDING' || o.status === 'CONFIRMED')
+          );
+          if (brandNewOrders.length > 0) {
+            const latest = brandNewOrders[0];
+            // 1. Trigger vibration
+            try {
+              Vibration.vibrate([0, 500, 200, 500]);
+            } catch {}
+
+            // 2. Trigger system local notification
+            void pushNotifications.triggerLocalOrderNotification({
+              orderNumber: latest.orderNumber,
+              total: latest.total,
+              customerName: latest.customerName,
+              type: latest.type,
+            });
+
+            // 3. Trigger in-app top banner
+            setNewOrderAlert(latest);
+          }
+        }
+
+        freshOrders.forEach((o) => knownOrderIdsRef.current.add(o.id));
+        isFirstLoadRef.current = false;
+        setOrders(freshOrders);
         setOrderLoadError(null);
         setOrderAuthRequired(false);
       } else {
@@ -210,6 +254,18 @@ export default function AdminDashboardScreen({ navigation }: AdminDashboardScree
         setLastUpdated(new Date());
 
         if (event === 'created') {
+          // Immediate alert on realtime WebSocket arrival
+          try {
+            Vibration.vibrate([0, 500, 200, 500]);
+          } catch {}
+          if (payload?.orderNumber) {
+            void pushNotifications.triggerLocalOrderNotification({
+              orderNumber: payload.orderNumber,
+              total: payload.total || 0,
+              customerName: payload.customerName,
+              type: payload.type,
+            });
+          }
           // New order created - refresh data smoothly
           loadData(true);
         } else if (event === 'updated' && payload?.orderId) {
@@ -698,6 +754,36 @@ export default function AdminDashboardScreen({ navigation }: AdminDashboardScree
               )}
             </View>
 
+            {/* New Incoming Order Alert Banner */}
+            {newOrderAlert && (
+              <View style={styles.newOrderBanner}>
+                <View style={styles.newOrderPulse}>
+                  <Ionicons name="notifications" size={18} color="#000" />
+                </View>
+                <View style={{ flex: 1, marginLeft: spacing.sm }}>
+                  <Text style={styles.newOrderBannerTitle}>🔔 New Order Received!</Text>
+                  <Text style={styles.newOrderBannerSub}>
+                    #{newOrderAlert.orderNumber} · {newOrderAlert.customerName} · Rs. {formatAdminRupees(newOrderAlert.total)}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.newOrderBannerBtn}
+                  onPress={() => {
+                    handleOpenOrderDetails(newOrderAlert);
+                    setNewOrderAlert(null);
+                  }}
+                >
+                  <Text style={styles.newOrderBannerBtnText}>Review</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={{ padding: 4, marginLeft: 4 }}
+                  onPress={() => setNewOrderAlert(null)}
+                >
+                  <Ionicons name="close" size={18} color={colors.textMuted} />
+                </TouchableOpacity>
+              </View>
+            )}
+
             {/* Kitchen Status Filter Chips */}
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>
               {[
@@ -857,7 +943,7 @@ export default function AdminDashboardScreen({ navigation }: AdminDashboardScree
                         <Ionicons name="time-outline" size={13} color={colors.textMuted} />
                         <Text style={styles.metaText}>{formatElapsed(order.createdAt)}</Text>
                       </View>
-                      <Text style={styles.orderTotal}>Rs. {order.total.toLocaleString()}</Text>
+                      <Text style={styles.orderTotal}>Rs. {formatAdminRupees(order.total)}</Text>
                     </View>
 
                     {/* Quick Kitchen Action Buttons */}
@@ -1062,7 +1148,7 @@ export default function AdminDashboardScreen({ navigation }: AdminDashboardScree
                       </View>
 
                       <View style={styles.dispatchFooterRow}>
-                        <Text style={styles.orderTotal}>Rs. {u.total.toLocaleString()}</Text>
+                        <Text style={styles.orderTotal}>Rs. {formatAdminRupees(u.total)}</Text>
                         <TouchableOpacity
                           style={styles.dispatchAssignBtn}
                           onPress={() =>
@@ -1486,7 +1572,7 @@ export default function AdminDashboardScreen({ navigation }: AdminDashboardScree
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={{ maxHeight: 480 }} showsVerticalScrollIndicator={false}>
+            <ScrollView style={{ maxHeight: 380, flexShrink: 1 }} showsVerticalScrollIndicator={false}>
               {loadingDetail ? (
                 <ActivityIndicator size="small" color={colors.gold} style={{ padding: spacing.xl }} />
               ) : (
@@ -1587,7 +1673,7 @@ export default function AdminDashboardScreen({ navigation }: AdminDashboardScree
                       </View>
                     </View>
                     <Text style={[styles.orderTotal, { fontSize: 18, marginTop: 4 }]}>
-                      Total: Rs. {selectedOrder?.total?.toLocaleString()}
+                      Total: Rs. {formatAdminRupees(selectedOrder?.total)}
                     </Text>
                   </View>
                 </View>
@@ -2307,14 +2393,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 8,
+    minHeight: 44,
+    paddingVertical: 10,
     borderRadius: borderRadius.md,
     marginRight: spacing.xs,
-    gap: 4,
+    gap: 6,
   },
   actionBtnText: {
     color: '#fff',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: 'bold',
   },
   cancelBtn: {
@@ -2621,7 +2708,47 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
     padding: spacing.lg,
-    maxHeight: '85%',
+    paddingBottom: Platform.OS === 'ios' ? 40 : 28,
+    maxHeight: '92%',
+  },
+  newOrderBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(217, 119, 6, 0.15)',
+    borderColor: colors.gold,
+    borderWidth: 1.5,
+    borderRadius: borderRadius.lg,
+    padding: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  newOrderPulse: {
+    width: 34,
+    height: 34,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.gold,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  newOrderBannerTitle: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: colors.goldText,
+  },
+  newOrderBannerSub: {
+    fontSize: 11,
+    color: colors.text,
+    marginTop: 2,
+  },
+  newOrderBannerBtn: {
+    backgroundColor: colors.gold,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: borderRadius.md,
+  },
+  newOrderBannerBtnText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#000',
   },
   modalHeaderRow: {
     flexDirection: 'row',

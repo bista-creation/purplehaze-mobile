@@ -7,12 +7,14 @@ import {
   Platform,
   Animated,
 } from 'react-native';
+import { usePathname } from 'expo-router';
 import { useMayaStore } from '../stores/maya-store';
 import { useThemeStore } from '../stores/theme-store';
 import { useCartStore } from '../stores/cart-store';
 import { MayaAssistantEmbed } from './MayaAssistantEmbed';
 
 export const MayaFloatingWidget: React.FC = () => {
+  const pathname = usePathname();
   const isOpen = useMayaStore((s) => s.isOpen);
   const closeMaya = useMayaStore((s) => s.closeMaya);
   const openMaya = useMayaStore((s) => s.openMaya);
@@ -34,6 +36,11 @@ export const MayaFloatingWidget: React.FC = () => {
       useNativeDriver: false,
     }).start();
   }, [targetBottom, bottomAnim]);
+
+  // Never display Maya on Admin operations / dashboard screens to prevent blocking staff controls
+  if (pathname?.toLowerCase().includes('admin')) {
+    return null;
+  }
 
   if (!isOpen) {
     return (

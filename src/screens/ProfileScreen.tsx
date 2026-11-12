@@ -18,7 +18,6 @@ import { useTheme } from '../stores/theme-store';
 import { useI18n } from '../i18n';
 import { ColorTheme, spacing, borderRadius } from '../theme';
 import { api, WEBSITE_BASE_URL } from '../services/api-client';
-import type { SavedAddressDto } from '../services/api-client';
 
 interface ProfileScreenProps {
   navigation: any;
@@ -29,10 +28,6 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
   const { mode, preference, setMode, colors } = useTheme();
   const { t, language, setLanguage, isNepali } = useI18n();
   const [failedAvatarUri, setFailedAvatarUri] = useState<string | null>(null);
-  const [savedAddresses, setSavedAddresses] = useState<SavedAddressDto[]>([]);
-  const [addressesLoading, setAddressesLoading] = useState(false);
-  const [addressesError, setAddressesError] = useState(false);
-  const [addressReload, setAddressReload] = useState(0);
 
   const styles = useMemo(() => createStyles(colors), [colors]);
 
@@ -48,29 +43,6 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
     redirectToSignIn();
     return unsubscribe;
   }, [navigation, isAuthenticated, isLoading]);
-
-  useEffect(() => {
-    let active = true;
-    const loadAddresses = async () => {
-      if (!isAuthenticated) return;
-      setAddressesLoading(true);
-      setAddressesError(false);
-      try {
-        const addresses = await api.profile.addresses();
-        if (active) setSavedAddresses(addresses);
-      } catch {
-        if (active) setAddressesError(true);
-      } finally {
-        if (active) setAddressesLoading(false);
-      }
-    };
-    void loadAddresses();
-    const unsubscribe = navigation.addListener('focus', loadAddresses);
-    return () => {
-      active = false;
-      unsubscribe();
-    };
-  }, [navigation, isAuthenticated, user?.id, addressReload]);
 
   if (isLoading || !isAuthenticated) {
     return (
@@ -186,52 +158,6 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
               <GoogleSignInButton style={{ marginTop: spacing.sm }} />
             </View>
           ) : null}
-        </Card>
-
-        <Typography variant="title" style={styles.sectionHeader}>
-          {t.profile.savedAddresses}
-        </Typography>
-        <Card variant="surface" style={styles.addressGroup}>
-          {addressesLoading ? (
-            <View style={styles.addressMessage}>
-              <ActivityIndicator color={colors.purple} />
-            </View>
-          ) : addressesError ? (
-            <TouchableOpacity style={styles.addressMessage} onPress={() => setAddressReload((value) => value + 1)}>
-              <Ionicons name="refresh-outline" size={18} color={colors.gold} />
-              <Typography variant="bodySmall" color={colors.textMuted} style={styles.addressMessageText}>
-                {t.profile.addressLoadFailed}
-              </Typography>
-            </TouchableOpacity>
-          ) : savedAddresses.length === 0 ? (
-            <View style={styles.addressMessage}>
-              <Ionicons name="location-outline" size={18} color={colors.textMuted} />
-              <Typography variant="bodySmall" color={colors.textMuted} style={styles.addressMessageText}>
-                {t.profile.noSavedAddresses}
-              </Typography>
-            </View>
-          ) : savedAddresses.map((address, index) => (
-            <View key={address.id} style={[styles.savedAddressRow, index > 0 ? styles.savedAddressBorder : null]}>
-              <View style={styles.savedAddressIcon}>
-                <Ionicons name="location" size={17} color={colors.gold} />
-              </View>
-              <View style={styles.savedAddressInfo}>
-                <View style={styles.savedAddressTitleRow}>
-                  <Typography variant="body" bold>{address.label}</Typography>
-                  {address.isDefault ? (
-                    <Text style={styles.defaultAddressBadge}>{t.profile.defaultAddress}</Text>
-                  ) : null}
-                </View>
-                <Typography variant="bodySmall" color={colors.textMuted}>
-                  {[address.line1, address.line2, address.city, address.state, address.postalCode, address.country]
-                    .filter(Boolean).join(', ')}
-                </Typography>
-                <Typography variant="caption" color={colors.textMuted}>
-                  {address.fullName} · {address.phone}
-                </Typography>
-              </View>
-            </View>
-          ))}
         </Card>
 
         {/* Admin Management Hub Card for Staff / Admins */}

@@ -129,6 +129,11 @@ export type OrderDto = {
   deliveryAddress?: string | null;
   notes?: string | null;
   createdAt: string;
+  statusHistory?: {
+    status: string;
+    note?: string | null;
+    createdAt: string;
+  }[];
   items: {
     id: string;
     name: string;

@@ -76,6 +76,36 @@ export const pushNotifications = {
   },
 
   /**
+   * Fires an immediate local sound + banner notification for new orders (for staff / admin).
+   */
+  async triggerLocalOrderNotification(order: {
+    orderNumber: string;
+    total: number;
+    customerName?: string;
+    type?: string;
+  }) {
+    try {
+      const rupees = Math.round((order.total || 0) / 100).toLocaleString('en-IN');
+      const orderType = order.type === 'DELIVERY' ? 'Home Delivery' : 'Dine-In/Takeaway';
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: `🔔 New Order Received! #${order.orderNumber}`,
+          body: `${order.customerName ? `${order.customerName} · ` : ''}Rs. ${rupees} (${orderType})`,
+          sound: 'default',
+          vibrate: [0, 500, 250, 500],
+          data: {
+            orderNumber: order.orderNumber,
+            type: 'NEW_ORDER',
+          },
+        },
+        trigger: null,
+      });
+    } catch (e) {
+      console.warn("Could not trigger local notification:", e);
+    }
+  },
+
+  /**
    * Sets up a listener for notification taps (when user opens a notification).
    */
   addNotificationResponseListener(

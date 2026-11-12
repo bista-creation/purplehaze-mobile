@@ -77,6 +77,7 @@ export function CheckoutScreen({ navigation }: any) {
   const [calculation, setCalculation] = useState<OrderSummaryDto | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
 
   // Fetch live delivery zones from backend
   useEffect(() => {
@@ -179,15 +180,43 @@ export function CheckoutScreen({ navigation }: any) {
   };
 
   const handlePlaceOrder = async () => {
+    setPhoneError(null);
+
     const trimmedName = fullName.trim();
     if (!trimmedName || trimmedName.length < 2) {
-      Alert.alert("Name Required", "Please enter your full name so our kitchen knows who this order is for.");
+      Alert.alert(
+        isNepali ? "नाम आवश्यक छ" : "Name Required",
+        isNepali
+          ? "कृपया आफ्नो पूरा नाम प्रविष्ट गर्नुहोस्।"
+          : "Please enter your full name so our kitchen knows who this order is for."
+      );
       return;
     }
 
     const cleanPhone = phone.replace(/\D/g, "");
-    if (!cleanPhone || cleanPhone.length < 7) {
-      Alert.alert("Invalid Phone", "Please enter a valid phone number (at least 7 digits).");
+    if (!phone.trim()) {
+      const msg = isNepali
+        ? "कृपया अर्डर गर्न आफ्नो फोन नम्बर राख्नुहोस्।"
+        : "Please enter your phone number to place your order.";
+      setPhoneError(msg);
+      Alert.alert(
+        isNepali ? "फोन नम्बर आवश्यक छ" : "Phone Number Required",
+        isNepali
+          ? "कृपया अर्डर अघि बढाउन आफ्नो फोन नम्बर प्रविष्ट गर्नुहोस् ताकि हाम्रो राइडरले सम्पर्क गर्न सकोस्।"
+          : "Please enter your phone number to place your order so our team and rider can contact you regarding your delivery."
+      );
+      return;
+    }
+
+    if (cleanPhone.length < 7) {
+      const msg = isNepali
+        ? "कृपया मान्य फोन नम्बर राख्नुहोस् (कम से कम ७ अंक)।"
+        : "Please enter a valid phone number (at least 7 digits).";
+      setPhoneError(msg);
+      Alert.alert(
+        isNepali ? "अमान्य फोन नम्बर" : "Invalid Phone Number",
+        msg
+      );
       return;
     }
 
@@ -489,13 +518,29 @@ export function CheckoutScreen({ navigation }: any) {
             onChangeText={setEmailInput}
           />
           <TextInput
-            style={styles.input}
+            style={[
+              styles.input,
+              phoneError ? styles.inputError : !phone.trim() ? styles.inputWarning : null,
+            ]}
             placeholder={t.cart.phoneRequired}
             placeholderTextColor="#64748b"
             keyboardType="phone-pad"
             value={phone}
-            onChangeText={setPhoneInput}
+            onChangeText={(val) => {
+              setPhoneInput(val);
+              if (phoneError) setPhoneError(null);
+            }}
           />
+          {phoneError ? (
+            <View style={styles.phoneErrorBanner}>
+              <Ionicons name="alert-circle" size={16} color="#ef4444" />
+              <Text style={styles.phoneErrorText}>{phoneError}</Text>
+            </View>
+          ) : !phone.trim() ? (
+            <Text style={styles.fieldHint}>
+              💡 {isNepali ? 'डेलिभरी र अर्डर अपडेटको लागि फोन नम्बर अनिवार्य छ।' : 'Phone number is required so our kitchen and rider can contact you.'}
+            </Text>
+          ) : null}
         </View>
 
         {/* Delivery Address */}
@@ -782,6 +827,30 @@ const createStyles = (colors: ColorTheme) =>
   },
   inputWarning: {
     borderColor: 'rgba(216, 173, 104, 0.4)',
+  },
+  inputError: {
+    borderColor: '#ef4444',
+    borderWidth: 1.5,
+    backgroundColor: 'rgba(239, 68, 68, 0.08)',
+  },
+  phoneErrorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(239, 68, 68, 0.12)',
+    borderColor: 'rgba(239, 68, 68, 0.3)',
+    borderWidth: 1,
+    borderRadius: borderRadius.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 6,
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  phoneErrorText: {
+    fontSize: 12,
+    color: '#ef4444',
+    fontWeight: '600',
+    flex: 1,
   },
   landmarksContainer: {
     marginTop: 2,
