@@ -23,6 +23,7 @@ export interface Translations {
     venues: string;
     cart: string;
     orders: string;
+    bookings: string;
     favorites: string;
     profile: string;
   };

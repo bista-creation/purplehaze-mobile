@@ -11,13 +11,16 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Header, Card, Typography, Badge, Button, Input } from '../components/ui';
 import { useTheme } from '../stores/theme-store';
+import { useAuthStore } from '../stores/auth-store';
 import { useI18n } from '../i18n';
 import { ColorTheme, spacing, borderRadius } from '../theme';
 import { api, type VenueDto } from '../services/api-client';
+import { EVENT_TYPES, type EventType } from '../shared/constants';
 
 export const VenuesScreen: React.FC<any> = ({ navigation }) => {
-  const { t } = useI18n();
+  const { t, isNepali } = useI18n();
   const { colors } = useTheme();
+  const { user } = useAuthStore();
   const [venues, setVenues] = useState<VenueDto[]>([]);
   const [selectedVenue, setSelectedVenue] = useState<VenueDto | null>(null);
   const [showInquiryModal, setShowInquiryModal] = useState(false);
@@ -30,17 +33,17 @@ export const VenuesScreen: React.FC<any> = ({ navigation }) => {
     if (navigation?.canGoBack?.()) {
       navigation.goBack();
     } else {
-      navigation?.navigate?.('MainTabs', { screen: 'Home' });
+      navigation?.navigate?.('MainTabs', { screen: 'Bookings' });
     }
   };
 
   // Inquiry form fields
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
+  const [name, setName] = useState(() => user?.name || '');
+  const [email, setEmail] = useState(() => user?.email || '');
+  const [phone, setPhone] = useState(() => user?.phone || '');
   const [guests, setGuests] = useState('50');
   const [date, setDate] = useState(() => new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0]);
-  const [eventType, setEventType] = useState('Wedding / Reception');
+  const [eventType, setEventType] = useState<EventType>('Wedding');
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -56,16 +59,16 @@ export const VenuesScreen: React.FC<any> = ({ navigation }) => {
     setSelectedVenue(venue);
     if (venue.capacity === 300) {
       setGuests('150');
-      setEventType('Wedding / Reception');
+      setEventType('Wedding');
     } else if (venue.capacity === 100) {
       setGuests('60');
-      setEventType('Corporate Meeting / Seminar');
+      setEventType('Corporate meeting');
     } else if (venue.capacity === 50) {
       setGuests('30');
-      setEventType('Workshop / Private Gathering');
+      setEventType('Private party');
     } else {
       setGuests('80');
-      setEventType('Outdoor Celebration / Music Event');
+      setEventType('Reception');
     }
     setShowInquiryModal(true);
   };
@@ -78,8 +81,29 @@ export const VenuesScreen: React.FC<any> = ({ navigation }) => {
   };
 
   const handleInquirySubmit = async () => {
-    if (!name.trim() || !phone.trim() || !email.trim()) {
-      Alert.alert(t.common.error, 'Please fill in name, email, and phone number.');
+    const trimmedName = name.trim();
+    const trimmedPhone = phone.trim();
+    const trimmedEmail = email.trim();
+    const guestNum = parseInt(guests, 10) || 50;
+
+    if (!trimmedName || trimmedName.length < 2) {
+      Alert.alert(t.common.error, isNepali ? 'कृपया आफ्नो पूरा नाम प्रविष्ट गर्नुहोस्।' : 'Please enter your full name (at least 2 characters).');
+      return;
+    }
+
+    const digitsOnly = trimmedPhone.replace(/\D/g, '');
+    if (!trimmedPhone || digitsOnly.length < 7) {
+      Alert.alert(t.common.error, isNepali ? 'कृपया कम्तिमा ७ अङ्कको मान्य फोन नम्बर प्रविष्ट गर्नुहोस्।' : 'Please enter a valid phone number (at least 7 digits).');
+      return;
+    }
+
+    if (!trimmedEmail || !trimmedEmail.includes('@')) {
+      Alert.alert(t.common.error, isNepali ? 'कृपया मान्य इमेल प्रविष्ट गर्नुहोस्।' : 'Please enter a valid email address.');
+      return;
+    }
+
+    if (guestNum < 10) {
+      Alert.alert(t.common.error, isNepali ? 'पार्टी वा कार्यक्रमका लागि कम्तिमा १० जना पाहुना हुनुपर्छ।' : 'Event enquiries require at least 10 guests. For smaller parties, please book a dining table.');
       return;
     }
 
@@ -87,21 +111,34 @@ export const VenuesScreen: React.FC<any> = ({ navigation }) => {
     try {
       await api.venues.createEventBooking({
         venueId: selectedVenue?.id,
-        name: name.trim(),
-        email: email.trim(),
-        phone: phone.trim(),
+        name: trimmedName,
+        email: trimmedEmail,
+        phone: trimmedPhone,
         eventType,
-        eventDate: new Date(`${date}T18:00:00`).toISOString(),
-        guests: parseInt(guests, 10) || (selectedVenue?.capacity ?? 50),
+        eventDate: date.trim(),
+        guests: guestNum,
         message: message.trim() || undefined,
       });
 
       Alert.alert(
-        'Enquiry Received!',
-        `Thank you ${name.trim()}! Our Biratnagar events coordinator will contact you at ${phone.trim()} to discuss details and arrangements for ${selectedVenue?.name}.`
+        isNepali ? 'सोधपुछ प्राप्त भयो!' : 'Enquiry Received!',
+        isNepali
+          ? `धन्यवाद ${trimmedName}! हाम्रो विराटनगर कार्यक्रम प्रबन्धकले ${trimmedPhone} मा थप विवरण र तयारीका लागि छिट्टै सम्पर्क गर्नुहुनेछ।`
+          : `Thank you ${trimmedName}! Our Biratnagar events coordinator will contact you at ${trimmedPhone} to discuss details and arrangements for ${selectedVenue?.name || 'your event'}.`,
+        [
+          {
+            text: isNepali ? 'बुकिङहरू हेर्नुहोस्' : 'View in Bookings',
+            onPress: () => navigation?.navigate?.('MainTabs', { screen: 'Bookings' }),
+          },
+          {
+            text: 'OK',
+            onPress: () => {
+              setShowInquiryModal(false);
+              setMessage('');
+            },
+          },
+        ]
       );
-      setShowInquiryModal(false);
-      setMessage('');
     } catch (e: any) {
       Alert.alert(t.common.error, e.message || 'Could not send enquiry. Please call us directly.');
     } finally {
@@ -294,12 +331,39 @@ export const VenuesScreen: React.FC<any> = ({ navigation }) => {
               />
             </View>
 
-            <Input
-              label="Event Type"
-              value={eventType}
-              onChangeText={setEventType}
-              placeholder="e.g. Wedding, Seminar, Birthday, Music Night"
-            />
+            <Typography variant="bodySmall" bold style={{ marginTop: spacing.sm, marginBottom: spacing.xs, color: colors.text }}>
+              {isNepali ? 'कार्यक्रमको प्रकार' : 'Event Type'}
+            </Typography>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: spacing.sm }}>
+              {EVENT_TYPES.map((evType) => {
+                const isSelected = eventType === evType;
+                return (
+                  <TouchableOpacity
+                    key={evType}
+                    onPress={() => setEventType(evType)}
+                    style={{
+                      paddingHorizontal: 12,
+                      paddingVertical: 6,
+                      borderRadius: borderRadius.full,
+                      borderWidth: 1,
+                      borderColor: isSelected ? colors.gold : colors.surfaceBorder,
+                      backgroundColor: isSelected ? colors.gold : colors.surface,
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        fontWeight: isSelected ? '700' : '500',
+                        color: isSelected ? '#130B1D' : colors.text,
+                      }}
+                    >
+                      {evType}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
 
             <Input
               label="Special Notes or Catering Preferences"

@@ -10,13 +10,16 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Header, Card, Typography, Input, Button } from '../components/ui';
 import { useTheme } from '../stores/theme-store';
+import { useAuthStore } from '../stores/auth-store';
 import { useI18n } from '../i18n';
 import { ColorTheme, spacing, borderRadius } from '../theme';
 import { api } from '../services/api-client';
+import { TIME_SLOTS } from '../shared/constants';
 
 export const ReservationsScreen: React.FC<any> = ({ navigation }) => {
-  const { t } = useI18n();
+  const { t, isNepali } = useI18n();
   const { colors } = useTheme();
+  const { user } = useAuthStore();
 
   const styles = useMemo(() => createStyles(colors), [colors]);
 
@@ -24,43 +27,68 @@ export const ReservationsScreen: React.FC<any> = ({ navigation }) => {
     if (navigation?.canGoBack?.()) {
       navigation.goBack();
     } else {
-      navigation?.navigate?.('MainTabs', { screen: 'Home' });
+      navigation?.navigate?.('MainTabs', { screen: 'Bookings' });
     }
   };
 
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
+  const [name, setName] = useState(() => user?.name || '');
+  const [email, setEmail] = useState(() => user?.email || '');
+  const [phone, setPhone] = useState(() => user?.phone || '');
   const [guests, setGuests] = useState(2);
   const [date, setDate] = useState(() => {
     const d = new Date(Date.now() + 86400000);
     return d.toISOString().split('T')[0];
   });
-  const [time, setTime] = useState('19:00');
+  const [time, setTime] = useState<string>('7:00 PM');
   const [seatingPreference, setSeatingPreference] = useState<'cabin' | 'garden' | 'indoor'>('garden');
   const [occasion, setOccasion] = useState<'casual' | 'birthday' | 'anniversary' | 'business'>('casual');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [createdRef, setCreatedRef] = useState<string>('');
 
   const handleSubmit = async () => {
-    if (!name.trim() || !phone.trim() || !email.trim()) {
-      Alert.alert(t.common.error, 'Please fill in your name, email, and phone number.');
+    const trimmedName = name.trim();
+    const trimmedPhone = phone.trim();
+    const trimmedEmail = email.trim();
+
+    if (!trimmedName || trimmedName.length < 2) {
+      Alert.alert(t.common.error, isNepali ? 'कृपया आफ्नो पूरा नाम प्रविष्ट गर्नुहोस्।' : 'Please enter your full name (at least 2 characters).');
+      return;
+    }
+
+    const digitsOnly = trimmedPhone.replace(/\D/g, '');
+    if (!trimmedPhone || digitsOnly.length < 7) {
+      Alert.alert(t.common.error, isNepali ? 'कृपया कम्तिमा ७ अङ्कको मान्य फोन नम्बर प्रविष्ट गर्नुहोस्।' : 'Please enter a valid phone number (at least 7 digits).');
+      return;
+    }
+
+    if (!trimmedEmail || !trimmedEmail.includes('@')) {
+      Alert.alert(t.common.error, isNepali ? 'कृपया मान्य इमेल ठेगाना प्रविष्ट गर्नुहोस्।' : 'Please enter a valid email address.');
+      return;
+    }
+
+    if (!date) {
+      Alert.alert(t.common.error, isNepali ? 'कृपया आरक्षण मिति रोज्नुहोस्।' : 'Please select a reservation date.');
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const reservationDate = new Date(`${date}T${time}:00`).toISOString();
-      await api.reservations.create({
-        name,
-        email,
-        phone,
-        date: reservationDate,
+      const res = await api.reservations.create({
+        name: trimmedName,
+        email: trimmedEmail,
+        phone: trimmedPhone,
+        date: date.trim(),
+        time: time.trim(),
         guests,
         occasion,
         notes: `${seatingPreference.toUpperCase()} seating. ${notes}`.trim(),
       });
+
+      if (res?.id) {
+        setCreatedRef(res.id.slice(-6).toUpperCase());
+      }
       setIsSuccess(true);
     } catch (e: any) {
       Alert.alert(t.common.error, e.message || 'Could not place reservation. Please try again.');
@@ -99,9 +127,16 @@ export const ReservationsScreen: React.FC<any> = ({ navigation }) => {
               <Text style={styles.summaryText}>👤 {name} ({guests} {t.venues.guestsCount})</Text>
               <Text style={styles.summaryText}>📅 {date} at {time}</Text>
               <Text style={styles.summaryText}>✨ {seatingPreference.toUpperCase()} Dining</Text>
+              {createdRef ? <Text style={styles.summaryRef}>Ref: #{createdRef}</Text> : null}
             </View>
             <Button
-              title="Book Another Table"
+              title={isNepali ? 'मेरो बुकिङहरूमा हेर्नुहोस्' : 'View in My Bookings'}
+              variant="gold"
+              onPress={() => navigation?.navigate?.('MainTabs', { screen: 'Bookings' })}
+              style={{ marginTop: spacing.md }}
+            />
+            <Button
+              title={isNepali ? 'अर्को टेबल बुक गर्नुहोस्' : 'Book Another Table'}
               variant="outline"
               onPress={() => {
                 setIsSuccess(false);
@@ -110,13 +145,7 @@ export const ReservationsScreen: React.FC<any> = ({ navigation }) => {
               style={styles.anotherButton}
             />
             <Button
-              title="Back to Home"
-              variant="gold"
-              onPress={() => navigation?.navigate?.('MainTabs', { screen: 'Home' })}
-              style={{ marginTop: spacing.sm }}
-            />
-            <Button
-              title="Explore Food Menu"
+              title={isNepali ? 'खानाको मेनु हेर्नुहोस्' : 'Explore Food Menu'}
               variant="ghost"
               onPress={() => navigation?.navigate?.('MainTabs', { screen: 'Menu' })}
               style={{ marginTop: spacing.xs }}
@@ -182,25 +211,40 @@ export const ReservationsScreen: React.FC<any> = ({ navigation }) => {
               </TouchableOpacity>
             </View>
 
-            {/* Date & Time selection */}
-            <View style={styles.row}>
-              <Input
-                label={t.reservations.date}
-                value={date}
-                onChangeText={setDate}
-                placeholder="YYYY-MM-DD"
-                leftIcon="calendar-outline"
-                containerStyle={styles.halfInput}
-              />
-              <Input
-                label={t.reservations.time}
-                value={time}
-                onChangeText={setTime}
-                placeholder="HH:MM (e.g. 19:30)"
-                leftIcon="time-outline"
-                containerStyle={styles.halfInput}
-              />
-            </View>
+            {/* Date */}
+            <Input
+              label={t.reservations.date}
+              value={date}
+              onChangeText={setDate}
+              placeholder="YYYY-MM-DD (e.g. 2026-11-20)"
+              leftIcon="calendar-outline"
+            />
+
+            {/* Time Slot Horizontal Chips */}
+            <Typography variant="title" style={styles.sectionLabel}>
+              {t.reservations.time}
+            </Typography>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.timeSlotsRow}
+            >
+              {TIME_SLOTS.map((slot) => {
+                const isSelected = time === slot;
+                return (
+                  <TouchableOpacity
+                    key={slot}
+                    style={[styles.timeChip, isSelected && styles.timeChipActive]}
+                    onPress={() => setTime(slot)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.timeChipText, isSelected && styles.timeChipTextActive]}>
+                      {slot}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
 
             {/* Guest Details */}
             <Input
@@ -259,34 +303,25 @@ export const ReservationsScreen: React.FC<any> = ({ navigation }) => {
               ))}
             </View>
 
+            {/* Special Instructions */}
             <Input
               label={t.reservations.specialRequests}
               value={notes}
               onChangeText={setNotes}
-              placeholder="Allergies, high chair, birthday cake surprise..."
+              placeholder={isNepali ? 'खाना वा उत्सव सम्बन्धी कुनै विशेष अनुरोध भए लेख्नुहोस्...' : 'Tell us about special occasions, dietary needs or seating preferences...'}
               multiline
               numberOfLines={3}
-              style={{ height: 70, textAlignVertical: 'top' }}
+              containerStyle={{ marginTop: spacing.sm }}
             />
 
             <Button
-              title={t.reservations.bookTable}
+              title={isSubmitting ? t.common.loading : t.reservations.bookTable}
               variant="gold"
               size="lg"
-              loading={isSubmitting}
               onPress={handleSubmit}
-              style={styles.submitButton}
+              loading={isSubmitting}
+              style={styles.submitBtn}
             />
-
-            <TouchableOpacity
-              onPress={handleBack}
-              style={{ marginTop: spacing.md, alignItems: 'center', padding: spacing.sm }}
-              activeOpacity={0.7}
-            >
-              <Text style={{ color: colors.textSecondary, fontSize: 14, fontWeight: '600' }}>
-                Cancel & Return Home
-              </Text>
-            </TouchableOpacity>
           </Card>
         )}
       </ScrollView>
@@ -296,122 +331,143 @@ export const ReservationsScreen: React.FC<any> = ({ navigation }) => {
 
 const createStyles = (colors: ColorTheme) =>
   StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  scrollContent: {
-    padding: spacing.md,
-    paddingBottom: spacing.huge,
-  },
-  headerTitleContainer: {
-    marginBottom: spacing.md,
-  },
-  subtitle: {
-    marginTop: spacing.xs,
-  },
-  formCard: {
-    padding: spacing.lg,
-  },
-  sectionLabel: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    marginBottom: spacing.xs,
-    marginTop: spacing.sm,
-  },
-  pillRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-    marginBottom: spacing.md,
-  },
-  optionPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.surfaceBorder,
-    borderRadius: borderRadius.full,
-  },
-  optionPillActive: {
-    backgroundColor: colors.gold,
-    borderColor: colors.goldDark,
-  },
-  optionText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.textSecondary,
-  },
-  optionTextActive: {
-    color: '#130B1D',
-    fontWeight: '700',
-  },
-  counterRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.surfaceBorder,
-    padding: spacing.sm,
-    marginBottom: spacing.md,
-  },
-  counterBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: borderRadius.sm,
-    backgroundColor: colors.surfaceElevated,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  counterValue: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: colors.goldText,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: spacing.md,
-  },
-  halfInput: {
-    flex: 1,
-  },
-  submitButton: {
-    marginTop: spacing.md,
-  },
-  successCard: {
-    padding: spacing.xl,
-    alignItems: 'center',
-  },
-  successIconWrapper: {
-    marginBottom: spacing.md,
-  },
-  successTitle: {
-    color: colors.goldText,
-    marginBottom: spacing.sm,
-  },
-  successMessage: {
-    marginBottom: spacing.lg,
-    lineHeight: 20,
-  },
-  summaryBox: {
-    backgroundColor: colors.surfaceElevated,
-    borderRadius: borderRadius.md,
-    padding: spacing.md,
-    width: '100%',
-    marginBottom: spacing.lg,
-    gap: 6,
-  },
-  summaryText: {
-    color: colors.text,
-    fontSize: 13,
-    fontWeight: '500',
-  },
-  anotherButton: {
-    width: '100%',
-  },
-});
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    scrollContent: {
+      padding: spacing.md,
+      paddingBottom: 90,
+    },
+    headerTitleContainer: {
+      marginBottom: spacing.md,
+    },
+    subtitle: {
+      marginTop: spacing.xs,
+    },
+    formCard: {
+      padding: spacing.md,
+    },
+    sectionLabel: {
+      marginTop: spacing.md,
+      marginBottom: spacing.xs,
+      fontWeight: '600',
+    },
+    pillRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: spacing.xs,
+      marginBottom: spacing.sm,
+    },
+    optionPill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
+      borderRadius: borderRadius.full,
+      borderWidth: 1,
+      borderColor: colors.surfaceBorder,
+      backgroundColor: colors.surface,
+    },
+    optionPillActive: {
+      backgroundColor: colors.gold,
+      borderColor: colors.gold,
+    },
+    optionText: {
+      fontSize: 13,
+      color: colors.text,
+      fontWeight: '500',
+    },
+    optionTextActive: {
+      color: '#130B1D',
+      fontWeight: '700',
+    },
+    counterRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: spacing.md,
+      gap: spacing.md,
+    },
+    counterBtn: {
+      width: 42,
+      height: 42,
+      borderRadius: borderRadius.md,
+      borderWidth: 1,
+      borderColor: colors.surfaceBorder,
+      backgroundColor: colors.surface,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    counterValue: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: colors.text,
+      minWidth: 90,
+      textAlign: 'center',
+    },
+    timeSlotsRow: {
+      paddingVertical: spacing.xs,
+      gap: 8,
+      marginBottom: spacing.md,
+    },
+    timeChip: {
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      borderRadius: borderRadius.md,
+      borderWidth: 1,
+      borderColor: colors.surfaceBorder,
+      backgroundColor: colors.surface,
+    },
+    timeChipActive: {
+      backgroundColor: colors.purple,
+      borderColor: colors.gold,
+    },
+    timeChipText: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    timeChipTextActive: {
+      color: '#FFFFFF',
+      fontWeight: '700',
+    },
+    submitBtn: {
+      marginTop: spacing.lg,
+    },
+    successCard: {
+      padding: spacing.xl,
+      alignItems: 'center',
+    },
+    successIconWrapper: {
+      marginBottom: spacing.md,
+    },
+    successTitle: {
+      marginBottom: spacing.xs,
+    },
+    successMessage: {
+      marginBottom: spacing.lg,
+    },
+    summaryBox: {
+      width: '100%',
+      backgroundColor: colors.surface,
+      borderRadius: borderRadius.md,
+      padding: spacing.md,
+      marginBottom: spacing.md,
+      gap: spacing.xs,
+    },
+    summaryText: {
+      color: colors.text,
+      fontSize: 14,
+      fontWeight: '500',
+    },
+    summaryRef: {
+      color: colors.gold,
+      fontSize: 13,
+      fontWeight: '700',
+      marginTop: 4,
+    },
+    anotherButton: {
+      marginTop: spacing.sm,
+      width: '100%',
+    },
+  });

@@ -23,6 +23,7 @@ export const ne: Translations = {
     venues: 'हल/बगैंचा',
     cart: 'कार्ट',
     orders: 'अर्डरहरू',
+    bookings: 'बुकिङ',
     favorites: 'मनपर्ने',
     profile: 'प्रोफाइल',
   },

@@ -157,7 +157,8 @@ export interface CreateReservationDto {
   name: string;
   email: string;
   phone: string;
-  date: string; // ISO
+  date: string; // YYYY-MM-DD
+  time: string; // e.g. "7:00 PM"
   guests: number;
   occasion?: string;
   notes?: string;
@@ -169,8 +170,9 @@ export interface CreateEventBookingDto {
   email: string;
   phone: string;
   eventType: string;
-  eventDate: string; // ISO
+  eventDate: string; // YYYY-MM-DD
   guests: number;
+  budget?: string;
   message?: string;
 }
 

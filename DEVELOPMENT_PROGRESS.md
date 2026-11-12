@@ -31,6 +31,13 @@ Production rebuild of the Purple Haze Restro & Garden mobile application for And
   - Added unique client idempotency keys (`mob_${Date.now()}_${random}`) to eliminate duplicate orders.
   - Seamless navigation to `OrderTracking` passing `orderNumber`, `orderId`, and `publicToken`.
   - Verified 100% clean TypeScript (`npx tsc --noEmit`) and Expo Lint (`npx expo lint`).
+- [x] **Phase 5: Table Reservations, Event Enquiries & Unified Bookings Hub**:
+  - Implemented 5-tab customer navigation dock with dedicated `Bookings` screen replacing Favorites (Favorites kept in profile and menu stack).
+  - Built unified `BookingsScreen.tsx` with segmented controls for "Table Reservations" and "Banquets & Events".
+  - Integrated TanStack Query hooks for real-time customer reservation history and banquet enquiry synchronization.
+  - Re-engineered `ReservationsScreen.tsx` with exact server `TIME_SLOTS` chips, Garden vs Private Cabin selection, guest counter, and instant prefill.
+  - Re-engineered `VenuesScreen.tsx` with exact `EVENT_TYPES` enum chips, capacity requirements (min 10 guests), and Biratnagar event manager callbacks.
+  - Verified 100% clean TypeScript (`npx tsc --noEmit`) and Expo Lint (`npx expo lint`).
 
 ---
 
@@ -38,8 +45,8 @@ Production rebuild of the Purple Haze Restro & Garden mobile application for And
 
 | Module | Status | Dependencies | Target Milestone |
 | :--- | :---: | :--- | :--- |
-| **Table Reservations & Private Cabins** | In Progress | `/reservations`, Venue schema | Phase 5 |
-| **Event & Banquet Bookings** | In Progress | `/event-bookings`, Package data | Phase 5 |
+| **Table Reservations & Private Cabins** | Completed | `/reservations`, Venue schema | Phase 5 |
+| **Event & Banquet Bookings** | Completed | `/event-bookings`, Package data | Phase 5 |
 | **Live Order Tracking & Reorder** | Pending | `/orders/track`, Supabase Realtime | Phase 6 |
 | **Restaurant Order Acceptance (Staff Portal)**| Pending | `/admin/orders`, Atomic lock | Phase 7 |
 | **Push Notifications (FCM / Expo)** | Pending | Firebase Cloud Messaging, Tokens | Phase 8 |

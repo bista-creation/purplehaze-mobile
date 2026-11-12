@@ -23,6 +23,7 @@ export const en: Translations = {
     venues: 'Venues',
     cart: 'Cart',
     orders: 'Orders',
+    bookings: 'Bookings',
     favorites: 'Favorites',
     profile: 'Profile',
   },

@@ -234,7 +234,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
 
           <TouchableOpacity
             style={[styles.menuItem, styles.menuItemBorder]}
-            onPress={() => navigation.navigate('Reservations')}
+            onPress={() => navigation.navigate('MainTabs', { screen: 'Bookings' })}
           >
             <View style={styles.menuLeft}>
               <Ionicons name="calendar-outline" size={20} color={colors.gold} style={styles.menuIcon} />

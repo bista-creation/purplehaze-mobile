@@ -15,6 +15,7 @@ import { CartScreen } from '../screens/CartScreen';
 import { CheckoutScreen } from '../screens/CheckoutScreen';
 import { DishDetailModal } from '../screens/DishDetailModal';
 import { FavoritesScreen } from '../screens/FavoritesScreen';
+import { BookingsScreen } from '../screens/BookingsScreen';
 import OrderTrackingScreen from '../screens/OrderTrackingScreen';
 import OrdersScreen from '../screens/OrdersScreen';
 import ProfileScreen from '../screens/ProfileScreen';
@@ -34,6 +35,8 @@ export type RootStackParamList = {
   Orders: undefined;
   Reservations: undefined;
   Venues: undefined;
+  Favorites: undefined;
+  Bookings: undefined;
   LoginModal: { returnTo?: 'Profile' } | undefined;
   RegisterModal: { returnTo?: 'Profile' } | undefined;
   MayaModal: undefined;
@@ -44,7 +47,7 @@ export type MainTabParamList = {
   Home: undefined;
   Menu: { categoryId?: string } | undefined;
   Orders: undefined;
-  Favorites: undefined;
+  Bookings: undefined;
   Profile: undefined;
 };
 
@@ -115,13 +118,13 @@ function MainTabs() {
         }}
       />
       <Tab.Screen
-        name="Favorites"
-        component={FavoritesScreen}
+        name="Bookings"
+        component={BookingsScreen}
         options={{
-          title: t.navigation.favorites,
-          tabBarLabel: t.navigation.favorites,
+          title: t.navigation.bookings,
+          tabBarLabel: t.navigation.bookings,
           tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons name={focused ? 'heart' : 'heart-outline'} size={size} color={color} />
+            <Ionicons name={focused ? 'calendar' : 'calendar-outline'} size={size} color={color} />
           ),
           headerShown: false,
         }}
@@ -160,13 +163,14 @@ const linking: LinkingOptions<RootStackParamList> = {
           Home: '',
           Menu: 'menu',
           Orders: 'orders',
-          Favorites: 'favorites',
+          Bookings: 'bookings',
           Profile: 'profile',
         },
       },
       Cart: 'cart',
       Reservations: 'reservations',
       Venues: 'venues',
+      Favorites: 'favorites',
       OrderTracking: {
         path: 'track-order/:orderId',
       },
@@ -274,6 +278,13 @@ export function RootNavigator() {
           options={{
             title: 'My Orders',
             headerBackTitle: 'Back',
+          }}
+        />
+        <Stack.Screen
+          name="Favorites"
+          component={FavoritesScreen}
+          options={{
+            headerShown: false,
           }}
         />
         <Stack.Screen
