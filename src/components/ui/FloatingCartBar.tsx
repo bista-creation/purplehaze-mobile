@@ -16,9 +16,10 @@ import { ColorTheme, borderRadius } from '../../theme';
 
 interface FloatingCartBarProps {
   onPress: () => void;
+  bottom?: number;
 }
 
-export const FloatingCartBar: React.FC<FloatingCartBarProps> = ({ onPress }) => {
+export const FloatingCartBar: React.FC<FloatingCartBarProps> = ({ onPress, bottom }) => {
   const { colors } = useTheme();
   const { t, formatCurrency } = useI18n();
 
@@ -108,8 +109,8 @@ export const FloatingCartBar: React.FC<FloatingCartBarProps> = ({ onPress }) => 
   }
 
   // Render geometry:
-  // Positioned safely at bottom: 74px to clear bottom navigation dock and avoid overlapping
-  const bottomPosition = 74;
+  // Positioned snugly at bottom: 10px just on top of the bottom navigation dock menu icons
+  const bottomPosition = bottom ?? 10;
 
   const styles = createStyles(colors);
 

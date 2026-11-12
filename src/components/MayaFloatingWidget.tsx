@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   TouchableOpacity,
   Text,
   StyleSheet,
   Platform,
+  Animated,
 } from 'react-native';
 import { useMayaStore } from '../stores/maya-store';
 import { useThemeStore } from '../stores/theme-store';
@@ -19,33 +20,49 @@ export const MayaFloatingWidget: React.FC = () => {
   const mode = useThemeStore((s) => s.mode);
   const cartItemCount = useCartStore((s) => s.getItemCount());
 
-  const launcherBottom = cartItemCount > 0 ? 140 : 84;
+  // When cart has items, floating cart bar is at bottom: 10 (top of cart at ~120px from root bottom).
+  // Position Maya safely above the floating cart at bottom: 132 so they never overlap.
+  // When cart is empty, Maya rests comfortably at bottom: 74 just above the navigation dock.
+  const targetBottom = cartItemCount > 0 ? 132 : 74;
+  const [bottomAnim] = useState(() => new Animated.Value(targetBottom));
+
+  useEffect(() => {
+    Animated.spring(bottomAnim, {
+      toValue: targetBottom,
+      friction: 8,
+      tension: 60,
+      useNativeDriver: false,
+    }).start();
+  }, [targetBottom, bottomAnim]);
 
   if (!isOpen) {
     return (
-      <TouchableOpacity
+      <Animated.View
         style={[
           styles.floatingLauncher,
           {
-            bottom: launcherBottom,
+            bottom: bottomAnim,
             backgroundColor: mode === 'dark' ? colors.purpleDark : colors.purple,
             borderColor: colors.gold,
             shadowColor: colors.purple,
           },
           Platform.OS === 'web' && ({
             position: 'fixed',
-            bottom: launcherBottom + 3,
             right: 16,
             zIndex: 40,
           } as any),
         ]}
-        onPress={openMaya}
-        activeOpacity={0.85}
-        aria-label="Open Maya AI Assistant"
       >
-        <Text style={styles.launcherIcon}>✨</Text>
-        <View style={styles.onlineDot} />
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.launcherTouchable}
+          onPress={openMaya}
+          activeOpacity={0.85}
+          aria-label="Open Maya AI Assistant"
+        >
+          <Text style={styles.launcherIcon}>✨</Text>
+          <View style={styles.onlineDot} />
+        </TouchableOpacity>
+      </Animated.View>
     );
   }
 
@@ -58,7 +75,7 @@ export const MayaFloatingWidget: React.FC = () => {
           position: 'fixed',
           bottom: 23,
           right: 20,
-          zIndex: 40,
+          zIndex: 150,
           width: 380,
           height: 600,
           maxWidth: 'calc(100vw - 30px)',
@@ -87,19 +104,23 @@ export const MayaFloatingWidget: React.FC = () => {
 const styles = StyleSheet.create({
   floatingLauncher: {
     position: 'absolute',
-    bottom: 84,
     right: 16,
     zIndex: 40,
     width: 46,
     height: 46,
     borderRadius: 23,
     borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35,
     shadowRadius: 8,
     elevation: 8,
+  },
+  launcherTouchable: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 23,
+    alignItems: 'center',
+    justifyContent: 'center',
     cursor: 'pointer' as any,
   },
   launcherIcon: {
@@ -121,7 +142,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 20,
     right: 20,
-    zIndex: 40,
+    zIndex: 150,
     width: 380,
     height: 600,
     maxWidth: '92%',
