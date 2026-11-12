@@ -230,8 +230,21 @@ export default function OrderTrackingScreen({ route, navigation }: OrderTracking
     }
     try {
       const res = await apiClient.orders.getLocation(targetId, token);
-      if (res?.active && res.location && hasValidCoordinates(res.location)) {
-        setRiderLocation(res.location);
+      if (res?.active && res.location) {
+        // The API's Redis location shape is { lat, lng }, while realtime
+        // broadcasts are normalized to { latitude, longitude }.
+        const location = res.location as typeof res.location & {
+          lat?: number;
+          lng?: number;
+        };
+        const normalizedLocation = {
+          ...location,
+          latitude: location.latitude ?? location.lat,
+          longitude: location.longitude ?? location.lng,
+        };
+        if (hasValidCoordinates(normalizedLocation)) {
+          setRiderLocation(normalizedLocation);
+        }
       } else if (!res?.active || res?.location === null) {
         setRiderLocation(null);
       }
