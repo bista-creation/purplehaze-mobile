@@ -155,12 +155,19 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   logout: async () => {
     set({ isLoading: true });
-    const refreshToken = await tokenStorage.getRefreshToken();
-    try { if (refreshToken) await api.auth.logout(undefined, false, refreshToken); }
-    finally {
-      await firebaseLogout().catch(() => undefined);
-      await tokenStorage.clearTokens();
-      set({ user: null, isAuthenticated: false, isLoading: false });
+    const refreshToken = await tokenStorage.getRefreshToken().catch(() => null);
+    await Promise.all([
+      firebaseLogout().catch(() => undefined),
+      tokenStorage.clearTokens(),
+    ]);
+    set({ user: null, isAuthenticated: false, isLoading: false });
+
+    // Local sign-out should succeed even if the API is unavailable. Revoke the
+    // server refresh token in the background so it cannot leave the UI stuck.
+    if (refreshToken) {
+      void api.auth.logout(undefined, false, refreshToken).catch((error) => {
+        console.warn('[Auth] Server session revocation deferred:', error);
+      });
     }
   },
 }));

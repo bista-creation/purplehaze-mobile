@@ -9,6 +9,7 @@ import {
   Image,
   Alert,
   Linking,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
@@ -53,6 +54,13 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
   }
 
   const handleLogout = () => {
+    // React Native Web implements Alert.alert as a no-op, so the native
+    // confirmation callback never runs in browsers.
+    if (Platform.OS === 'web') {
+      void logout();
+      return;
+    }
+
     Alert.alert(t.profile.signOut, t.profile.signOutConfirm, [
       { text: t.common.cancel, style: 'cancel' },
       {
