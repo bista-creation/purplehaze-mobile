@@ -78,6 +78,8 @@ export function CheckoutScreen({ navigation }: any) {
   const [isCalculating, setIsCalculating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [addressError, setAddressError] = useState<string | null>(null);
 
   // Fetch live delivery zones from backend
   useEffect(() => {
@@ -180,14 +182,20 @@ export function CheckoutScreen({ navigation }: any) {
   };
 
   const handlePlaceOrder = async () => {
+    setNameError(null);
     setPhoneError(null);
+    setAddressError(null);
 
     const trimmedName = fullName.trim();
     if (!trimmedName || trimmedName.length < 2) {
+      const msg = isNepali
+        ? "कृपया अर्डर गर्न आफ्नो पूरा नाम राख्नुहोस्।"
+        : "Please enter your full name to place your order.";
+      setNameError(msg);
       Alert.alert(
         isNepali ? "नाम आवश्यक छ" : "Name Required",
         isNepali
-          ? "कृपया आफ्नो पूरा नाम प्रविष्ट गर्नुहोस्।"
+          ? "कृपया अर्डर गर्न आफ्नो पूरा नाम प्रविष्ट गर्नुहोस् ताकि भान्साले ग्राहक पहिचान गर्न सकोस्।"
           : "Please enter your full name so our kitchen knows who this order is for."
       );
       return;
@@ -221,7 +229,16 @@ export function CheckoutScreen({ navigation }: any) {
     }
 
     if (deliveryType === "DELIVERY" && (!line1.trim() || line1.trim().length < 4)) {
-      Alert.alert("Delivery Address Required", "Please enter your street address or landmark so our rider can deliver your food.");
+      const msg = isNepali
+        ? "कृपया डेलिभरी ठेगाना वा चिनारी ठाउँ राख्नुहोस्।"
+        : "Please enter your delivery street address or landmark.";
+      setAddressError(msg);
+      Alert.alert(
+        isNepali ? "डेलिभरी ठेगाना आवश्यक छ" : "Delivery Address Required",
+        isNepali
+          ? "कृपया डेलिभरी ठेगाना वा चिनारी ठाउँ प्रविष्ट गर्नुहोस् ताकि राइडरले खाना ल्याउन सकोस्।"
+          : "Please enter your street address or landmark so our rider can deliver your food."
+      );
       return;
     }
 
@@ -499,15 +516,26 @@ export function CheckoutScreen({ navigation }: any) {
         <View style={styles.card}>
           <Text style={styles.cardTitle}>{t.cart.contactDetails}</Text>
           <TextInput
-            style={[styles.input, !fullName.trim() && styles.inputWarning]}
+            style={[
+              styles.input,
+              nameError ? styles.inputError : !fullName.trim() ? styles.inputWarning : null,
+            ]}
             placeholder={`${t.auth.fullName} *`}
             placeholderTextColor="#64748b"
             value={fullName}
-            onChangeText={setFullNameInput}
+            onChangeText={(val) => {
+              setFullNameInput(val);
+              if (nameError) setNameError(null);
+            }}
           />
-          {!fullName.trim() && (
+          {nameError ? (
+            <View style={styles.phoneErrorBanner}>
+              <Ionicons name="alert-circle" size={16} color="#ef4444" />
+              <Text style={styles.phoneErrorText}>{nameError}</Text>
+            </View>
+          ) : !fullName.trim() ? (
             <Text style={styles.fieldHint}>💡 {t.cart.nameHint}</Text>
-          )}
+          ) : null}
           <TextInput
             style={styles.input}
             placeholder={t.cart.emailReceipt}
@@ -548,15 +576,26 @@ export function CheckoutScreen({ navigation }: any) {
           <View style={styles.card}>
             <Text style={styles.cardTitle}>{t.cart.deliveryAddress}</Text>
             <TextInput
-              style={[styles.input, !line1.trim() && styles.inputWarning]}
+              style={[
+                styles.input,
+                addressError ? styles.inputError : !line1.trim() && styles.inputWarning,
+              ]}
               placeholder={isNepali ? 'सडक, चोक वा चिनारी ठाउँ *' : 'Street name, Chowk, or Landmark *'}
               placeholderTextColor="#64748b"
               value={line1}
-              onChangeText={setLine1}
+              onChangeText={(val) => {
+                setLine1(val);
+                if (addressError) setAddressError(null);
+              }}
             />
-            {!line1.trim() && (
+            {addressError ? (
+              <View style={styles.phoneErrorBanner}>
+                <Ionicons name="alert-circle" size={16} color="#ef4444" />
+                <Text style={styles.phoneErrorText}>{addressError}</Text>
+              </View>
+            ) : !line1.trim() ? (
               <Text style={styles.fieldHint}>💡 {t.cart.addressHint}</Text>
-            )}
+            ) : null}
 
             {/* Quick Landmark Chips */}
             <View style={styles.landmarksContainer}>
