@@ -18,18 +18,19 @@ Production rebuild of the Purple Haze Restro & Garden mobile application for And
   - Built comprehensive typed `api-client.ts` and `use-queries.ts` hooks library.
 - [x] **Phase 3: Customer Home Screen & Dynamic Menu**:
   - Implemented single sticky top header with official round logo, location badge (`Airport Road, Biratnagar`), language toggle, theme toggle, and cart badge.
-  - Implemented time-aware dynamic greeting banner:
-    - 5:00 PM – 11:00 PM: *"Evenings in the Garden 🌿 — Charcoal grills are live."*
-    - 11:00 AM – 4:00 PM: *"Sunny Courtyard Lunch ☀️ — Fresh platters & Newari Khaja."*
-    - Default: *"Garden Oasis & Private Cabins 🌿 — Authentic dining on Airport Road."*
+  - Implemented time-aware dynamic greeting banner.
   - Replaced all "Rooftop" references with dedicated "Private Cabins & Indoor Dining".
-  - Created two-card action split:
-    - **Card A**: Garden Table & Private Cabin Booking (ambient green garden tables or air-conditioned secluded private cabins).
-    - **Card B**: Kitchen Takeaway & Express Delivery with live badge *"⚡ Ready in 25–35 mins"*.
-  - Pinned horizontal category filter chips (`Chef's Recommendations, Nepali, Continental, Asian, Indian`).
-  - Refined compact horizontal menu cards (`MenuCardHorizontal`) with 96x96px rounded thumbnails, food safety standard icons (green dot in square for veg, red in square for non-veg), sensory copywriting, and instant inline quantity steppers (`[- 1 +]`).
-  - Positioned persistent floating cart bar above bottom navigation dock (`bottom: 74px` / `10px` above tabs) with subtotal and *"View Tray / Checkout →"* trigger.
-  - Verified 100% clean TypeScript and Expo Lint.
+  - Created two-card action split (Garden & Cabins vs Express Takeaway).
+  - Pinned horizontal category filter chips.
+  - Refined compact horizontal menu cards with food safety dietary indicators, sensory copywriting, and inline steppers.
+  - Positioned persistent floating cart bar above bottom navigation dock.
+- [x] **Phase 4: Cart, Validated Checkout Flow & Payment Integrations**:
+  - Authoritative backend pricing calculation (`/checkout/calculate`) computing subtotal, delivery zone fees, tax, and coupon discounts in Paisa.
+  - Multi-layer required field validation for Name, Phone Number (≥ 7 digits), and Street Address with native alert modals, red border highlights, and inline warning banners.
+  - Integrated Cash on Delivery (`COD`), `Khalti`, and `eSewa` digital payments with server confirmation callbacks.
+  - Added unique client idempotency keys (`mob_${Date.now()}_${random}`) to eliminate duplicate orders.
+  - Seamless navigation to `OrderTracking` passing `orderNumber`, `orderId`, and `publicToken`.
+  - Verified 100% clean TypeScript (`npx tsc --noEmit`) and Expo Lint (`npx expo lint`).
 
 ---
 
@@ -37,9 +38,8 @@ Production rebuild of the Purple Haze Restro & Garden mobile application for And
 
 | Module | Status | Dependencies | Target Milestone |
 | :--- | :---: | :--- | :--- |
-| **Cart & Validated Checkout Flow** | In Progress | `/checkout/calculate`, `/orders` | Phase 4 |
-| **Table Reservations & Private Cabins** | Pending | `/reservations`, Venue schema | Phase 5 |
-| **Event & Banquet Bookings** | Pending | `/event-bookings`, Package data | Phase 5 |
+| **Table Reservations & Private Cabins** | In Progress | `/reservations`, Venue schema | Phase 5 |
+| **Event & Banquet Bookings** | In Progress | `/event-bookings`, Package data | Phase 5 |
 | **Live Order Tracking & Reorder** | Pending | `/orders/track`, Supabase Realtime | Phase 6 |
 | **Restaurant Order Acceptance (Staff Portal)**| Pending | `/admin/orders`, Atomic lock | Phase 7 |
 | **Push Notifications (FCM / Expo)** | Pending | Firebase Cloud Messaging, Tokens | Phase 8 |
