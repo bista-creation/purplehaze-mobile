@@ -13,12 +13,23 @@ Production rebuild of the Purple Haze Restro & Garden mobile application for And
 - [x] **Design Tokens Extracted**: Extracted live brand palette (`#5b21b6` primary, `#f5b942` gold accent, `#130b1d` dark canvas, `#ffffff`/`#1e132c` cards) and typography from website CSS.
 - [x] **Architecture Specification**: Authored comprehensive architectural blueprint and milestone plan.
 - [x] **Phase 2: Project Core & TanStack Query Integration**:
-  - Installed `@tanstack/react-query` via Expo SDK-compatible resolution.
-  - Configured global `QueryClient` with optimized stale times, memory garbage collection, and retry backoffs.
-  - Wrapped root navigator in `QueryClientProvider` in `src/app/_layout.tsx`.
-  - Upgraded centralized typed `api-client.ts` covering Delivery Zones, Checkout, Payments, Reservations, Events, Orders, Notifications, and Staff operations.
-  - Created reusable TanStack Query hooks in `src/hooks/use-queries.ts`.
-  - Verified 100% clean TypeScript (`npx tsc --noEmit`) and Expo Lint (`npx expo lint`).
+  - Integrated `@tanstack/react-query` with optimized stale times and memory garbage collection.
+  - Wrapped root navigator in `QueryClientProvider`.
+  - Built comprehensive typed `api-client.ts` and `use-queries.ts` hooks library.
+- [x] **Phase 3: Customer Home Screen & Dynamic Menu**:
+  - Implemented single sticky top header with official round logo, location badge (`Airport Road, Biratnagar`), language toggle, theme toggle, and cart badge.
+  - Implemented time-aware dynamic greeting banner:
+    - 5:00 PM – 11:00 PM: *"Evenings in the Garden 🌿 — Charcoal grills are live."*
+    - 11:00 AM – 4:00 PM: *"Sunny Courtyard Lunch ☀️ — Fresh platters & Newari Khaja."*
+    - Default: *"Garden Oasis & Private Cabins 🌿 — Authentic dining on Airport Road."*
+  - Replaced all "Rooftop" references with dedicated "Private Cabins & Indoor Dining".
+  - Created two-card action split:
+    - **Card A**: Garden Table & Private Cabin Booking (ambient green garden tables or air-conditioned secluded private cabins).
+    - **Card B**: Kitchen Takeaway & Express Delivery with live badge *"⚡ Ready in 25–35 mins"*.
+  - Pinned horizontal category filter chips (`Chef's Recommendations, Nepali, Continental, Asian, Indian`).
+  - Refined compact horizontal menu cards (`MenuCardHorizontal`) with 96x96px rounded thumbnails, food safety standard icons (green dot in square for veg, red in square for non-veg), sensory copywriting, and instant inline quantity steppers (`[- 1 +]`).
+  - Positioned persistent floating cart bar above bottom navigation dock (`bottom: 74px` / `10px` above tabs) with subtotal and *"View Tray / Checkout →"* trigger.
+  - Verified 100% clean TypeScript and Expo Lint.
 
 ---
 
@@ -26,9 +37,7 @@ Production rebuild of the Purple Haze Restro & Garden mobile application for And
 
 | Module | Status | Dependencies | Target Milestone |
 | :--- | :---: | :--- | :--- |
-| **Customer Home Screen (Time-aware, Split)**| In Progress | Design System, API client | Phase 3 |
-| **Dynamic Menu with Horizontal Cards** | In Progress | `/menu/categories`, `/menu/dishes` | Phase 3 |
-| **Cart & Validated Checkout Flow** | Pending | `/checkout/calculate`, `/orders` | Phase 4 |
+| **Cart & Validated Checkout Flow** | In Progress | `/checkout/calculate`, `/orders` | Phase 4 |
 | **Table Reservations & Private Cabins** | Pending | `/reservations`, Venue schema | Phase 5 |
 | **Event & Banquet Bookings** | Pending | `/event-bookings`, Package data | Phase 5 |
 | **Live Order Tracking & Reorder** | Pending | `/orders/track`, Supabase Realtime | Phase 6 |
