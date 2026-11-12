@@ -122,6 +122,7 @@ export interface Translations {
     optionalAddOns: string;
     cookingInstructions: string;
     optionsAvailable: string;
+    optionsLabel: string;
     viewTrayCheckout: string;
   };
   cart: {

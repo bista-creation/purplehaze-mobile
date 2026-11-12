@@ -63,7 +63,7 @@ export const ne: Translations = {
     nonVeg: 'मांसाहारी',
     spicy: 'पिरो',
     emptyCategory: 'यस विधामा अहिले परिकार उपलब्ध छैन।',
-    loadingMenu: 'पर्पल हेजको मेनु लोड हुँदैछ...', favoritesFilter: 'मनपर्ने', recommendedSort: 'सिफारिस गरिएका', priceLowHigh: 'मूल्य: कमदेखि बढी', priceHighLow: 'मूल्य: बढीदेखि कम', underPrice: 'रु. ५०० भन्दा कम', soldOut: 'उपलब्ध छैन', browseFullMenu: 'पूरा मेनु हेर्नुहोस्', chefSpecialSpice: 'शेफको विशेष पिरोपना', spicePreference: 'पिरोपनाको स्तर छान्नुहोस्', chooseVariant: 'विकल्प छान्नुहोस्', optionalAddOns: 'थप्न मिल्ने परिकार', cookingInstructions: 'पकाउने निर्देशन', optionsAvailable: 'विकल्पहरू उपलब्ध', viewTrayCheckout: 'ट्रे हेर्नुहोस् / भुक्तानी →',
+    loadingMenu: 'पर्पल हेजको मेनु लोड हुँदैछ...', favoritesFilter: 'मनपर्ने', recommendedSort: 'सिफारिस गरिएका', priceLowHigh: 'मूल्य: कमदेखि बढी', priceHighLow: 'मूल्य: बढीदेखि कम', underPrice: 'रु. ५०० भन्दा कम', soldOut: 'उपलब्ध छैन', browseFullMenu: 'पूरा मेनु हेर्नुहोस्', chefSpecialSpice: 'शेफको विशेष पिरोपना', spicePreference: 'पिरोपनाको स्तर छान्नुहोस्', chooseVariant: 'विकल्प छान्नुहोस्', optionalAddOns: 'थप्न मिल्ने परिकार', cookingInstructions: 'पकाउने निर्देशन', optionsAvailable: 'विकल्पहरू उपलब्ध', optionsLabel: 'विकल्प', viewTrayCheckout: 'ट्रे हेर्नुहोस् / भुक्तानी →',
   },
   cart: {
     title: 'तपाईंको कार्ट',

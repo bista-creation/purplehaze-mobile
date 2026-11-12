@@ -61,6 +61,12 @@ export const MenuCardHorizontal: React.FC<MenuCardHorizontalProps> = ({
     });
   };
 
+  const handleOptionsPress = (e?: GestureResponderEvent) => {
+    e?.stopPropagation?.();
+    if (onOptionsPress) onOptionsPress();
+    else onPress();
+  };
+
   const handleIncrement = (e?: GestureResponderEvent) => {
     e?.stopPropagation?.();
     const defaultItem = matchingCartItems[0];
@@ -169,31 +175,23 @@ export const MenuCardHorizontal: React.FC<MenuCardHorizontalProps> = ({
             <Text style={[styles.price, { color: colors.goldText }]}>
               {formatCurrency(dish.price)}
             </Text>
-            {hasOptions ? (
-              <TouchableOpacity
-                style={[
-                  styles.customizeBtn,
-                  {
-                    backgroundColor: isDark ? 'rgba(168, 85, 247, 0.18)' : 'rgba(126, 34, 206, 0.1)',
-                    borderColor: isDark ? 'rgba(192, 132, 252, 0.4)' : 'rgba(126, 34, 206, 0.2)',
-                  },
-                ]}
-                onPress={(e) => {
-                  e?.stopPropagation?.();
-                  if (onOptionsPress) onOptionsPress();
-                  else onPress();
-                }}
-                activeOpacity={0.75}
-                accessibilityRole="button"
-                accessibilityLabel={`${t.menu.optionsAvailable}: ${dish.name}`}
-              >
-                <Ionicons name="options-outline" size={16} color={colors.purple} />
-              </TouchableOpacity>
-            ) : null}
           </View>
 
           {isAvailable ? (
-            currentQuantity > 0 ? (
+            hasOptions ? (
+              <TouchableOpacity
+                style={[styles.optionsBtn, { borderColor: colors.purple }]}
+                onPress={handleOptionsPress}
+                activeOpacity={0.75}
+                accessibilityRole="button"
+                accessibilityLabel={`${t.menu.optionsLabel}: ${dish.name}`}
+              >
+                <Ionicons name="options-outline" size={16} color={colors.purple} />
+                <Text style={[styles.optionsBtnText, { color: colors.purple }]}>
+                  {t.menu.optionsLabel}
+                </Text>
+              </TouchableOpacity>
+            ) : currentQuantity > 0 ? (
               <View
                 style={[
                   styles.stepperContainer,
@@ -347,14 +345,19 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 0.2,
   },
-  customizeBtn: {
-    width: 25,
-    height: 23,
-    marginTop: 2,
+  optionsBtn: {
+    flexDirection: 'row',
+    height: 34,
+    paddingHorizontal: 12,
+    gap: 7,
     borderWidth: 1,
-    borderRadius: 7,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  optionsBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
   },
   addBtn: {
     paddingHorizontal: 14,

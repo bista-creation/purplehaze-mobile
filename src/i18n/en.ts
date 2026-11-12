@@ -63,7 +63,7 @@ export const en: Translations = {
     nonVeg: 'Non-Veg',
     spicy: 'Spicy',
     emptyCategory: 'No dishes available in this section right now.',
-    loadingMenu: 'Loading Purple Haze Menu...', favoritesFilter: 'Favorites', recommendedSort: 'Recommended', priceLowHigh: 'Price: Low to High', priceHighLow: 'Price: High to Low', underPrice: 'Under Rs. 500', soldOut: 'Sold Out', browseFullMenu: 'Browse Full Menu', chefSpecialSpice: 'Chef Special Spice', spicePreference: 'Spice Level Preference', chooseVariant: 'Choose Variant', optionalAddOns: 'Optional Add-ons', cookingInstructions: 'Cooking Instructions', optionsAvailable: 'Options available', viewTrayCheckout: 'View Tray / Checkout →',
+    loadingMenu: 'Loading Purple Haze Menu...', favoritesFilter: 'Favorites', recommendedSort: 'Recommended', priceLowHigh: 'Price: Low to High', priceHighLow: 'Price: High to Low', underPrice: 'Under Rs. 500', soldOut: 'Sold Out', browseFullMenu: 'Browse Full Menu', chefSpecialSpice: 'Chef Special Spice', spicePreference: 'Spice Level Preference', chooseVariant: 'Choose Variant', optionalAddOns: 'Optional Add-ons', cookingInstructions: 'Cooking Instructions', optionsAvailable: 'Options available', optionsLabel: 'Options', viewTrayCheckout: 'View Tray / Checkout →',
   },
   cart: {
     title: 'Your Cart',
