@@ -2,6 +2,7 @@ import * as Notifications from "expo-notifications";
 import Constants from "expo-constants";
 import { AndroidImportance } from "expo-notifications";
 import { Platform } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { api } from "./api";
 
 // Configure how notifications appear when app is in foreground
@@ -16,6 +17,7 @@ Notifications.setNotificationHandler({
 });
 
 let cachedPushToken: string | null = null;
+const PUSH_TOKEN_KEY = "purplehaze.expoPushToken";
 
 export const pushNotifications = {
   /**
@@ -45,8 +47,8 @@ export const pushNotifications = {
 
       // Android requires a notification channel
       if (Platform.OS === "android") {
-        await Notifications.setNotificationChannelAsync("default", {
-          name: "Purple Haze Orders",
+        await Notifications.setNotificationChannelAsync("order_updates", {
+          name: "Order updates",
           importance: AndroidImportance.MAX,
           vibrationPattern: [0, 250, 250, 250],
           lightColor: "#7c3aed",
@@ -61,6 +63,7 @@ export const pushNotifications = {
       const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
       const token = tokenData.data;
       cachedPushToken = token;
+      await AsyncStorage.setItem(PUSH_TOKEN_KEY, token);
 
       // Register with the backend API
       await api.post("/notifications/push-token", {
@@ -73,6 +76,26 @@ export const pushNotifications = {
       console.warn("Could not register for push notifications:", e);
       return null;
     }
+  },
+
+  async unregisterPushToken(): Promise<void> {
+    const token = cachedPushToken ?? await AsyncStorage.getItem(PUSH_TOKEN_KEY);
+    if (!token) return;
+    try {
+      await api.unregisterPushToken(token);
+      cachedPushToken = null;
+      await AsyncStorage.removeItem(PUSH_TOKEN_KEY);
+    } catch (e) {
+      // Keep the token so a later sign-out/retry can remove it from the server.
+      console.warn("Could not unregister push token:", e);
+    }
+  },
+
+  addPushTokenListener(): () => void {
+    const subscription = Notifications.addPushTokenListener(() => {
+      void this.registerForPushNotifications();
+    });
+    return () => subscription.remove();
   },
 
   /**

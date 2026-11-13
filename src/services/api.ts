@@ -13,4 +13,9 @@ export const api = {
     request<T>(endpoint, { method: 'PATCH', headers, body: body === undefined ? undefined : JSON.stringify(body) }),
   delete: <T>(endpoint: string, headers?: Record<string, string>) =>
     request<T>(endpoint, { method: 'DELETE', headers }),
+  unregisterPushToken: (token: string) =>
+    request<{ unregistered: boolean }>('/notifications/push-token', {
+      method: 'DELETE',
+      body: JSON.stringify({ token }),
+    }),
 };

@@ -38,6 +38,8 @@ function AppRouter() {
 
 export default function RootLayout() {
   const checkAuth = useAuthStore((state) => state.checkAuth);
+  const isLoading = useAuthStore((state) => state.isLoading);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const systemColorScheme = useColorScheme();
   const themeInitializationStarted = useRef(false);
 
@@ -58,12 +60,24 @@ export default function RootLayout() {
     }
 
     void checkAuth();
-    void pushNotifications.registerForPushNotifications().catch(() => {});
     const notificationSubscription = pushNotifications.addNotificationResponseListener((data) => {
       if (data?.orderId) console.log('[Notification Tap] Target order:', data.orderId);
     });
     return () => notificationSubscription();
   }, [checkAuth]);
+
+  // Register only after session restoration. Registering during the initial
+  // auth check created an unowned token, so order updates had no recipient.
+  useEffect(() => {
+    if (Platform.OS === 'web' || isLoading) return;
+    if (isAuthenticated) {
+      void pushNotifications.registerForPushNotifications().catch(() => {});
+      const tokenSubscription = pushNotifications.addPushTokenListener();
+      return () => tokenSubscription();
+    } else {
+      void pushNotifications.unregisterPushToken();
+    }
+  }, [isAuthenticated, isLoading]);
 
   useEffect(() => {
     const themeStore = useThemeStore.getState();
