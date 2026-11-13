@@ -1,6 +1,6 @@
 import * as Notifications from "expo-notifications";
 import Constants from "expo-constants";
-import { AndroidImportance } from "expo-notifications";
+import { AndroidImportance, AndroidNotificationVisibility } from "expo-notifications";
 import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { api } from "./api";
@@ -52,6 +52,9 @@ export const pushNotifications = {
           importance: AndroidImportance.MAX,
           vibrationPattern: [0, 250, 250, 250],
           lightColor: "#7c3aed",
+          enableLights: true,
+          enableVibrate: true,
+          lockscreenVisibility: AndroidNotificationVisibility.PUBLIC,
           sound: "default",
         });
       }
