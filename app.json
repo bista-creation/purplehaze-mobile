@@ -3,7 +3,7 @@
     "name": "Purple Haze Restro & Garden",
     "slug": "purplehaze-mobile",
     "scheme": "purplehaze",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -14,7 +14,7 @@
     },
     "android": {
       "package": "com.bistacreation.purplehaze",
-      "versionCode": 11,
+      "versionCode": 12,
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#FAF7F2",
@@ -59,6 +59,6 @@
         "projectId": "96309d2f-a6d1-4e19-a11f-65aa8c7b979d"
       }
     },
-    "owner": "bistacreations-team"
+    "owner": "bistacreation"
   }
 }

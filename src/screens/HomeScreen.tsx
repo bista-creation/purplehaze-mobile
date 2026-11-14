@@ -76,7 +76,7 @@ export function HomeScreen({ navigation }: any) {
 
   const cartItemCount = getItemCount();
 
-  const loadData = async (forceRefresh = false) => {
+  const loadData = useCallback(async (forceRefresh = false) => {
     try {
       const [catData, dishData] = await Promise.all([
         typedApi.menu.getCategories({ forceRefresh }).catch(() => []),
@@ -90,28 +90,18 @@ export function HomeScreen({ navigation }: any) {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     let active = true;
-    Promise.all([
-      typedApi.menu.getCategories().catch(() => []),
-      typedApi.menu.getDishes().catch(() => []),
-    ])
-      .then(([catData, dishData]) => {
-        if (!active) return;
-        if (catData?.length) setCategories(catData);
-        if (dishData?.length) setDishes(dishData);
-      })
-      .catch((e) => console.warn('[HomeScreen] Data loading error:', e))
-      .finally(() => {
-        if (active) setIsLoading(false);
-      });
+    loadData(false).catch((e) => {
+      if (active) console.warn('[HomeScreen] Init load error:', e);
+    });
 
     return () => {
       active = false;
     };
-  }, []);
+  }, [loadData]);
 
   // Recommendations are sourced only from the matching live menu category.
   const recommendationCategory = useMemo(

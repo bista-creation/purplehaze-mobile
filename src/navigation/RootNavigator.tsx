@@ -71,11 +71,15 @@ function MainTabs() {
           paddingBottom: 5,
           paddingTop: 4,
         },
+        tabBarItemStyle: {
+          paddingHorizontal: 0,
+        },
         tabBarActiveTintColor: colors.purple,
         tabBarInactiveTintColor: colors.textMuted,
         tabBarLabelStyle: {
-          fontSize: 11,
+          fontSize: 10,
           fontWeight: '700',
+          letterSpacing: -0.1,
         },
       }}
     >

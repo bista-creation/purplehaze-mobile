@@ -20,6 +20,7 @@ import { Header } from '../components/ui';
 import { ColorTheme, spacing, borderRadius } from '../theme';
 import { STATUS_META } from '../shared/constants';
 import type { OrderDto } from '../shared/types';
+import { queryClient } from '../services/query-client';
 
 interface OrdersScreenProps {
   navigation: any;
@@ -68,6 +69,7 @@ export default function OrdersScreen({ navigation }: OrdersScreenProps) {
 
   const handleRefresh = () => {
     setRefreshing(true);
+    void queryClient.invalidateQueries({ queryKey: ['loyalty'] });
     fetchOrders();
   };
 

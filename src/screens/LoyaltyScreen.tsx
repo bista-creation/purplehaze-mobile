@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Header, Card, Typography, LoyaltyRewardsCard } from '../components/ui';
 import { useAuthStore } from '../stores/auth-store';
@@ -25,7 +25,7 @@ export default function LoyaltyScreen({ navigation }: any) {
   const { user, isAuthenticated } = useAuthStore();
   const { colors } = useTheme();
   const { t } = useI18n();
-  const { data: summary = EMPTY_SUMMARY, isLoading: loading } = useQuery({
+  const { data: summary = EMPTY_SUMMARY, isLoading: loading, isFetching, refetch } = useQuery({
     queryKey: ['loyalty', user?.id],
     queryFn: () => api.get<LoyaltySummaryDto>('/loyalty'),
     enabled: Boolean(isAuthenticated && user?.id),
@@ -36,7 +36,20 @@ export default function LoyaltyScreen({ navigation }: any) {
   return (
     <View style={styles.container}>
       <Header />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isFetching && !loading}
+            onRefresh={() => {
+              void refetch();
+            }}
+            tintColor={colors.gold}
+            colors={[colors.gold, colors.purple]}
+          />
+        }
+      >
         <Typography variant="goldHeading">{t.loyalty.title}</Typography>
         <Typography variant="bodySmall" color={colors.textMuted} style={styles.subtitle}>
           {t.loyalty.earnRate}
