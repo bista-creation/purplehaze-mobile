@@ -101,7 +101,27 @@ export const useAuthStore = create<AuthState>((set) => ({
   login: async (email, password) => {
     set({ isLoading: true });
     try {
-      const credential = await firebaseEmailLogin(email, password);
+      const cleanEmail = email.trim().toLowerCase();
+
+      // 1. First attempt direct API credentials verification against the backend database
+      try {
+        const authData = await api.auth.login({ email: cleanEmail, password });
+        if (authData?.tokens?.accessToken) {
+          await saveAuth(authData);
+          return;
+        }
+      } catch (apiErr: any) {
+        if (apiErr?.code === 'UNVERIFIED_EMAIL') {
+          throw new Error('Please verify your email address from the link we sent before signing in.');
+        }
+        if (apiErr?.code === 'GOOGLE_AUTH_REQUIRED' || apiErr?.message?.includes('Google')) {
+          throw new Error(apiErr.message || "This account was created with Google. Please use 'Continue with Google' to sign in.");
+        }
+        // If credentials invalid on direct API, fall through to Firebase
+      }
+
+      // 2. Fallback to Firebase authentication
+      const credential = await firebaseEmailLogin(cleanEmail, password);
       if (credential.user.email && !credential.user.emailVerified) {
         throw new Error('Please verify your email from the link we sent before signing in.');
       }
@@ -127,6 +147,18 @@ export const useAuthStore = create<AuthState>((set) => ({
   loginWithGoogle: async (idToken) => {
     set({ isLoading: true });
     try {
+      // 1. Direct backend Google token exchange (validates token with Google & matches client ID)
+      try {
+        const authData = await api.auth.googleSignIn(idToken);
+        if (authData?.tokens?.accessToken) {
+          await saveAuth(authData);
+          return;
+        }
+      } catch (serverErr: any) {
+        console.warn('[GoogleAuth] Server Google sign-in failed, trying Firebase:', serverErr);
+      }
+
+      // 2. Fallback to Firebase credential exchange
       const credential = await firebaseGoogleLogin(idToken);
       await exchangeFirebaseSession(await credential.user.getIdToken(true), credential.user);
     }

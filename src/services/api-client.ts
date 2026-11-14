@@ -523,7 +523,7 @@ export async function request<T>(
   const isFirebaseSignIn = cleanEndpoint === '/auth/firebase';
   const controller = isFirebaseSignIn ? new AbortController() : undefined;
   const timeout = controller
-    ? setTimeout(() => controller.abort(), 20000)
+    ? setTimeout(() => controller.abort(), 45000)
     : undefined;
   try {
     response = await fetch(url, {

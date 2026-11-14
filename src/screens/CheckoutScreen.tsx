@@ -94,14 +94,23 @@ export function CheckoutScreen({ navigation }: any) {
 
   // Fetch live delivery zones from backend
   useEffect(() => {
-    api.get<DeliveryZone[]>('/delivery-zones')
-      .then((data) => {
-        if (Array.isArray(data) && data.length > 0) {
-          setZones(data);
-          setSelectedZoneId(data[0].id);
+    let active = true;
+    api.get<any>('/delivery-zones')
+      .then((res) => {
+        if (!active) return;
+        const list = Array.isArray(res) ? res : res?.data || [];
+        if (Array.isArray(list) && list.length > 0) {
+          setZones(list);
+          setSelectedZoneId((current) => {
+            const exists = list.some((z: any) => z.id === current);
+            return exists ? current : list[0].id;
+          });
         }
       })
       .catch(() => {});
+    return () => {
+      active = false;
+    };
   }, []);
 
   // Reuse the account's website-saved default address in mobile checkout.
@@ -841,18 +850,26 @@ export function CheckoutScreen({ navigation }: any) {
       {/* Place Order Bar */}
       <View style={styles.footerBar}>
         <TouchableOpacity
-          style={[styles.placeOrderBtn, (isSubmitting || isCalculating) && styles.btnDisabled]}
+          style={[styles.placeOrderBtn, isSubmitting && styles.btnDisabled]}
           onPress={handlePlaceOrder}
-          disabled={isSubmitting || isCalculating}
+          disabled={isSubmitting}
+          activeOpacity={0.88}
         >
-          {isSubmitting || isCalculating ? (
-            <ActivityIndicator color="#fff" />
+          {isSubmitting ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <ActivityIndicator color="#fff" size="small" />
+              <Text style={styles.placeOrderText}>Placing Order...</Text>
+            </View>
           ) : (
             <>
               <Text style={styles.placeOrderText}>
                 Place Order · {formatCurrency(totalPaisa)}
               </Text>
-              <Ionicons name="checkmark-circle" size={20} color="#fff" />
+              {isCalculating ? (
+                <ActivityIndicator size="small" color="#FFFFFF" style={{ marginLeft: 6 }} />
+              ) : (
+                <Ionicons name="checkmark-circle" size={20} color="#fff" />
+              )}
             </>
           )}
         </TouchableOpacity>
